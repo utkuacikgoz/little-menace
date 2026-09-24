@@ -12,9 +12,9 @@ struct ShareCardView: View {
         ZStack {
             palette.day
             RadialGradient(colors: [palette.glow.opacity(0.6), .clear], center: .init(x: 0.5, y: 0.45), startRadius: 10, endRadius: 260)
-            VStack(spacing: 14) {
-                Spacer(minLength: 20)
-                CrumbView(pose: pose, hat: state.wardrobe.hat, neck: state.wardrobe.neck, size: 230, animated: false)
+            VStack(spacing: 10) {
+                Spacer(minLength: 12)
+                CrumbView(pose: pose, hat: state.wardrobe.hat, neck: state.wardrobe.neck, size: 190, animated: false)
                 Text(state.name)
                     .font(.system(size: 40, weight: .black, design: .rounded))
                 Text(Self.title(for: state.personality))
@@ -26,11 +26,11 @@ struct ShareCardView: View {
                     Label("\(state.discoveries.count)", systemImage: "sparkles")
                 }
                 .font(.system(size: 18, weight: .heavy, design: .rounded))
-                Spacer(minLength: 10)
+                Spacer(minLength: 6)
                 Text("Little Menace")
                     .font(.system(size: 13, weight: .bold, design: .rounded))
                     .opacity(0.7)
-                    .padding(.bottom, 16)
+                    .padding(.bottom, 14)
             }
             .foregroundStyle(.white)
         }
