@@ -31,6 +31,11 @@ struct ThemePalette {
 
 enum Ink {
     static let body = Color(hex: 0x241F33)
+    static let bodyLight = Color(hex: 0x3A3350)
+    static let bodyDark = Color(hex: 0x16121F)
+    static let bellyDark = Color(hex: 0x2E2842)
+    static let iris = Color(hex: 0xE59A2E)
+    static let irisLight = Color(hex: 0xFFD46B)
     static let belly = Color(hex: 0x3B3452)
     static let eye = Color(hex: 0xFFF7EA)
     static let pupil = Color(hex: 0x120F1C)
