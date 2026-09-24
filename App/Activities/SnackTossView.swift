@@ -155,10 +155,11 @@ struct SnackTossView: View {
         model.haptics.play(.tap)
 
         let settle = catchTime ?? 0.9
+        let caughtIt = catchTime != nil
         Task {
             try? await Task.sleep(for: .seconds(settle))
             resolved += 1
-            if catchTime != nil {
+            if caughtIt {
                 caught += 1
                 react(.feed)
                 model.sounds.play(.chomp)

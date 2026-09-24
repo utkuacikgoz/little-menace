@@ -74,7 +74,7 @@ final class GameModel {
             startTicker()
         case .background:
             // A round interrupted by leaving the app is dropped: no cost, no reward.
-            if session != nil { cancelActivity() }
+            if session != nil || game.state.session != nil { cancelActivity() }
             ticker?.cancel()
             save()
             replanReminders()
@@ -256,8 +256,9 @@ final class GameModel {
     /// Returns the XP earned so the activity can show it.
     @discardableResult
     func finishActivity(_ result: ActivityResult) -> Int {
-        guard let s = session else { return 0 }
+        guard let s = session, s.kind == result.kind else { return 0 }
         let out = game.finishActivity(s, result: result, now: Date())
+        guard out.refusal == nil else { return 0 }
         session = nil
         sounds.play(result.won ? .win : .lose)
         haptics.play(result.won ? .success : .tap)
@@ -421,6 +422,27 @@ final class GameModel {
         replanReminders()
         react(.wake, for: 2)
     }
+
+    #if DEBUG
+    /// Screenshot tours: `-LMScreen <name>` launch argument (DEBUG builds only).
+    /// Returns a sheet for HomeView to present, if the screen is one.
+    func applyDebugLaunch() -> HomeSheet? {
+        guard let screen = UserDefaults.standard.string(forKey: "LMScreen") else { return nil }
+        game.state.xp = max(game.state.xp, Tuning.xpForLevel(4))
+        game.state.counters.visitDays = max(game.state.counters.visitDays, 3)
+        game.state.needs = Needs(fullness: 50, energy: 60, joy: 60)
+        if let theme = UserDefaults.standard.string(forKey: "LMTheme") { game.state.wardrobe.theme = theme }
+        if let hat = UserDefaults.standard.string(forKey: "LMHat") { game.state.wardrobe.hat = hat }
+        switch screen {
+        case "asleep": _ = game.sleep(now: Date())
+        case "mischief": game.state.mischief.nextAt = Date().addingTimeInterval(-1)
+        case "touch": react(.touch, for: 30)
+        default: break
+        }
+        if let kind = ActivityKind(rawValue: screen) { startActivity(kind) }
+        return HomeSheet(rawValue: screen)
+    }
+    #endif
 
     // MARK: Persistence
 

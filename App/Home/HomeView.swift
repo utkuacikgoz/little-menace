@@ -81,12 +81,15 @@ struct HomeView: View {
             .animation(.spring(response: 0.35, dampingFraction: 0.7), value: model.bubble)
             .animation(.spring(response: 0.35, dampingFraction: 0.7), value: model.toast)
             .animation(.spring(response: 0.4, dampingFraction: 0.7), value: model.showReminderOffer)
+            .onChange(of: model.activity) { _, _ in snackAt = nil }
+            .onChange(of: sheet) { _, _ in snackAt = nil }
             .onChange(of: stretch) { _, value in
                 // Gesture cancelled or released: eyes return to the player.
                 if value == .zero { model.endAttention() }
             }
             .onChange(of: snackAt) { _, point in
-                guard let point, !snackEaten else { return }
+                guard let point else { model.endAttention(); return }
+                guard !snackEaten else { return }
                 let d = hypot(point.x - mouth.x, point.y - mouth.y)
                 model.look = CGSize(width: max(-1, min(1, (point.x - mouth.x) / 120)), height: max(-1, min(1, (point.y - mouth.y) / 120)))
                 if d < 160 && model.transient == nil { model.react(.attention, for: 0.6) }
@@ -112,7 +115,9 @@ struct HomeView: View {
         .fullScreenCover(item: $model.activity) { kind in
             ActivityContainer(kind: kind)
         }
-        .statusBarHidden(false)
+        #if DEBUG
+        .task { if let s = model.applyDebugLaunch() { sheet = s } }
+        #endif
     }
 
     // MARK: Crumb

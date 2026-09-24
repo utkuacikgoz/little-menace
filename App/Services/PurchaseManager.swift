@@ -1,4 +1,5 @@
 import StoreKit
+import Observation
 import MenaceCore
 
 /// StoreKit 2 for non-consumable collections. Ownership comes only from verified,
@@ -22,6 +23,8 @@ final class PurchaseManager {
             for await update in Transaction.updates {
                 if case .verified(let transaction) = update { await transaction.finish() }
                 await self?.refreshEntitlements()
+                // An Ask to Buy approval or decline arrives here; either way stop waiting.
+                if self?.state == .pending { self?.state = .idle }
             }
         }
     }
