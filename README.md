@@ -2,7 +2,7 @@
 
 A native iPhone pet toy. It has one chaotic little gremlin (Crumb), one bold background, and almost no text. It is written in SwiftUI for iOS 17+, with no third-party packages, no accounts and no backend.
 
-> **Honest status:** this repository started empty. The prototype, the original `DESIGN.md`/`GAMEPLAY.md` and the generated mascot art named in the brief were not present, so everything here was rebuilt from the brief. The character is a vector placeholder. The rules engine (`MenaceCore`) is compiled and tested. The iOS app has only been compiled in CI, and has not been played on a device (see *Validation*).
+> **Honest status:** this repository started empty. The prototype, the original `DESIGN.md`/`GAMEPLAY.md` and the generated mascot art named in the brief were not present, so everything here was rebuilt from the brief. The character is a vector placeholder. The rules engine (`MenaceCore`) is compiled and tested. The iOS app builds and launches in CI on simulators, but nobody has played it on a device yet (see *Validation*).
 
 ## Layout
 
@@ -53,9 +53,10 @@ Core tests run anywhere Swift runs:
 | Check | Result |
 |---|---|
 | `MenaceCore` tests (Swift 6.1.3, Linux) | **51/51 pass**: time rules, clock changes, time zones, rewards granted once, migrations, corrupt-save recovery, interrupted/duplicate rounds, tug gesture cancellation and frame-rate independence, entitlements/revocation, offer gating, reminder planning |
-| iOS app compile | See the CI section below. This environment had no Xcode. |
-| Simulator run / screenshots | CI captures home in light and dark on iPhone SE and 16 Pro Max |
-| Compact/large phones, large text, VoiceOver, Reduce Motion, denied notifications, relaunch, offline | **Not yet inspected by a person.** They are implemented as described in DESIGN.md. |
+| iOS app compile | **Builds** with Xcode on GitHub's macOS 15 runner (`.github/workflows/ios.yml`), on every push |
+| Simulator launch | Launches with no error-level logs on iPhone SE (3rd gen) and iPhone 16 Pro Max |
+| Screenshots | `docs/screenshots/` covers home, touch, mischief, all three toys, dark mode, wardrobe, stamp card, share card, settings, asleep, SE, and SE at the largest accessibility text size. Regenerate them by running the workflow manually. |
+| Interactive play, VoiceOver, Reduce Motion, denied notifications, relaunch, offline | **Not yet inspected by a person.** The screenshots are static launches, and these paths are implemented as described in DESIGN.md. |
 | Haptics | Needs a physical device |
 | Purchases | Only the StoreKit local config exists. No sandbox or App Store Connect products have been created. |
 

@@ -119,8 +119,8 @@ struct CrumbView: View {
         let open = pose.eyeOpen * blink
         return ZStack {
             HStack(spacing: 34) {
-                eye(open: open, cocked: false)
-                eye(open: open, cocked: true)
+                eye(open: open, cocked: false, blinking: blink < 1)
+                eye(open: open, cocked: true, blinking: blink < 1)
             }
             .position(x: 100, y: 100)
 
@@ -152,7 +152,7 @@ struct CrumbView: View {
         }
     }
 
-    private func eye(open: CGFloat, cocked: Bool) -> some View {
+    private func eye(open: CGFloat, cocked: Bool, blinking: Bool) -> some View {
         let cock: CGFloat = cocked ? pose.browAsym * 0.25 : 0
         let height = 42 * max(0.06, min(1.25, open + cock))
         let showWhite = open > 0.12 && pose.eyeHappy < 0.6
@@ -168,7 +168,7 @@ struct CrumbView: View {
                 .clipShape(Ellipse())
                 .opacity(showWhite ? 1 : 0)
 
-            LidArc(curve: pose.sleeping ? 1 : -1)
+            LidArc(curve: pose.sleeping ? 1 : blinking ? 0.25 : -1)
                 .stroke(Ink.eye, style: StrokeStyle(lineWidth: 4.5, lineCap: .round))
                 .frame(width: 30, height: 12)
                 .opacity(showWhite ? 0 : 1)
