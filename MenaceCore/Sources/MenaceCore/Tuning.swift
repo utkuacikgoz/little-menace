@@ -10,7 +10,7 @@ public enum Tuning {
     public static let fullnessDecayAwake = 8.0
     public static let fullnessDecayAsleep = 4.0
     public static let energyDecayAwake = 5.0
-    public static let energyRecoveryAsleep = 45.0
+    public static let energyRecoveryAsleep = 240.0
     public static let joyDecay = 6.0
 
     /// Passing time alone never pushes needs below these. Play can, time cannot.
@@ -22,13 +22,13 @@ public enum Tuning {
     public static let refuseFoodAt = 90.0
     public static let refuseNapAt = 75.0
     public static let tooSleepyToPlay = 15.0
-    public static let maxNap: TimeInterval = 150 * 60
+    public static let maxNap: TimeInterval = 25 * 60
     /// Waking before this counts as an early (grumpy) wake. No penalty beyond the face.
     public static let restfulNap: TimeInterval = 5 * 60
     public static let petJoy = 2.0
 
     // MARK: Play
-    public static let playEnergyCost = 12.0
+    public static let playEnergyCost = 6.0
     public static let playFullnessCost = 6.0
     public static let playJoy = 14.0
 
@@ -46,7 +46,7 @@ public enum Tuning {
     public static let stampsForGift = 5
 
     // MARK: Mischief
-    public static let firstMischiefDelay: TimeInterval = 15 * 60
+    public static let firstMischiefDelay: TimeInterval = 90
     public static let mischiefGapMin: TimeInterval = 3 * 3600
     public static let mischiefGapMax: TimeInterval = 5 * 3600
     public static let mischiefXP = 5

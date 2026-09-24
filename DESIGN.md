@@ -1,6 +1,6 @@
 # Little Menace — design
 
-Rebuilt from the owner brief. The original `DESIGN.md` and the generated raster mascot were not in this repository. The character here is a **vector placeholder** drawn in SwiftUI. The palette and character are provisional.
+Rebuilt from the owner brief. The original `DESIGN.md` and the generated raster mascot were not in this repository. The character is an animated SwiftUI vector rig with a scalloped fur silhouette, amber eyes and separate pose-driven parts.
 
 ## Composition (home)
 
@@ -14,7 +14,7 @@ Rebuilt from the owner brief. The original `DESIGN.md` and the generated raster 
   A thin white ring on each button shows fullness, joy or energy.
 - Top right: one `…` menu (Wardrobe, Stamps, Share, Settings). There are no labels, cards, badges or shop on the home screen.
 - Transient only:
-  - a speech bubble (≤ 32 characters, shown now and then, always on refusals)
+  - one short line beneath the character (≤ 32 characters, shown briefly, always on refusals)
   - a toast chip (icon + number) for level, stamp, gift or discovery
   - the mischief prop
   - the one-time reminder offer
@@ -89,3 +89,9 @@ Drag: the body stretches toward the finger through a rubber-band curve (limit 70
 3. Tapping, dragging, feeding, refusing, napping and waking each look different, even with the sound off.
 4. No layout clipping at the largest accessibility text size in the sheets.
 5. With Reduce Motion on, nothing loops except the sleep z's.
+
+## Voice and collection presentation
+
+The home caption is a single centered line or short wrap below the character, never a card. It disappears after five seconds and yields to naming/reminder prompts. The 328 authored lines stay on-device and use persistent repeat avoidance. Do not replace this voice with generic motivational messages or a chat UI.
+
+Collection previews are honest demonstrations: show the actual outfit, prop, animation and punchline. Keep the price localized from StoreKit and explain permanent ownership in one sentence. No store badge, countdown, subscription or currency belongs on the home screen. A new collection must add authored behavior or playable variation; a recolor alone is insufficient.

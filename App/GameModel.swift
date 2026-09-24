@@ -24,6 +24,7 @@ final class GameModel {
     /// A collection reaction in progress overrides everything else.
     private(set) var specialPose: GremlinPose?
     private(set) var specialProp: String?
+    private(set) var specialLine: String?
     var look: CGSize = .zero
     private(set) var bubble: Bubble?
     private(set) var toast: Toast?
@@ -31,6 +32,7 @@ final class GameModel {
     private(set) var session: ActivitySession?
     var showReminderOffer = false
     var showNamePrompt = false
+    var homeObscured = false
     private(set) var notificationsDenied = false
 
     let purchases = PurchaseManager()
@@ -70,6 +72,7 @@ final class GameModel {
         await purchases.refreshEntitlements()
         await purchases.loadProducts()
         notificationsDenied = state.prefs.remindersEnabled ? !(await reminders.isAuthorized()) : false
+        if bubble == nil && !homeObscured { say(.idle) }
     }
 
     func scenePhaseChanged(_ phase: ScenePhase) {
@@ -113,6 +116,10 @@ final class GameModel {
                     self.game.acknowledgeWake()
                     self.react(.wake, for: 2)
                     self.sounds.play(.pop)
+                    self.say(.wake)
+                }
+                if !self.homeObscured && self.activity == nil && !self.showNamePrompt && !self.showReminderOffer && self.bubble == nil && self.specialPose == nil {
+                    self.say(.idle, chance: 0.55)
                 }
             }
         }
@@ -121,6 +128,7 @@ final class GameModel {
     // MARK: Pose
 
     var pose: GremlinPose {
+        if state.isAsleep { return .pose(for: .asleep) }
         if let specialPose { return specialPose }
         var p = transient.map(GremlinPose.pose(for:)) ?? GremlinPose.base(asleep: state.isAsleep, energy: state.needs.energy)
         if transient == nil || transient == .attention { p.look = look }
@@ -128,6 +136,7 @@ final class GameModel {
     }
 
     func react(_ reaction: Reaction, for seconds: Double = 1.4) {
+        cancelSpecial()
         transient = reaction
         reactionTask?.cancel()
         reactionTask = Task { [weak self] in
@@ -145,15 +154,29 @@ final class GameModel {
 
     func say(_ reaction: Reaction, chance: Double = 1) {
         guard Double.random(in: 0..<1, using: &rng) < chance,
-              let line = Lines.line(for: reaction, personality: state.personality, using: &rng) else { return }
-        bubble = Bubble(text: line)
+              let line = Lines.next(for: reaction, state: &game.state,
+                                    hour: game.days.hour(Date()), using: &rng) else { return }
+        showLine(line)
+        save()
+    }
+
+    private func showLine(_ line: String, duration: Double = 5) {
         bubbleTask?.cancel()
+        bubble = Bubble(text: line)
         bubbleTask = Task { [weak self] in
-            try? await Task.sleep(for: .seconds(2.4))
+            try? await Task.sleep(for: .seconds(duration))
             guard !Task.isCancelled else { return }
             self?.bubble = nil
         }
         UIAccessibility.post(notification: .announcement, argument: "\(state.titleName): \(line)")
+    }
+
+    func cancelSpecial() {
+        specialTask?.cancel()
+        if specialLine != nil { bubbleTask?.cancel(); bubble = nil }
+        specialLine = nil
+        specialPose = nil
+        specialProp = nil
     }
 
     /// Long press: an owned collection reaction, or just a sly grin.
@@ -173,8 +196,8 @@ final class GameModel {
         guard let special = SpecialReaction.find(id) else { return }
         specialTask?.cancel()
         specialProp = special.prop
-        bubble = Bubble(text: special.line)
-        UIAccessibility.post(notification: .announcement, argument: "\(state.titleName): \(special.line)")
+        specialLine = special.line
+        showLine(special.line, duration: special.beats.reduce(0) { $0 + $1.seconds } + 2)
         sounds.play(.boing)
         specialTask = Task { [weak self] in
             for beat in special.beats {
@@ -186,7 +209,6 @@ final class GameModel {
             guard let self, !Task.isCancelled else { return }
             self.specialPose = nil
             self.specialProp = nil
-            self.bubble = nil
         }
     }
 
@@ -201,7 +223,7 @@ final class GameModel {
             react(.touch)
             haptics.play(.squish)
             sounds.play(.pop)
-            say(.touch, chance: 0.2)
+            say(.touch, chance: 0.75)
             // Meet it first, then name it: the prompt appears once, after the first pet.
             if state.name.isEmpty && !state.namePromptShown {
                 game.state.namePromptShown = true
@@ -235,13 +257,14 @@ final class GameModel {
     }
 
     private func finishCare(_ out: Outcome, duration: Double = 1.4) {
+        cancelSpecial()
         if let refusal = out.refusal {
             react(refusal.reaction, for: 1.6)
             say(refusal.reaction)
             haptics.play(.nope)
         } else {
             if out.reaction != .asleep { react(out.reaction, for: duration) } else { transient = nil }
-            say(out.reaction, chance: 0.3)
+            say(out.reaction)
         }
         handle(out.events)
         save()
@@ -302,13 +325,7 @@ final class GameModel {
         guard out.refusal == nil else { return }
         let choice = indulge ? event.indulge : event.redirect
         react(out.reaction, for: 2)
-        bubble = Bubble(text: choice.line)
-        bubbleTask?.cancel()
-        bubbleTask = Task { [weak self] in
-            try? await Task.sleep(for: .seconds(2.6))
-            guard !Task.isCancelled else { return }
-            self?.bubble = nil
-        }
+        showLine(choice.line)
         sounds.play(indulge ? .boing : .pop)
         haptics.play(.success)
         handle(out.events)
@@ -429,12 +446,17 @@ final class GameModel {
     }
 
     func reset() {
+        cancelSpecial()
+        reactionTask?.cancel()
+        bubbleTask?.cancel()
         game.reset(now: Date())
         Catalog.sanitize(&game.state, entitlements: entitlements)
         session = nil
         activity = nil
         transient = nil
         bubble = nil
+        showNamePrompt = false
+        showReminderOffer = false
         save()
         replanReminders()
         react(.wake, for: 2)
@@ -454,6 +476,8 @@ final class GameModel {
         case "asleep": _ = game.sleep(now: Date())
         case "mischief": game.state.mischief.nextAt = Date().addingTimeInterval(-1)
         case "touch": react(.touch, for: 30)
+        case "dialogue": showLine("my alibi is adorable.", duration: 30)
+        case "collection": return .settings
         default: break
         }
         if let kind = ActivityKind(rawValue: screen) { startActivity(kind) }

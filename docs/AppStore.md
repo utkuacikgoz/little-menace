@@ -24,9 +24,9 @@
   Optional: the Midnight Snack collection adds a nightcap, moon charm, starry background, glow sock and three midnight reactions. Preview it all on the gremlin before you decide.
 
 - **Keywords:** virtual pet, gremlin, cute, tamagotchi, pet game, toy, cozy, mischief
-- **In-app purchase:** Midnight Snack, non-consumable, Family Sharing on. The price is to be decided; $3.99 is a sandbox test input only.
+- **In-app purchase:** Midnight Snack, non-consumable, Family Sharing on. Proposed US launch price: $3.99 once. Set the actual production price in App Store Connect; the included StoreKit file is local testing only.
 - **Screenshots needed (6.9" and 6.5" iPhone):** home in Tangerine, sock tug, cushion hunt, wardrobe preview, share card. Capture them from the simulator, following `README.md`.
-- **Support URL / Privacy URL:** required before submission. Placeholders live in `App/Sheets/SettingsView.swift` (`AppLinks`).
+- **Support URL / Privacy URL:** public repository pages `docs/Support.md` and `docs/Privacy.md`, linked by `AppLinks` in Settings. Enter these URLs in App Store Connect.
 
 ## App Privacy ("nutrition label")
 

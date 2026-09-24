@@ -2,7 +2,7 @@
 
 A native iPhone pet toy. It has one chaotic little gremlin that players name themselves, one bold background, and almost no text. It is written in SwiftUI for iOS 17+, with no third-party packages, no accounts and no backend.
 
-> **Honest status:** this repository started empty. The prototype, the original `DESIGN.md`/`GAMEPLAY.md` and the generated mascot art named in the brief were not present, so everything here was rebuilt from the brief. The character is a vector placeholder. The rules engine (`MenaceCore`) is compiled and tested. The iOS app builds and launches in CI on simulators, but nobody has played it on a device yet (see *Validation*).
+> **Honest status:** this repository started empty. The prototype, the original `DESIGN.md`/`GAMEPLAY.md` and the generated mascot art named in the brief were not present, so everything here was rebuilt from the brief. The character uses an animated vector rig. The rules engine (`MenaceCore`) is compiled and tested. The iOS app builds and launches in CI on simulators, but nobody has played it on a device yet (see *Validation*).
 
 ## Layout
 
@@ -20,7 +20,7 @@ docs/AppStore.md          Draft metadata + privacy answers
 
 1. Open `LittleMenace.xcodeproj` in Xcode 16 or later.
 2. Pick the **LittleMenace** scheme and an iPhone simulator, then Run.
-3. Purchases use the local StoreKit config, so no real money is involved. If the store shows "Unavailable offline", set **Scheme › Run › Options › StoreKit Configuration** to `Config/LittleMenace.storekit`. The scheme references it, but Xcode's relative-path handling for that field varies.
+3. Purchases use the local StoreKit config, so no real money is involved. If the store shows "Store unavailable", set **Scheme › Run › Options › StoreKit Configuration** to `Config/LittleMenace.storekit`. The scheme references it, but Xcode's relative-path handling for that field varies.
 4. For a device: set your team under Signing and change the bundle ID (`app.littlemenace.LittleMenace` is a placeholder).
 
 Core tests run anywhere Swift runs:
@@ -52,7 +52,7 @@ Core tests run anywhere Swift runs:
 
 | Check | Result |
 |---|---|
-| `MenaceCore` tests (Swift 6.1.3, Linux) | **51/51 pass**: time rules, clock changes, time zones, rewards granted once, migrations, corrupt-save recovery, interrupted/duplicate rounds, tug gesture cancellation and frame-rate independence, entitlements/revocation, offer gating, reminder planning |
+| `MenaceCore` tests (Xcode 26.6, macOS) | **59/59 pass**: time rules, clock changes, time zones, rewards granted once, migrations, corrupt-save recovery, interrupted/duplicate rounds, tug gesture cancellation and frame-rate independence, entitlements/revocation, offer gating, reminder planning |
 | iOS app compile | **Builds** with Xcode on GitHub's macOS 15 runner (`.github/workflows/ios.yml`), on every push |
 | Simulator launch | Launches without crashing on iPhone SE (3rd gen) and iPhone 16 Pro Max. The error-level log lines are only standard simulator noise from Apple frameworks (audio plugin factory, eligibility plist, CoreFS cache), with none from app code. |
 | Screenshots | `docs/screenshots/` covers home, touch, mischief, all three toys, dark mode, wardrobe, stamp card, share card, settings, asleep, SE, and SE at the largest accessibility text size. Regenerate them by running the workflow manually. |
@@ -62,8 +62,18 @@ Core tests run anywhere Swift runs:
 
 ## Known gaps / next steps
 
-- **Art:** the vector gremlin is a stand-in for commissioned or generated character art. The rig's parameters are the contract a future art pass should keep.
-- **Speech lines:** there are 79 short contextual lines and 36 mischief lines. The brief's prototype had 330, which were not available.
-- **Links:** privacy and support URLs are placeholders (`AppLinks`).
+- **Art:** the gremlin uses a shaded vector rig with amber eyes and a fur silhouette. Further art work should preserve its pose parameters and wearable alignment.
+- **Speech lines:** 328 authored contextual lines plus 36 mischief lines. The last 50 utterances are saved with the pet; small reaction pools cycle oldest-first after exhaustion. Idle speech responds to needs, time, personality, outfits and games actually played.
+- **Links:** privacy and support pages are in `docs/Privacy.md` and `docs/Support.md`, linked from Settings.
 - **Analytics:** none. Add them only with a documented, minimal event list.
 - **Android:** not started, since it is not agreed.
+
+## Personality and first collection update
+
+The first paid offer remains **Midnight Snack**, a permanent collection with a proposed US launch price of **$3.99**. The app always displays Apple's localized product price; the local configuration does not create a live product or set its production price. See `docs/Monetization.md` for setup and the first experiment.
+
+- Speech appears briefly beneath the character, with no extra home-screen panels. Care actions and refusals speak; idle lines surface occasionally while the home screen is visible.
+- Naps recover four energy per minute and finish within 25 minutes. Each game costs six energy. The first mischief event appears after 90 seconds; subsequent events remain spaced out.
+- Collection previews show the performance, prop and punchline together. A purchase is a separate explicit action. Owners can wear the whole collection, and everyone can restore from the collection page.
+- Store failures never imply that the user is necessarily offline; the page offers a retry and keeps previews available. Already-owned and pending purchases cannot be started again.
+- CI now propagates build/test command failures instead of allowing failed commands to produce a green check.

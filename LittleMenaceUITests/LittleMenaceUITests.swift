@@ -91,6 +91,21 @@ final class LittleMenaceUITests: XCTestCase {
         XCTAssertFalse(waitForValue(containing: "Asleep", timeout: 2))
     }
 
+    func testCollectionPreviewsShowTheirPunchlineWithoutBuying() {
+        launch()
+        menu("Settings")
+        app.buttons["Midnight Snack"].tap()
+        let preview = app.buttons["Preview Fridge Raid"]
+        XCTAssertTrue(preview.waitForExistence(timeout: 5))
+        if !preview.isHittable { app.swipeUp() }
+        preview.tap()
+        let caption = app.staticTexts["collection-caption"]
+        if !caption.isHittable { app.swipeDown() }
+        XCTAssertTrue(caption.waitForExistence(timeout: 3))
+        XCTAssertEqual(caption.label, "midnight snack run.")
+        XCTAssertFalse(app.buttons["wear-collection"].exists, "previewing never grants ownership")
+    }
+
     // MARK: Toys
 
     private func open(_ toy: String) {

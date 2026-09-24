@@ -11,13 +11,13 @@ Three hidden needs, each 0–100. There are no bars on the home screen. The grem
 | Need | Awake, per hour | Asleep, per hour | Absence floor |
 |---|---|---|---|
 | Fullness | −8 | −4 | 20 |
-| Energy | −5 | +45 | 20 |
+| Energy | −5 | +240 | 20 |
 | Joy | −6 | 0 | 25 |
 
 - **Feed**: +25 fullness, +4 joy. Refused at ≥ 90 fullness: the gremlin turns its head and the snack bounces back. There are two ways to feed: tap the cookie (auto-toss), or drag the cookie to the gremlin's mouth. The gremlin's mouth opens as the cookie gets close.
 - **Pet** (tap the gremlin): +2 joy. Drag the gremlin to stretch it (the stretch is rubber-banded and bounded), and release for a springy reaction. **Long press**: a sly grin, or an owned collection reaction.
-- **Nap**: refused at ≥ 75 energy. A nap ends by itself at full energy or after 150 minutes. Waking the gremlin in the first 5 minutes gets a grumpy face and has no other cost.
-- **Play**: costs 12 energy and 6 fullness, and gives up to 14 joy. Refused below 15 energy ("too sleepy").
+- **Nap**: refused at ≥ 75 energy. A nap ends by itself at full energy or after 25 minutes. Waking the gremlin in the first 5 minutes gets a grumpy face and has no other cost.
+- **Play**: costs 6 energy and 6 fullness, and gives up to 14 joy. Refused below 15 energy ("too sleepy").
 - Nothing else can happen while a round is running. Feed, nap and a second round all return `busy`.
 
 ## Time model (`TimeModel.advance`)
@@ -73,7 +73,7 @@ Completing it grants 30 XP and a **gold stamp** once. It is shown only as an ico
 
 ## Mischief events
 
-- 12 authored events. The first comes 15 minutes after first launch, then one every 3–5 hours (deterministic jitter). An event appears only while the gremlin is awake and idle.
+- 12 authored events. The first comes 90 seconds after first launch, then one every 3–5 hours (deterministic jitter). An event appears only while the gremlin is awake and idle.
 - The only on-screen sign is a small bobbing prop next to the gremlin. Tapping it shows one line and two icon choices:
   - **indulge** (+personality, toward menace)
   - **redirect** (−personality, toward sweet)
@@ -95,7 +95,7 @@ The menu has a **Share** item. It renders a 1080×1350 card from the real state:
 
 ## Paid collection (hypothesis, sandbox only)
 
-- **Midnight Snack**, `app.littlemenace.collection.midnight`, non-consumable. The sandbox price of $3.99 is a test input, not an approved price.
+- **Midnight Snack**, `app.littlemenace.collection.midnight`, non-consumable. The proposed US launch price is $3.99, matching the local test configuration. Production pricing must still be configured in App Store Connect; the app reads localized prices from StoreKit.
 - Contents:
   - Nightcap, Moon Charm, Midnight background (starry)
   - **Glow Sock**, a themed toy variation for sock tug
@@ -112,3 +112,9 @@ The menu has a **Share** item. It renders a 1080×1350 card from the real state:
   - Settings has Restore Purchases (`AppStore.sync`)
 
 Not built, by decision: currency, loot boxes, ads, subscriptions, accounts, cloud sync, multiplayer, AI chat.
+
+## Dialogue memory
+
+There are 328 short authored contextual lines plus the existing mischief dialogue. The pet stores its last 50 utterances, oldest first. It chooses an unseen line from the current context, or the oldest eligible line when a small pool is exhausted. This history survives relaunch and defaults to empty for old saves. No generation service is used.
+
+Idle dialogue prioritizes sleep, low energy and hunger, then adds time-of-day, personality, outfit, returning-visit and played-game callbacks. Callbacks never claim the player did something absent from their saved counters. Sheets and games suppress idle speech. Feed, nap and refusal feedback remains available without a purchase.
