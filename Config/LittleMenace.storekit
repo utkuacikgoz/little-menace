@@ -1,0 +1,43 @@
+{
+  "identifier" : "4C1D2E6A",
+  "nonRenewingSubscriptions" : [
+
+  ],
+  "products" : [
+    {
+      "displayPrice" : "3.99",
+      "familyShareable" : true,
+      "internalID" : "6739000001",
+      "localizations" : [
+        {
+          "description" : "Nightcap, moon charm, Midnight background, glow sock, and three midnight reactions.",
+          "displayName" : "Midnight Snack",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "app.littlemenace.collection.midnight",
+      "referenceName" : "Midnight Snack Collection",
+      "type" : "NonConsumable"
+    }
+  ],
+  "settings" : {
+    "_applicationInternalID" : "6739000000",
+    "_askToBuyEnabled" : false,
+    "_billingGracePeriodEnabled" : false,
+    "_billingIssuesEnabled" : false,
+    "_disableDialogs" : false,
+    "_failTransactionsEnabled" : false,
+    "_locale" : "en_US",
+    "_storefront" : "USA",
+    "_storeKitErrors" : [
+
+    ]
+  },
+  "subscriptionGroups" : [
+
+  ],
+  "version" : {
+    "major" : 3,
+    "minor" : 0
+  }
+}
