@@ -54,7 +54,7 @@ Core tests run anywhere Swift runs:
 |---|---|
 | `MenaceCore` tests (Swift 6.1.3, Linux) | **51/51 pass**: time rules, clock changes, time zones, rewards granted once, migrations, corrupt-save recovery, interrupted/duplicate rounds, tug gesture cancellation and frame-rate independence, entitlements/revocation, offer gating, reminder planning |
 | iOS app compile | **Builds** with Xcode on GitHub's macOS 15 runner (`.github/workflows/ios.yml`), on every push |
-| Simulator launch | Launches with no error-level logs on iPhone SE (3rd gen) and iPhone 16 Pro Max |
+| Simulator launch | Launches without crashing on iPhone SE (3rd gen) and iPhone 16 Pro Max. The error-level log lines are only standard simulator noise from Apple frameworks (audio plugin factory, eligibility plist, CoreFS cache), with none from app code. |
 | Screenshots | `docs/screenshots/` covers home, touch, mischief, all three toys, dark mode, wardrobe, stamp card, share card, settings, asleep, SE, and SE at the largest accessibility text size. Regenerate them by running the workflow manually. |
 | Interactive play, VoiceOver, Reduce Motion, denied notifications, relaunch, offline | **Not yet inspected by a person.** The screenshots are static launches, and these paths are implemented as described in DESIGN.md. |
 | Haptics | Needs a physical device |
