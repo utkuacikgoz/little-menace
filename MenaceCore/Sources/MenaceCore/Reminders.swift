@@ -15,12 +15,12 @@ public enum ReminderPolicy {
     public static let daysAhead = 3
 
     static let nudges = [
-        "Crumb found something shiny. Probably yours.",
-        "Crumb is doing a tiny dance. Come see.",
+        "{name} found something shiny. Probably yours.",
+        "{name} is doing a tiny dance. Come see.",
         "The sock is ready for a rematch.",
-        "Crumb saved you a snack. Mostly.",
-        "Snack toss? Crumb is warming up.",
-        "Crumb hid somewhere. Cushions look suspicious.",
+        "{name} saved you a snack. Mostly.",
+        "Snack toss? {name} is warming up.",
+        "{name} hid somewhere. Cushions look suspicious.",
     ]
 
     /// Show the soft offer after a moment that makes reminders useful (a nap, or a few rounds of play).
@@ -34,7 +34,7 @@ public enum ReminderPolicy {
         guard s.prefs.remindersEnabled else { return [] }
         var out: [PlannedReminder] = []
         if let wake = TimeModel.expectedWake(s), wake > now {
-            out.append(.init(id: "wake", date: wake, body: "Crumb is awake and suspiciously energetic."))
+            out.append(.init(id: "wake", date: wake, body: "\(s.titleName) is awake and suspiciously energetic."))
         }
         let cal = days.calendar
         let startOfToday = cal.startOfDay(for: now)
@@ -46,6 +46,7 @@ public enum ReminderPolicy {
             guard at > now else { continue }
             let key = days.dayKey(at)
             let body = nudges[Int(stableHash("nudge:" + key) % UInt64(nudges.count))]
+                .replacingOccurrences(of: "{name}", with: s.titleName)
             out.append(.init(id: "nudge-" + key, date: at, body: body))
         }
         return out

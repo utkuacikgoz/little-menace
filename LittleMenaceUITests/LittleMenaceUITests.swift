@@ -1,7 +1,7 @@
 import XCTest
 
 /// Drives the real app through its accessibility tree. `-LMReset YES` starts from a fresh
-/// Crumb; `-LMScreen home` (DEBUG) sets level 4, two visit days and mid-range needs.
+/// The gremlin; `-LMScreen home` (DEBUG) sets level 4, two visit days and mid-range needs.
 final class LittleMenaceUITests: XCTestCase {
     var app: XCUIApplication!
 
@@ -13,15 +13,15 @@ final class LittleMenaceUITests: XCTestCase {
     private func launch(_ extra: [String] = [], reset: Bool = true) {
         app.launchArguments = (reset ? ["-LMReset", "YES"] : []) + extra
         app.launch()
-        XCTAssertTrue(crumb.waitForExistence(timeout: 10))
+        XCTAssertTrue(pet.waitForExistence(timeout: 10))
     }
 
-    private var crumb: XCUIElement { app.otherElements["Crumb"].firstMatch.exists ? app.otherElements["Crumb"].firstMatch : app.buttons["Crumb"].firstMatch }
-    private var crumbValue: String { (crumb.value as? String) ?? "" }
+    private var pet: XCUIElement { app.descendants(matching: .any)["pet"].firstMatch }
+    private var petValue: String { (pet.value as? String) ?? "" }
 
     private func waitForValue(containing text: String, timeout: TimeInterval = 5) -> Bool {
         let predicate = NSPredicate(format: "value CONTAINS %@", text)
-        let exp = expectation(for: predicate, evaluatedWith: crumb)
+        let exp = expectation(for: predicate, evaluatedWith: pet)
         return XCTWaiter.wait(for: [exp], timeout: timeout) == .completed
     }
 
@@ -38,24 +38,42 @@ final class LittleMenaceUITests: XCTestCase {
 
     func testPetDragAndFeedUntilFull() {
         launch()
-        crumb.tap()
-        let center = crumb.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
+        pet.tap()
+        let center = pet.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
         center.press(forDuration: 0.1, thenDragTo: center.withOffset(CGVector(dx: 120, dy: -80)))
-        XCTAssertTrue(crumb.isHittable, "Crumb springs back after a drag")
+        XCTAssertTrue(pet.isHittable, "the gremlin springs back after a drag")
 
         // Fresh fullness is 60: two snacks reach Full, the third is refused.
         app.buttons["Feed"].tap()
         app.buttons["Feed"].tap()
         XCTAssertTrue(waitForValue(containing: "Full"))
         app.buttons["Feed"].tap()
-        XCTAssertTrue(crumbValue.contains("Full"))
+        XCTAssertTrue(petValue.contains("Full"))
+    }
+
+    func testNamePromptAfterFirstPet() {
+        launch()
+        XCTAssertEqual(pet.label, "Your gremlin")
+        pet.tap()
+        let field = app.textFields["Name"]
+        XCTAssertTrue(field.waitForExistence(timeout: 3), "prompt appears after the first pet")
+        field.tap()
+        field.typeText("Mo Fang")
+        app.buttons["Save name"].tap()
+        XCTAssertEqual(pet.label, "Mo Fang")
+
+        app.terminate()
+        launch(reset: false)
+        XCTAssertEqual(pet.label, "Mo Fang", "name persists")
+        pet.tap()
+        XCTAssertFalse(app.textFields["Name"].waitForExistence(timeout: 2), "prompt is shown only once")
     }
 
     func testDragSnackToMouth() {
         launch()
         let feed = app.buttons["Feed"]
-        feed.press(forDuration: 0.1, thenDragTo: crumb)
-        XCTAssertTrue(crumb.isHittable)
+        feed.press(forDuration: 0.1, thenDragTo: pet)
+        XCTAssertTrue(pet.isHittable)
     }
 
     func testNapWakeAndSurvivesRelaunch() {
@@ -67,7 +85,7 @@ final class LittleMenaceUITests: XCTestCase {
         launch(reset: false)
         XCTAssertTrue(waitForValue(containing: "Asleep"), "a nap persists across termination")
 
-        app.buttons["Wake Crumb"].tap()
+        app.buttons["Wake"].tap()
         XCTAssertFalse(waitForValue(containing: "Asleep", timeout: 2))
     }
 

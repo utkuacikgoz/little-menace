@@ -1,10 +1,10 @@
 import SwiftUI
 import MenaceCore
 
-/// Crumb, drawn as a vector rig in a 200×220 design space and scaled to `size`.
+/// The gremlin, drawn as a vector rig in a 200×220 design space and scaled to `size`.
 /// Pose changes spring; breathing, blinking and tail wag run on a timeline.
-struct CrumbView: View {
-    var pose: CrumbPose
+struct GremlinView: View {
+    var pose: GremlinPose
     var hat: String?
     var neck: String?
     var size: CGFloat = 220
@@ -41,7 +41,7 @@ struct CrumbView: View {
         let lean = Double(pose.lean) + Double(stretch.width) / 12
 
         return ZStack {
-            // Shadow stays on the ground while Crumb hops.
+            // Shadow stays on the ground while the gremlin hops.
             Ellipse().fill(.black.opacity(0.18))
                 .frame(width: 130 - pose.hop * 2, height: 16)
                 .position(x: 100, y: 210)

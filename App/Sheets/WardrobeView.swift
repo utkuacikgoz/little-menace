@@ -1,7 +1,7 @@
 import SwiftUI
 import MenaceCore
 
-/// Owned items equip on tap. Paid items preview on Crumb first; buying is a separate, explicit tap.
+/// Owned items equip on tap. Paid items preview on the gremlin first; buying is a separate, explicit tap.
 struct WardrobeView: View {
     @Environment(GameModel.self) private var model
     @State private var slot: Slot = .hat
@@ -16,7 +16,7 @@ struct WardrobeView: View {
                 if slot == .sock {
                     SockView(style: wardrobe.sock).rotationEffect(.degrees(12))
                 } else {
-                    CrumbView(pose: model.specialPose ?? .pose(for: preview == nil ? .idle : .touch), hat: wardrobe.hat, neck: wardrobe.neck, size: 150)
+                    GremlinView(pose: model.specialPose ?? .pose(for: preview == nil ? .idle : .touch), hat: wardrobe.hat, neck: wardrobe.neck, size: 150)
                 }
             }
             .frame(height: 210)
@@ -81,7 +81,7 @@ struct WardrobeView: View {
     private var previewLabel: String {
         let w = shownWardrobe
         let parts = [w.hat, w.neck, w.theme].compactMap { $0 }.compactMap { Catalog.item($0)?.name }
-        return "Crumb wearing " + (parts.isEmpty ? "nothing" : parts.joined(separator: ", "))
+        return "\(model.state.titleName) wearing " + (parts.isEmpty ? "nothing" : parts.joined(separator: ", "))
     }
 
     @ViewBuilder private func cell(_ item: Item?) -> some View {
@@ -209,7 +209,7 @@ struct BuyBar: View {
                     .font(.subheadline)
                     .foregroundStyle(Ink.body.opacity(0.7))
             }
-            // Reactions are previewable too: tap to watch Crumb do it.
+            // Reactions are previewable too: tap to watch the gremlin do it.
             HStack(spacing: 10) {
                 ForEach(collection?.reactionIDs ?? [], id: \.self) { id in
                     if let special = SpecialReaction.find(id) {

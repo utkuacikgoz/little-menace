@@ -29,9 +29,9 @@ public enum ChallengeKind: String, CaseIterable, Sendable {
         switch self {
         case .catchSix: return "Catch six snacks in one toss"
         case .winTug: return "Win a sock tug"
-        case .firstTryFind: return "Find Crumb on the first try"
-        case .petEight: return "Pet Crumb eight times"
-        case .restfulNap: return "Let Crumb have a proper nap"
+        case .firstTryFind: return "Find the gremlin on the first try"
+        case .petEight: return "Give eight pets"
+        case .restfulNap: return "Let it have a proper nap"
         case .playAllThree: return "Play all three games"
         }
     }
@@ -67,10 +67,10 @@ public enum Discovery: String, CaseIterable, Sendable {
         case .firstNap: return "First nap"
         case .firstTugWin: return "Won a sock tug"
         case .perfectToss: return "Perfect snack toss"
-        case .firstTryFind: return "Found Crumb first try"
+        case .firstTryFind: return "Found it on the first try"
         case .nightOwl: return "Played after midnight"
-        case .menace: return "Crumb turned properly menacing"
-        case .softie: return "Crumb turned soft"
+        case .menace: return "Turned properly menacing"
+        case .softie: return "Turned soft"
         case .fullCard: return "Seven stamps in a week"
         case .regular: return "Visited on five days"
         }

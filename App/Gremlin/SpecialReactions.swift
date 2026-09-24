@@ -1,14 +1,14 @@
 import SwiftUI
 import MenaceCore
 
-/// Authored multi-beat reactions sold in collections. Long-press Crumb to play an owned one;
+/// Authored multi-beat reactions sold in collections. Long-press the gremlin to play an owned one;
 /// the wardrobe lets anyone preview them before buying.
 struct SpecialReaction {
     let id: String
     let name: String
     let prop: String
     let line: String
-    let beats: [(pose: CrumbPose, seconds: Double)]
+    let beats: [(pose: GremlinPose, seconds: Double)]
 
     static func find(_ id: String) -> SpecialReaction? { all.first { $0.id == id } }
 
@@ -32,8 +32,8 @@ struct SpecialReaction {
         ]),
     ]
 
-    private static func with(_ r: Reaction, _ edit: (inout CrumbPose) -> Void) -> CrumbPose {
-        var p = CrumbPose.pose(for: r)
+    private static func with(_ r: Reaction, _ edit: (inout GremlinPose) -> Void) -> GremlinPose {
+        var p = GremlinPose.pose(for: r)
         edit(&p)
         return p
     }

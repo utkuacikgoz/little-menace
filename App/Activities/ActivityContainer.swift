@@ -63,7 +63,7 @@ struct ActivityContainer: View {
             result = nil
             round += 1
         } else {
-            // Too sleepy for another round: back home, where Crumb shows why.
+            // Too sleepy for another round: back home, where the gremlin shows why.
             model.closeActivity(won: nil)
         }
     }
@@ -79,7 +79,7 @@ private struct ResultCard: View {
 
     var body: some View {
         VStack(spacing: 18) {
-            CrumbView(pose: .pose(for: result.won ? .win : .lose), hat: hat, neck: neck, size: 150)
+            GremlinView(pose: .pose(for: result.won ? .win : .lose), hat: hat, neck: neck, size: 150)
             HStack(spacing: 8) {
                 Image(systemName: "sparkles")
                 Text("+\(xp)")

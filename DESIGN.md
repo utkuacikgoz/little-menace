@@ -4,10 +4,10 @@ Rebuilt from the owner brief. The original `DESIGN.md` and the generated raster 
 
 ## Composition (home)
 
-- One bold full-bleed colour, with a soft radial glow behind Crumb. Midnight adds stars.
-- Crumb is centred, a little above the middle, at 72 % of the screen width (max 300 pt).
+- One bold full-bleed colour, with a soft radial glow behind the gremlin. Midnight adds stars.
+- The gremlin is centred, a little above the middle, at 72 % of the screen width (max 300 pt).
 - Bottom row: three round buttons, 66 pt with 28 pt gaps:
-  - **Feed** (cookie; drag it to Crumb or tap)
+  - **Feed** (cookie; drag it to the gremlin or tap)
   - **Play** (opens a three-toy picker)
   - **Nap/Wake**
 
@@ -39,15 +39,15 @@ Ink:
 
 Type is SF Rounded heavy, used only in bubbles, toasts and numbers.
 
-## Character rig (`App/Crumb`)
+## Character rig (`App/Gremlin`)
 
-Crumb is drawn in a 200×220 design space from separate parts:
+The gremlin is drawn in a 200×220 design space from separate parts:
 - tail, ears (with inner blush), arms, body, belly, feet
 - eyes (white, pupil, highlight, lid arcs), brows, blush
 - mouth (an animatable open/smile shape) with one fang
 - wearables layered on top
 
-`CrumbPose` holds 17 parameters: eye openness and happiness, brow tilt/lift/asymmetry, mouth open and smile, fang, blush, ear droop, squash/stretch, lean, hop, arms, tail wag, look direction, and sleeping.
+`GremlinPose` holds 17 parameters: eye openness and happiness, brow tilt/lift/asymmetry, mouth open and smile, fang, blush, ear droop, squash/stretch, lean, hop, arms, tail wag, look direction, and sleeping.
 
 Poses are values. SwiftUI springs between any two of them (response 0.38, damping 0.55), so reactions interrupt each other without snapping. A 30 fps timeline drives breathing, blinking (a double blink every third cycle) and tail wag.
 
@@ -75,7 +75,7 @@ Drag: the body stretches toward the finger through a rubber-band curve (limit 70
   - cushion swaps are fewer and slower
   - the mischief prop doesn't bob
 - **VoiceOver**:
-  - Crumb is one element. Its value speaks its state (hungry, sleepy, bored, level). Its actions are pet (default), Feed, Nap/Wake and Tickle.
+  - The gremlin is one element. Its value speaks its state (hungry, sleepy, bored, level). Its actions are pet (default), Feed, Nap/Wake and Tickle.
   - Speech lines and toasts are announced.
   - Every icon-only control has a label.
   - Each toy has an accessible path: throw action, pull action with a "Now!" cue, and cushions as labelled buttons.
@@ -84,8 +84,8 @@ Drag: the body stretches toward the finger through a rubber-band curve (limit 70
 
 ## Visual acceptance checks
 
-1. Home shows exactly: background, Crumb, three buttons, `…`. No words at rest.
-2. Crumb reads clearly on every theme, in light and dark mode, on iPhone SE and on Pro Max.
+1. Home shows exactly: background, the gremlin, three buttons, `…`. No words at rest.
+2. The gremlin reads clearly on every theme, in light and dark mode, on iPhone SE and on Pro Max.
 3. Tapping, dragging, feeding, refusing, napping and waking each look different, even with the sound off.
 4. No layout clipping at the largest accessibility text size in the sheets.
 5. With Reduce Motion on, nothing loops except the sleep z's.

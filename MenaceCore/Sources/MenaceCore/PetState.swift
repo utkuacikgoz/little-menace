@@ -34,7 +34,7 @@ public struct ActivitySession: Equatable, Sendable {
 
 public struct ActivityResult: Equatable, Sendable {
     public var kind: ActivityKind
-    /// 0...1 quality of the round, drives XP and Crumb's reaction.
+    /// 0...1 quality of the round, drives XP and the gremlin's reaction.
     public var quality: Double
     /// Activity-specific count: snacks caught, tug pulls won, guesses needed.
     public var score: Int
@@ -137,7 +137,10 @@ public struct Preferences: Codable, Equatable, Sendable {
 
 /// Everything that persists. Decoding tolerates missing keys so older saves load.
 public struct PetState: Codable, Equatable, Sendable {
+    /// Chosen by the player; empty until they name it (UI then says "your gremlin").
     public var name: String
+    /// Whether the one-time "name me?" prompt has been shown.
+    public var namePromptShown = false
     public var createdAt: Date
     public var lastSimulated: Date
     public var needs: Needs
@@ -161,7 +164,7 @@ public struct PetState: Codable, Equatable, Sendable {
     public var session: ActivitySession?
 
     public init(now: Date) {
-        name = "Crumb"
+        name = ""
         createdAt = now
         lastSimulated = now
         needs = .fresh
@@ -180,11 +183,25 @@ public struct PetState: Codable, Equatable, Sendable {
         session = nil
     }
 
+    public static let maxNameLength = 16
+
+    /// For the middle of a sentence: "Feed your gremlin" / "Feed Mo".
+    public var displayName: String { name.isEmpty ? "your gremlin" : name }
+    /// For the start of a sentence or a label.
+    public var titleName: String { name.isEmpty ? "Your gremlin" : name }
+
+    /// Trims, drops line breaks, caps the length. An empty result means unnamed.
+    public mutating func rename(_ raw: String) {
+        let cleaned = raw.components(separatedBy: .newlines).joined(separator: " ")
+            .trimmingCharacters(in: .whitespaces)
+        name = String(cleaned.prefix(Self.maxNameLength))
+    }
+
     public var isAsleep: Bool { napStartedAt != nil }
     public var level: Int { Tuning.level(forXP: xp) }
 
     enum CodingKeys: String, CodingKey {
-        case name, createdAt, lastSimulated, needs, napStartedAt, pendingWake, xp, discoveries,
+        case name, namePromptShown, createdAt, lastSimulated, needs, napStartedAt, pendingWake, xp, discoveries,
              personality, mischief, stamps, challenge, granted, wardrobe, counters, prefs
     }
 
@@ -193,7 +210,8 @@ public struct PetState: Codable, Equatable, Sendable {
         // Only the clock anchor is required; everything else falls back to a fresh default.
         let anchor = try c.decode(Date.self, forKey: .lastSimulated)
         self.init(now: anchor)
-        name = try c.decodeIfPresent(String.self, forKey: .name) ?? name
+        rename(try c.decodeIfPresent(String.self, forKey: .name) ?? "")
+        namePromptShown = try c.decodeIfPresent(Bool.self, forKey: .namePromptShown) ?? false
         createdAt = try c.decodeIfPresent(Date.self, forKey: .createdAt) ?? anchor
         needs = try c.decodeIfPresent(Needs.self, forKey: .needs) ?? needs
         needs.clamp()

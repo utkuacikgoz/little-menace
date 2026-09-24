@@ -18,7 +18,7 @@ final class TugMatchTests: XCTestCase {
 
     func testPullingOnlyWhenTiredWins() {
         var m = TugMatch(seed: 1)
-        run(&m) { $0.crumbTired ? 1 : 0.3 }
+        run(&m) { $0.gremlinTired ? 1 : 0.3 }
         XCTAssertEqual(m.outcome, true)
         XCTAssertGreaterThan(m.windowsUsed, 0)
         XCTAssertTrue(m.result.won)
@@ -26,7 +26,7 @@ final class TugMatchTests: XCTestCase {
 
     func testYankingNonstopLoses() {
         var smart = TugMatch(seed: 3)
-        run(&smart) { $0.crumbTired ? 1 : 0.2 }
+        run(&smart) { $0.gremlinTired ? 1 : 0.2 }
         var brute = TugMatch(seed: 3)
         run(&brute) { _ in 1 }
         XCTAssertEqual(smart.outcome, true)
@@ -37,8 +37,8 @@ final class TugMatchTests: XCTestCase {
     func testFrameRateIndependent() {
         var a = TugMatch(seed: 9)
         var b = TugMatch(seed: 9)
-        run(&a, fps: 120) { $0.crumbTired ? 1 : 0.4 }
-        run(&b, fps: 20) { $0.crumbTired ? 1 : 0.4 }
+        run(&a, fps: 120) { $0.gremlinTired ? 1 : 0.4 }
+        run(&b, fps: 20) { $0.gremlinTired ? 1 : 0.4 }
         XCTAssertEqual(a.outcome, b.outcome)
     }
 

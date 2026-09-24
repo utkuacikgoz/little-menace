@@ -2,7 +2,7 @@ import SwiftUI
 import UIKit
 import MenaceCore
 
-/// Crumb hides under a cushion, the cushions shuffle, you get two guesses.
+/// The gremlin hides under a cushion, the cushions shuffle, you get two guesses.
 struct CushionHuntView: View {
     var finish: (ActivityResult) -> Void
 
@@ -25,7 +25,7 @@ struct CushionHuntView: View {
             let y = geo.size.height * 0.56
             ZStack {
                 if phase == .peek || lifted.contains(hidden) {
-                    CrumbView(pose: crumbPose, hat: model.state.wardrobe.hat, neck: model.state.wardrobe.neck, size: 110)
+                    GremlinView(pose: gremlinPose, hat: model.state.wardrobe.hat, neck: model.state.wardrobe.neck, size: 110)
                         .position(x: x(for: hidden, width: geo.size.width), y: y - 50)
                         .transition(.move(edge: .bottom).combined(with: .opacity))
                         .accessibilityHidden(true)
@@ -59,7 +59,7 @@ struct CushionHuntView: View {
         .task { await play() }
     }
 
-    private var crumbPose: CrumbPose {
+    private var gremlinPose: GremlinPose {
         switch phase {
         case .peek: return .pose(for: .mischief)
         case .over: return .pose(for: found ? .touch : .mischief)
@@ -89,7 +89,7 @@ struct CushionHuntView: View {
             try? await Task.sleep(for: .seconds(speed + 0.06))
         }
         phase = .guess
-        UIAccessibility.post(notification: .announcement, argument: "Where is Crumb?")
+        UIAccessibility.post(notification: .announcement, argument: "Where did it go?")
     }
 
     private func guess(_ c: Int) {
