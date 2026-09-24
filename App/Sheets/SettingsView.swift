@@ -81,7 +81,7 @@ struct SettingsView: View {
                         Label("Start Over", systemImage: "arrow.counterclockwise")
                     }
                 } footer: {
-                    Text("Start Over resets \(model.state.titleName)'s level, stamps and discoveries. Purchases stay yours.")
+                    Text("Start Over resets \(model.state.displayName)'s level, stamps and discoveries. Purchases stay yours.")
                 }
             }
             .onAppear { nameDraft = model.state.name }

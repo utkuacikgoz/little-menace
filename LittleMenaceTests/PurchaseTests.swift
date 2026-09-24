@@ -35,7 +35,12 @@ final class PurchaseTests: XCTestCase {
 
         let transaction = try XCTUnwrap(session.allTransactions().first { $0.productIdentifier == productID })
         try session.refundTransaction(identifier: transaction.identifier)
-        await pm.refreshEntitlements()
+        // The sandbox records the refund asynchronously; give it a few seconds.
+        for _ in 0..<30 {
+            await pm.refreshEntitlements()
+            if !pm.entitlements.contains(productID) { break }
+            try await Task.sleep(for: .milliseconds(100))
+        }
         XCTAssertFalse(pm.entitlements.contains(productID), "refund removes ownership")
     }
 
