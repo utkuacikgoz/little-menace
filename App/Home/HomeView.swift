@@ -10,6 +10,7 @@ enum HomeSheet: String, Identifiable {
 struct HomeView: View {
     @Environment(GameModel.self) private var model
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.colorScheme) private var colorScheme
 
     @State private var sheet: HomeSheet?
     @State private var showPlay = false
@@ -34,7 +35,7 @@ struct HomeView: View {
                 if let bubble = model.bubble, !model.showNamePrompt, !model.showReminderOffer {
                     Text(bubble.text)
                         .font(.system(.body, design: .rounded).weight(.semibold))
-                        .foregroundStyle(Ink.eye)
+                        .foregroundStyle(colorScheme == .dark || ["grape", "midnight"].contains(model.state.wardrobe.theme) ? Ink.eye : Ink.body)
                         .multilineTextAlignment(.center)
                         .accessibilityIdentifier("pet-dialogue")
                         .frame(maxWidth: geo.size.width - 64)
