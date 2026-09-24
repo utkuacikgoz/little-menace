@@ -153,7 +153,8 @@ final class CatalogTests: XCTestCase {
         for line in Lines.allLines { XCTAssertLessThanOrEqual(line.count, 32, line) }
         var rng = SplitMix64(seed: 1)
         for r in Reaction.allCases where r != .idle {
-            _ = Lines.line(for: r, personality: 0, using: &rng)
+            var state = PetState(now: t0)
+            XCTAssertNotNil(Lines.next(for: r, state: &state, hour: 12, using: &rng))
         }
     }
 }

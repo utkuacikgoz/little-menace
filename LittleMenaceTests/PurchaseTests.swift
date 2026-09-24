@@ -48,13 +48,23 @@ final class PurchaseTests: XCTestCase {
         XCTAssertFalse(pm.entitlements.contains(productID))
     }
 
-    func testFailedPurchaseSurfacesError() async {
-        session.failTransactionsEnabled = true
+    func testFailedPurchaseSurfacesError() async throws {
+        try await session.setSimulatedError(.generic(.networkError(URLError(.notConnectedToInternet))), forAPI: .purchase)
         let pm = PurchaseManager()
         await pm.loadProducts()
         await pm.purchase(productID)
         if case .failed = pm.state {} else { XCTFail("expected failed, got \(pm.state)") }
         XCTAssertFalse(pm.entitlements.contains(productID))
+    }
+
+    func testOwnedCollectionCannotBePurchasedTwice() async {
+        let pm = PurchaseManager()
+        await pm.loadProducts()
+        await pm.purchase(productID)
+        XCTAssertTrue(pm.entitlements.contains(productID))
+        let count = session.allTransactions().count
+        await pm.purchase(productID)
+        XCTAssertEqual(session.allTransactions().count, count)
     }
 
     func testRestoreFindsPriorPurchase() async throws {

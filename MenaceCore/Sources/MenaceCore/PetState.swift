@@ -141,6 +141,8 @@ public struct PetState: Codable, Equatable, Sendable {
     public var name: String
     /// Whether the one-time "name me?" prompt has been shown.
     public var namePromptShown = false
+    /// Most recent utterances, oldest first. Kept across launches.
+    public var recentLines: [String] = []
     public var createdAt: Date
     public var lastSimulated: Date
     public var needs: Needs
@@ -201,7 +203,7 @@ public struct PetState: Codable, Equatable, Sendable {
     public var level: Int { Tuning.level(forXP: xp) }
 
     enum CodingKeys: String, CodingKey {
-        case name, namePromptShown, createdAt, lastSimulated, needs, napStartedAt, pendingWake, xp, discoveries,
+        case name, namePromptShown, recentLines, createdAt, lastSimulated, needs, napStartedAt, pendingWake, xp, discoveries,
              personality, mischief, stamps, challenge, granted, wardrobe, counters, prefs
     }
 
@@ -212,6 +214,7 @@ public struct PetState: Codable, Equatable, Sendable {
         self.init(now: anchor)
         rename(try c.decodeIfPresent(String.self, forKey: .name) ?? "")
         namePromptShown = try c.decodeIfPresent(Bool.self, forKey: .namePromptShown) ?? false
+        recentLines = Array((try c.decodeIfPresent([String].self, forKey: .recentLines) ?? []).suffix(Lines.historyLimit))
         createdAt = try c.decodeIfPresent(Date.self, forKey: .createdAt) ?? anchor
         needs = try c.decodeIfPresent(Needs.self, forKey: .needs) ?? needs
         needs.clamp()

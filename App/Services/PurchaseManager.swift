@@ -11,6 +11,7 @@ final class PurchaseManager {
         case idle, purchasing, pending, failed(String), restored
     }
 
+    private(set) var isLoadingProducts = false
     private(set) var products: [String: Product] = [:]
     private(set) var entitlements: Set<String> = []
     var state: State = .idle
@@ -30,6 +31,9 @@ final class PurchaseManager {
     }
 
     func loadProducts() async {
+        guard !isLoadingProducts else { return }
+        isLoadingProducts = true
+        defer { isLoadingProducts = false }
         let ids = Catalog.collections.map(\.id)
         do {
             let loaded = try await Product.products(for: ids)
@@ -53,7 +57,8 @@ final class PurchaseManager {
     }
 
     func purchase(_ productID: String) async {
-        guard let product = products[productID] else { return }
+        guard state != .purchasing, state != .pending, !entitlements.contains(productID),
+              let product = products[productID] else { return }
         state = .purchasing
         do {
             let result = try await product.purchase()
@@ -77,13 +82,15 @@ final class PurchaseManager {
     }
 
     func restore() async {
+        guard state != .purchasing else { return }
+        let wasPending = state == .pending
         state = .purchasing
         do {
             try await AppStore.sync()
             await refreshEntitlements()
-            state = .restored
+            state = wasPending && entitlements.isEmpty ? .pending : .restored
         } catch {
-            state = .failed(error.localizedDescription)
+            state = wasPending ? .pending : .failed(error.localizedDescription)
         }
     }
 }

@@ -31,11 +31,15 @@ struct HomeView: View {
 
                 gremlin(size: petSize, center: center)
 
-                if let bubble = model.bubble {
-                    SpeechBubble(text: bubble.text)
+                if let bubble = model.bubble, !model.showNamePrompt, !model.showReminderOffer {
+                    Text(bubble.text)
+                        .font(.system(.body, design: .rounded).weight(.semibold))
+                        .foregroundStyle(Ink.eye)
+                        .multilineTextAlignment(.center)
+                        .accessibilityIdentifier("pet-dialogue")
                         .frame(maxWidth: geo.size.width - 64)
-                        .position(x: center.x, y: center.y - petSize * 0.72)
-                        .transition(.scale(scale: 0.6).combined(with: .opacity))
+                        .position(x: center.x, y: min(center.y + petSize * 0.68, geo.size.height - 155))
+                        .transition(.opacity)
                         .id(bubble.id)
                 }
 
@@ -83,6 +87,10 @@ struct HomeView: View {
             .animation(.spring(response: 0.35, dampingFraction: 0.7), value: model.toast)
             .animation(.spring(response: 0.4, dampingFraction: 0.7), value: model.showReminderOffer)
             .animation(.spring(response: 0.4, dampingFraction: 0.7), value: model.showNamePrompt)
+            .onChange(of: sheet != nil || showMischief || model.activity != nil) { _, covered in
+                model.homeObscured = covered
+                if !covered { model.cancelSpecial() }
+            }
             .onChange(of: model.activity) { _, _ in snackAt = nil }
             .onChange(of: sheet) { _, _ in snackAt = nil }
             .onChange(of: stretch) { _, value in
@@ -91,7 +99,7 @@ struct HomeView: View {
             }
             .onChange(of: snackAt) { _, point in
                 guard let point else { model.endAttention(); return }
-                guard !snackEaten else { return }
+                guard !snackEaten, !model.state.isAsleep else { return }
                 let d = hypot(point.x - mouth.x, point.y - mouth.y)
                 model.look = CGSize(width: max(-1, min(1, (point.x - mouth.x) / 120)), height: max(-1, min(1, (point.y - mouth.y) / 120)))
                 if d < 160 && model.transient == nil { model.react(.attention, for: 0.6) }
@@ -130,6 +138,7 @@ struct HomeView: View {
                 state = Self.rubberBand(value.translation, limit: 70)
             }
             .onChanged { value in
+                guard !model.state.isAsleep else { return }
                 if model.transient != .attention { model.react(.attention, for: 10) }
                 model.look = CGSize(width: max(-1, min(1, value.translation.width / 80)),
                                     height: max(-1, min(1, value.translation.height / 80)))

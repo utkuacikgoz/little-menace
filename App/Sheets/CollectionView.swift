@@ -1,51 +1,61 @@
 import SwiftUI
 import MenaceCore
 
-/// Always reachable from Settings, so anyone (including App Review) can preview and buy a
-/// collection. The Wardrobe only shows paid items after attachment; this page is the quiet
-/// exception, and it is never promoted on the home screen.
+/// A quiet, permanent purchase. Previewing never equips or charges anything.
 struct CollectionView: View {
     let collection: Pack
     @Environment(GameModel.self) private var model
 
+    private var preview: Wardrobe {
+        var value = model.state.wardrobe
+        for id in collection.itemIDs {
+            if let item = Catalog.item(id) { value.equip(id, in: item.slot) }
+        }
+        return value
+    }
+
     var body: some View {
         let owned = model.entitlements.contains(collection.id)
-        var preview = model.state.wardrobe
-        for id in collection.itemIDs {
-            if let item = Catalog.item(id), item.slot != .sock { preview.equip(id, in: item.slot) }
-        }
-        return ScrollView {
-            VStack(spacing: 18) {
-                ZStack {
-                    ThemeBackground(themeID: preview.theme)
-                    GremlinView(pose: model.specialPose ?? .pose(for: .mischief), hat: preview.hat, neck: preview.neck, size: 170)
-                    if let sock = collection.itemIDs.first(where: { Catalog.item($0)?.slot == .sock }) {
-                        SockView(style: sock).scaleEffect(0.45).rotationEffect(.degrees(-20))
-                            .frame(width: 50, height: 80).offset(x: 120, y: 60)
-                    }
-                }
-                .frame(height: 260)
-                .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
-                .accessibilityElement(children: .ignore)
-                .accessibilityLabel("\(model.state.titleName) wearing the \(collection.name) collection")
-
-                VStack(alignment: .leading, spacing: 8) {
-                    ForEach(collection.itemIDs, id: \.self) { id in
-                        if let item = Catalog.item(id) {
-                            Label(item.name, systemImage: symbol(for: item.slot))
+        ScrollView {
+            VStack(spacing: 20) {
+                CollectionStage(wardrobe: preview)
+                Text("Small hours. Big nonsense.")
+                    .font(.system(.title3, design: .rounded).weight(.bold))
+                Text("A nightcap, moon charm, starry sky, glow sock and three little performances.")
+                    .font(.subheadline)
+                    .multilineTextAlignment(.center)
+                VStack(spacing: 10) {
+                    ForEach(collection.reactionIDs, id: \.self) { id in
+                        if let special = SpecialReaction.find(id) {
+                            Button { model.performSpecial(id) } label: {
+                                Label(special.name, systemImage: "play.fill")
+                                    .frame(maxWidth: .infinity, minHeight: 48, alignment: .leading)
+                                    .padding(.horizontal, 16)
+                                    .background(Ink.body.opacity(0.06), in: RoundedRectangle(cornerRadius: 16))
+                            }
+                            .accessibilityLabel("Preview \(special.name)")
                         }
                     }
                 }
-                .font(.system(.body, design: .rounded).weight(.semibold))
-                .frame(maxWidth: .infinity, alignment: .leading)
-
                 if owned {
-                    Label("Owned. Find it in the Wardrobe.", systemImage: "checkmark.seal.fill")
-                        .font(.system(.headline, design: .rounded))
+                    Label("Yours. For keeps.", systemImage: "checkmark")
                         .accessibilityIdentifier("owned")
-                    reactionButtons
+                    Button("Wear collection") {
+                        for id in collection.itemIDs {
+                            if let item = Catalog.item(id) { model.equip(item, in: item.slot) }
+                        }
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .tint(Ink.body)
+                    .accessibilityIdentifier("wear-collection")
                 } else {
-                    BuyBar(productID: collection.id)
+                    BuyBar(productID: collection.id, showsReactions: false)
+                }
+                Button("Restore purchases") { Task { await model.purchases.restore() } }
+                    .disabled(model.purchases.state == .purchasing)
+                if model.purchases.state == .restored {
+                    Text(owned ? "Your collection is restored." : "No collection purchases to restore.")
+                        .font(.footnote)
                 }
             }
             .padding(20)
@@ -54,30 +64,40 @@ struct CollectionView: View {
         .background(Ink.eye)
         .navigationTitle(collection.name)
         .navigationBarTitleDisplayMode(.inline)
+        .onDisappear { model.cancelSpecial() }
     }
+}
 
-    /// Owners can replay reactions here too (the BuyBar already offers previews otherwise).
-    private var reactionButtons: some View {
-        HStack(spacing: 10) {
-            ForEach(collection.reactionIDs, id: \.self) { id in
-                if let special = SpecialReaction.find(id) {
-                    Button { model.performSpecial(id) } label: {
-                        Image(systemName: special.prop)
-                            .frame(maxWidth: .infinity, minHeight: 40)
-                            .background(Ink.body.opacity(0.08), in: Capsule())
-                    }
-                    .accessibilityLabel("Play \(special.name)")
+/// All the parts of a performance stay visible where the user is previewing it.
+struct CollectionStage: View {
+    let wardrobe: Wardrobe
+    @Environment(GameModel.self) private var model
+
+    var body: some View {
+        VStack(spacing: 8) {
+            ZStack {
+                GremlinView(pose: model.specialPose ?? .idle, hat: wardrobe.hat, neck: wardrobe.neck, size: 160)
+                if let prop = model.specialProp {
+                    Image(systemName: prop)
+                        .font(.system(size: 28, weight: .bold))
+                        .foregroundStyle(Ink.eye)
+                        .offset(x: -100, y: -25)
                 }
+                SockView(style: wardrobe.sock).scaleEffect(0.3)
+                    .frame(width: 40, height: 50).rotationEffect(.degrees(-15))
+                    .offset(x: 95, y: 55)
             }
+            .frame(height: 185)
+            Text(model.specialLine ?? "Try a little trouble.")
+                .font(.system(.subheadline, design: .rounded).weight(.semibold))
+                .multilineTextAlignment(.center)
+                .foregroundStyle(Ink.eye)
+                .frame(minHeight: 40)
+                .accessibilityIdentifier("collection-caption")
         }
-    }
-
-    private func symbol(for slot: Slot) -> String {
-        switch slot {
-        case .hat: return "crown.fill"
-        case .neck: return "bell.fill"
-        case .theme: return "paintpalette.fill"
-        case .sock: return "hand.draw.fill"
-        }
+        .padding(16)
+        .frame(maxWidth: .infinity)
+        .background { ThemeBackground(themeID: wardrobe.theme) }
+        .clipShape(RoundedRectangle(cornerRadius: 24))
     }
 }
