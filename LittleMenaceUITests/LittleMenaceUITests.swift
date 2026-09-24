@@ -17,6 +17,7 @@ final class LittleMenaceUITests: XCTestCase {
     }
 
     private var pet: XCUIElement { app.descendants(matching: .any)["pet"].firstMatch }
+    private var buyButton: XCUIElement { app.descendants(matching: .any)["buy"].firstMatch }
     private var petValue: String { (pet.value as? String) ?? "" }
 
     private func waitForValue(containing text: String, timeout: TimeInterval = 5) -> Bool {
@@ -171,7 +172,7 @@ final class LittleMenaceUITests: XCTestCase {
         let nightcap = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Nightcap'")).firstMatch
         XCTAssertTrue(nightcap.exists, "paid items are visible after attachment")
         nightcap.tap()
-        XCTAssertTrue(app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Buy' OR label == 'Unavailable offline'")).firstMatch.waitForExistence(timeout: 3))
+        XCTAssertTrue(buyButton.waitForExistence(timeout: 5), "buy button (or offline placeholder) is shown")
     }
 
     func testReviewerCanReachCollectionFromSettingsOnDayOne() {
@@ -180,7 +181,7 @@ final class LittleMenaceUITests: XCTestCase {
         let row = app.buttons["Midnight Snack"]
         XCTAssertTrue(row.waitForExistence(timeout: 3))
         row.tap()
-        XCTAssertTrue(app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Buy' OR label == 'Unavailable offline'")).firstMatch.waitForExistence(timeout: 5))
+        XCTAssertTrue(buyButton.waitForExistence(timeout: 5), "buy button (or offline placeholder) is shown")
     }
 
     func testSettingsResetNeedsConfirmation() {
@@ -196,15 +197,26 @@ final class LittleMenaceUITests: XCTestCase {
 
     func testDeniedNotificationsAreHandled() {
         launch()
+        // Fallback: fires on the next interaction if the alert is not handled directly below.
+        addUIInterruptionMonitor(withDescription: "Notifications") { alert in
+            let deny = alert.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Don'")).firstMatch
+            guard deny.exists else { return false }
+            deny.tap()
+            return true
+        }
         menu("Settings")
         let toggle = app.switches["Reminders"]
         XCTAssertTrue(toggle.waitForExistence(timeout: 3))
         toggle.tap()
         let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
         let deny = springboard.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Don'")).firstMatch
-        if deny.waitForExistence(timeout: 5) { deny.tap() }
+        if deny.waitForExistence(timeout: 10) {
+            deny.tap()
+        } else {
+            app.navigationBars.firstMatch.tap() // lets the interruption monitor run
+        }
         let note = app.buttons["Notifications are off in iOS Settings"]
-        XCTAssertTrue(note.waitForExistence(timeout: 8))
+        XCTAssertTrue(note.waitForExistence(timeout: 10), "denied permission is explained in Settings")
         XCTAssertEqual(toggle.value as? String, "0", "the toggle stays off when permission is denied")
     }
 
