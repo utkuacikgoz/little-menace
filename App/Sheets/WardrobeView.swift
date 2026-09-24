@@ -85,7 +85,7 @@ struct WardrobeView: View {
     }
 
     @ViewBuilder private func cell(_ item: Item?) -> some View {
-        let owned = item.map(model.owns) ?? true
+        let owned = item.map { model.owns($0) } ?? true
         let equipped = model.state.wardrobe.equipped(slot) == item?.id
         let previewing = preview != nil && preview == item
         Button {
@@ -110,7 +110,7 @@ struct WardrobeView: View {
                     .background(Ink.body.opacity(0.06), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
                     .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous)
                         .stroke(Ink.body, lineWidth: equipped || previewing ? 3 : 0))
-                    .opacity(owned || item.map(isPaid) == true ? 1 : 0.45)
+                    .opacity(owned || item.map { isPaid($0) } == true ? 1 : 0.45)
                 if let item, !owned { lockBadge(item) }
             }
         }

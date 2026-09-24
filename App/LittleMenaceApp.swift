@@ -15,7 +15,7 @@ struct LittleMenaceApp: App {
                     model.refreshClock()
                 }
         }
-        .onChange(of: scenePhase) { _, phase in
+        .onChange(of: scenePhase, initial: true) { _, phase in
             model.scenePhaseChanged(phase)
         }
     }

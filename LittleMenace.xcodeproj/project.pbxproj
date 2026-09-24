@@ -300,6 +300,7 @@
 /* Begin XCSwiftPackageProductDependency section */
 		4C0000000000000000000011 /* MenaceCore */ = {
 			isa = XCSwiftPackageProductDependency;
+			package = 4C0000000000000000000012 /* XCLocalSwiftPackageReference "MenaceCore" */;
 			productName = MenaceCore;
 		};
 /* End XCSwiftPackageProductDependency section */
