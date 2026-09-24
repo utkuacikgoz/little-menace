@@ -48,6 +48,10 @@ final class GameModel {
     var state: PetState { game.state }
 
     init() {
+        #if DEBUG
+        // UI tests: `-LMReset YES` starts from a fresh Crumb.
+        if UserDefaults.standard.bool(forKey: "LMReset") { store.wipe() }
+        #endif
         let (loaded, _) = store.load(now: Date())
         game = Game(state: loaded)
         applyPrefs()

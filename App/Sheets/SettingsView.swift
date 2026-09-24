@@ -45,6 +45,13 @@ struct SettingsView: View {
                 }
 
                 Section {
+                    ForEach(Catalog.collections) { c in
+                        NavigationLink {
+                            CollectionView(collection: c)
+                        } label: {
+                            Label(c.name, systemImage: "sparkles")
+                        }
+                    }
                     Button {
                         Task { await model.purchases.restore() }
                     } label: {

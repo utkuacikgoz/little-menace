@@ -1,0 +1,231 @@
+import XCTest
+
+/// Drives the real app through its accessibility tree. `-LMReset YES` starts from a fresh
+/// Crumb; `-LMScreen home` (DEBUG) sets level 4, two visit days and mid-range needs.
+final class LittleMenaceUITests: XCTestCase {
+    var app: XCUIApplication!
+
+    override func setUp() {
+        continueAfterFailure = false
+        app = XCUIApplication()
+    }
+
+    private func launch(_ extra: [String] = [], reset: Bool = true) {
+        app.launchArguments = (reset ? ["-LMReset", "YES"] : []) + extra
+        app.launch()
+        XCTAssertTrue(crumb.waitForExistence(timeout: 10))
+    }
+
+    private var crumb: XCUIElement { app.otherElements["Crumb"].firstMatch.exists ? app.otherElements["Crumb"].firstMatch : app.buttons["Crumb"].firstMatch }
+    private var crumbValue: String { (crumb.value as? String) ?? "" }
+
+    private func waitForValue(containing text: String, timeout: TimeInterval = 5) -> Bool {
+        let predicate = NSPredicate(format: "value CONTAINS %@", text)
+        let exp = expectation(for: predicate, evaluatedWith: crumb)
+        return XCTWaiter.wait(for: [exp], timeout: timeout) == .completed
+    }
+
+    // MARK: Home
+
+    func testHomeShowsOnlyTheToy() {
+        launch()
+        for label in ["Feed", "Play", "Nap", "More"] {
+            XCTAssertTrue(app.buttons[label].exists, "missing \(label)")
+        }
+        // No words at rest: the only static text allowed is a transient speech bubble.
+        XCTAssertLessThanOrEqual(app.staticTexts.count, 1)
+    }
+
+    func testPetDragAndFeedUntilFull() {
+        launch()
+        crumb.tap()
+        let center = crumb.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
+        center.press(forDuration: 0.1, thenDragTo: center.withOffset(CGVector(dx: 120, dy: -80)))
+        XCTAssertTrue(crumb.isHittable, "Crumb springs back after a drag")
+
+        // Fresh fullness is 60: two snacks reach Full, the third is refused.
+        app.buttons["Feed"].tap()
+        app.buttons["Feed"].tap()
+        XCTAssertTrue(waitForValue(containing: "Full"))
+        app.buttons["Feed"].tap()
+        XCTAssertTrue(crumbValue.contains("Full"))
+    }
+
+    func testDragSnackToMouth() {
+        launch()
+        let feed = app.buttons["Feed"]
+        feed.press(forDuration: 0.1, thenDragTo: crumb)
+        XCTAssertTrue(crumb.isHittable)
+    }
+
+    func testNapWakeAndSurvivesRelaunch() {
+        launch(["-LMScreen", "home"]) // energy 60, so a nap is allowed
+        app.buttons["Nap"].tap()
+        XCTAssertTrue(waitForValue(containing: "Asleep"))
+
+        app.terminate()
+        launch(reset: false)
+        XCTAssertTrue(waitForValue(containing: "Asleep"), "a nap persists across termination")
+
+        app.buttons["Wake Crumb"].tap()
+        XCTAssertFalse(waitForValue(containing: "Asleep", timeout: 2))
+    }
+
+    // MARK: Toys
+
+    private func open(_ toy: String) {
+        app.buttons["Play"].tap()
+        let button = app.buttons[toy]
+        XCTAssertTrue(button.waitForExistence(timeout: 3))
+        button.tap()
+    }
+
+    private func finishRound(timeout: TimeInterval) {
+        let done = app.buttons["Done"]
+        XCTAssertTrue(done.waitForExistence(timeout: timeout), "round never finished")
+        done.tap()
+        XCTAssertTrue(app.buttons["Play"].waitForExistence(timeout: 5))
+    }
+
+    func testSnackTossRound() {
+        launch(["-LMScreen", "home"])
+        open("Snack toss")
+        let snack = app.otherElements["Snack"].firstMatch
+        XCTAssertTrue(snack.waitForExistence(timeout: 5))
+        for _ in 0..<8 {
+            if !snack.exists { break }
+            snack.swipeUp(velocity: .fast)
+        }
+        finishRound(timeout: 10)
+    }
+
+    func testSockTugRound() {
+        launch(["-LMScreen", "home"])
+        open("Sock tug")
+        let area = app.otherElements["Sock tug"].firstMatch
+        XCTAssertTrue(area.waitForExistence(timeout: 5))
+        let grip = area.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.7))
+        grip.press(forDuration: 1.5, thenDragTo: grip.withOffset(CGVector(dx: 0, dy: 140)))
+        finishRound(timeout: 30) // rounds end by 20 s at the latest
+    }
+
+    func testCushionHuntRound() {
+        launch(["-LMScreen", "home"])
+        open("Cushion hunt")
+        let left = app.buttons["Cushion left"]
+        XCTAssertTrue(left.waitForExistence(timeout: 5))
+        let enabled = NSPredicate(format: "isEnabled == true")
+        wait(for: [expectation(for: enabled, evaluatedWith: left)], timeout: 10)
+        for name in ["Cushion left", "Cushion middle", "Cushion right"] {
+            if app.buttons["Done"].exists { break }
+            let b = app.buttons[name]
+            if b.isEnabled { b.tap(); sleep(1) }
+        }
+        finishRound(timeout: 8)
+    }
+
+    func testClosingMidRoundLeavesNothingStuck() {
+        launch(["-LMScreen", "home"])
+        open("Sock tug")
+        app.buttons["Close"].tap()
+        XCTAssertTrue(app.buttons["Play"].waitForExistence(timeout: 5))
+        // If the abandoned round were still active, the next one would be refused as busy.
+        open("Cushion hunt")
+        XCTAssertTrue(app.buttons["Cushion left"].waitForExistence(timeout: 5))
+    }
+
+    // MARK: Sheets
+
+    private func menu(_ item: String) {
+        app.buttons["More"].tap()
+        let b = app.buttons[item]
+        XCTAssertTrue(b.waitForExistence(timeout: 3))
+        b.tap()
+    }
+
+    func testWardrobeEquipAndPreview() {
+        launch(["-LMScreen", "home"])
+        menu("Wardrobe")
+        let leaf = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Leaf'")).firstMatch
+        XCTAssertTrue(leaf.waitForExistence(timeout: 3))
+        leaf.tap()
+        XCTAssertTrue(leaf.label.contains("wearing"))
+        let nightcap = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Nightcap'")).firstMatch
+        XCTAssertTrue(nightcap.exists, "paid items are visible after attachment")
+        nightcap.tap()
+        XCTAssertTrue(app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Buy' OR label == 'Unavailable offline'")).firstMatch.waitForExistence(timeout: 3))
+    }
+
+    func testReviewerCanReachCollectionFromSettingsOnDayOne() {
+        launch() // fresh: level 1, one visit
+        menu("Settings")
+        let row = app.buttons["Midnight Snack"]
+        XCTAssertTrue(row.waitForExistence(timeout: 3))
+        row.tap()
+        XCTAssertTrue(app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Buy' OR label == 'Unavailable offline'")).firstMatch.waitForExistence(timeout: 5))
+    }
+
+    func testSettingsResetNeedsConfirmation() {
+        launch(["-LMScreen", "home"])
+        menu("Settings")
+        app.buttons["Start Over"].firstMatch.tap()
+        let cancel = app.buttons["Cancel"]
+        XCTAssertTrue(cancel.waitForExistence(timeout: 3))
+        cancel.tap()
+        app.buttons["Done"].tap()
+        XCTAssertTrue(waitForValue(containing: "Level 4"), "cancel keeps progress")
+    }
+
+    func testDeniedNotificationsAreHandled() {
+        launch()
+        menu("Settings")
+        let toggle = app.switches["Reminders"]
+        XCTAssertTrue(toggle.waitForExistence(timeout: 3))
+        toggle.tap()
+        let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
+        let deny = springboard.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Don'")).firstMatch
+        if deny.waitForExistence(timeout: 5) { deny.tap() }
+        let note = app.buttons["Notifications are off in iOS Settings"]
+        XCTAssertTrue(note.waitForExistence(timeout: 8))
+        XCTAssertEqual(toggle.value as? String, "0", "the toggle stays off when permission is denied")
+    }
+
+    func testShareCardRenders() {
+        launch(["-LMScreen", "home"])
+        menu("Share")
+        XCTAssertTrue(app.buttons["Share"].waitForExistence(timeout: 5))
+    }
+
+    // MARK: Accessibility
+
+    func testLargestTextSizeSheets() {
+        launch(["-LMScreen", "home", "-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL"])
+        menu("Stamps")
+        XCTAssertTrue(app.scrollViews.firstMatch.waitForExistence(timeout: 3))
+    }
+
+    /// Xcode's built-in audit on each screen. Issues are logged as AUDIT lines for triage;
+    /// categories that are genuine bugs for this app fail the test.
+    func testAccessibilityAudit() throws {
+        launch(["-LMScreen", "home"])
+        var failures: [String] = []
+        func audit(_ screen: String) throws {
+            try app.performAccessibilityAudit { issue in
+                let line = "AUDIT [\(screen)] \(issue.auditType) \(issue.compactDescription) — \(issue.element?.label ?? "?")"
+                print(line)
+                if [.hitRegion, .sufficientElementDescription].contains(issue.auditType) { failures.append(line) }
+                return true
+            }
+        }
+        try audit("home")
+        menu("Stamps")
+        try audit("stamps")
+        app.swipeDown(velocity: .fast)
+        menu("Wardrobe")
+        try audit("wardrobe")
+        app.swipeDown(velocity: .fast)
+        menu("Settings")
+        try audit("settings")
+        XCTAssertTrue(failures.isEmpty, failures.joined(separator: "\n"))
+    }
+}
