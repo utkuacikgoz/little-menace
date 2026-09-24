@@ -239,6 +239,7 @@ struct BuyBar: View {
                 .foregroundStyle(Ink.eye)
             }
             .disabled(product == nil || model.purchases.state == .purchasing || model.purchases.state == .pending)
+            .accessibilityIdentifier("buy")
             .accessibilityLabel(product.map { "Buy \(collection?.name ?? "") for \($0.displayPrice)" } ?? "Unavailable offline")
 
             if case .failed(let message) = model.purchases.state {

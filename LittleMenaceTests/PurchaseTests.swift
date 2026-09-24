@@ -55,7 +55,12 @@ final class PurchaseTests: XCTestCase {
     func testRestoreFindsPriorPurchase() async throws {
         try await session.buyProduct(identifier: productID)
         let pm = PurchaseManager()
-        await pm.refreshEntitlements()
+        // The sandbox records the purchase asynchronously; give it a few seconds.
+        for _ in 0..<30 where !pm.entitlements.contains(productID) {
+            await pm.refreshEntitlements()
+            if pm.entitlements.contains(productID) { break }
+            try await Task.sleep(for: .milliseconds(100))
+        }
         XCTAssertTrue(pm.entitlements.contains(productID))
     }
 }
