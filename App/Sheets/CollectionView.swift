@@ -42,6 +42,7 @@ struct CollectionView: View {
                 if owned {
                     Label("Owned. Find it in the Wardrobe.", systemImage: "checkmark.seal.fill")
                         .font(.system(.headline, design: .rounded))
+                        .accessibilityIdentifier("owned")
                     reactionButtons
                 } else {
                     BuyBar(productID: collection.id)

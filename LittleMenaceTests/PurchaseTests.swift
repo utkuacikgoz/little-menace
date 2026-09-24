@@ -15,6 +15,11 @@ final class PurchaseTests: XCTestCase {
         session.clearTransactions()
     }
 
+    /// Leave no sandbox purchases behind: the UI tests run on the same simulator next.
+    override func tearDown() async throws {
+        session?.clearTransactions()
+    }
+
     func testProductLoadsWithLocalizedPrice() async {
         let pm = PurchaseManager()
         await pm.loadProducts()
