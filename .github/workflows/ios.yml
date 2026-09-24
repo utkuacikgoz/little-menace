@@ -88,7 +88,7 @@ jobs:
           ls shots
 
       - name: Publish screenshots to docs/screenshots (manual runs only)
-        if: github.event_name == 'workflow_dispatch'
+        if: always() && github.event_name == 'workflow_dispatch'
         run: |
           rm -rf docs/screenshots && mkdir -p docs/screenshots
           for f in shots/*.png; do
@@ -99,6 +99,8 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add docs/screenshots
           git commit -m "Update simulator screenshots [skip ci]" || exit 0
+          # The branch may have moved while this ran; land the screenshots on top of it.
+          git pull --rebase origin ${GITHUB_REF_NAME}
           git push origin HEAD:${GITHUB_REF_NAME}
 
       - uses: actions/upload-artifact@v4
