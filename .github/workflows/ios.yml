@@ -5,6 +5,9 @@ on:
   pull_request:
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: macos-15
@@ -62,28 +65,19 @@ jobs:
           xcrun simctl shutdown "$PM"
           ls shots
 
-      - name: Contact sheet (base64 in log)
+      - name: Publish screenshots to docs/screenshots (manual runs only)
+        if: github.event_name == 'workflow_dispatch'
         run: |
-          python3 -m pip install --quiet --break-system-packages pillow || python3 -m pip install --quiet pillow
-          python3 - <<'PY'
-          import glob, base64, io
-          from PIL import Image
-          files = sorted(glob.glob("shots/*.png"))
-          tiles = []
-          for f in files:
-              im = Image.open(f).convert("RGB"); im.thumbnail((240, 520)); tiles.append(im)
-          cols = 5; w = 240; h = max(t.height for t in tiles)
-          rows = (len(tiles) + cols - 1) // cols
-          sheet = Image.new("RGB", (cols * w, rows * h), "white")
-          for i, t in enumerate(tiles):
-              sheet.paste(t, ((i % cols) * w, (i // cols) * h))
-          buf = io.BytesIO(); sheet.save(buf, "JPEG", quality=70)
-          data = base64.b64encode(buf.getvalue()).decode()
-          print("ORDER:", " ".join(f.split("/")[-1] for f in files))
-          print("B64BEGIN")
-          for i in range(0, len(data), 900): print("B64:" + data[i:i+900])
-          print("B64END")
-          PY
+          rm -rf docs/screenshots && mkdir -p docs/screenshots
+          for f in shots/*.png; do
+            n=$(basename "$f" .png)
+            sips -s format jpeg -s formatOptions 70 --resampleWidth 430 "$f" --out "docs/screenshots/$n.jpg" >/dev/null
+          done
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/screenshots
+          git commit -m "Update simulator screenshots [skip ci]" || exit 0
+          git push origin HEAD:${GITHUB_REF_NAME}
 
       - uses: actions/upload-artifact@v4
         if: always()
