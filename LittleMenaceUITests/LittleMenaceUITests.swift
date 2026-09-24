@@ -18,6 +18,7 @@ final class LittleMenaceUITests: XCTestCase {
 
     private var pet: XCUIElement { app.descendants(matching: .any)["pet"].firstMatch }
     private var buyButton: XCUIElement { app.descendants(matching: .any)["buy"].firstMatch }
+    private var ownedMarker: XCUIElement { app.descendants(matching: .any)["owned"].firstMatch }
     private var petValue: String { (pet.value as? String) ?? "" }
 
     private func waitForValue(containing text: String, timeout: TimeInterval = 5) -> Bool {
@@ -172,7 +173,9 @@ final class LittleMenaceUITests: XCTestCase {
         let nightcap = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Nightcap'")).firstMatch
         XCTAssertTrue(nightcap.exists, "paid items are visible after attachment")
         nightcap.tap()
-        XCTAssertTrue(buyButton.waitForExistence(timeout: 5), "buy button (or offline placeholder) is shown")
+        // Not owned: the preview shows the buy bar. Owned (e.g. a leftover sandbox purchase): it equips.
+        let offered = buyButton.waitForExistence(timeout: 5)
+        XCTAssertTrue(offered || nightcap.label.contains("wearing"), "paid item previews with a buy button, or equips if owned")
     }
 
     func testReviewerCanReachCollectionFromSettingsOnDayOne() {
@@ -181,7 +184,8 @@ final class LittleMenaceUITests: XCTestCase {
         let row = app.buttons["Midnight Snack"]
         XCTAssertTrue(row.waitForExistence(timeout: 3))
         row.tap()
-        XCTAssertTrue(buyButton.waitForExistence(timeout: 5), "buy button (or offline placeholder) is shown")
+        let offered = buyButton.waitForExistence(timeout: 5)
+        XCTAssertTrue(offered || ownedMarker.exists, "collection page shows the buy button, or 'Owned' if already bought")
     }
 
     func testSettingsResetNeedsConfirmation() {
@@ -207,7 +211,8 @@ final class LittleMenaceUITests: XCTestCase {
         menu("Settings")
         let toggle = app.switches["Reminders"]
         XCTAssertTrue(toggle.waitForExistence(timeout: 3))
-        toggle.tap()
+        // Tap the switch itself; tapping a SwiftUI toggle's centre can land on its label.
+        toggle.coordinate(withNormalizedOffset: CGVector(dx: 0.93, dy: 0.5)).tap()
         let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
         let deny = springboard.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Don'")).firstMatch
         if deny.waitForExistence(timeout: 10) {
