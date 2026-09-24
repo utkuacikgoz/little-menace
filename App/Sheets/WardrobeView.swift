@@ -193,7 +193,7 @@ struct WardrobeView: View {
     }
 }
 
-private struct BuyBar: View {
+struct BuyBar: View {
     let productID: String
     @Environment(GameModel.self) private var model
 

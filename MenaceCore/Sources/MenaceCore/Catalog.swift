@@ -18,7 +18,7 @@ public struct Item: Identifiable, Equatable, Sendable {
     public let source: ItemSource
 }
 
-public struct Collection: Identifiable, Equatable, Sendable {
+public struct Pack: Identifiable, Equatable, Sendable {
     public let id: String // StoreKit product ID
     public let name: String
     public let itemIDs: [String]
@@ -54,8 +54,8 @@ public enum Catalog {
         Item(id: "glow", slot: .sock, name: "Glow Sock", source: .collection(midnightProductID)),
     ]
 
-    public static let collections: [Collection] = [
-        Collection(id: midnightProductID, name: "Midnight Snack",
+    public static let collections: [Pack] = [
+        Pack(id: midnightProductID, name: "Midnight Snack",
                    itemIDs: ["nightcap", "moon", "midnight", "glow"],
                    reactionIDs: ["fridgeRaid", "moonHowl", "blanketCape"]),
     ]

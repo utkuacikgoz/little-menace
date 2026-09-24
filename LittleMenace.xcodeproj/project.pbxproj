@@ -8,18 +8,48 @@
 
 /* Begin PBXBuildFile section */
 		4C0000000000000000000010 /* MenaceCore in Frameworks */ = {isa = PBXBuildFile; productRef = 4C0000000000000000000011 /* MenaceCore */; };
+		4C0000000000000000000090 /* LittleMenace.storekit in Resources */ = {isa = PBXBuildFile; fileRef = 4C0000000000000000000008 /* LittleMenace.storekit */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		4C0000000000000000000001 /* LittleMenace.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LittleMenace.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		4C0000000000000000000007 /* MenaceCore */ = {isa = PBXFileReference; lastKnownFileType = wrapper; path = MenaceCore; sourceTree = "<group>"; };
 		4C0000000000000000000008 /* LittleMenace.storekit */ = {isa = PBXFileReference; lastKnownFileType = text; path = LittleMenace.storekit; sourceTree = "<group>"; };
+		4C0000000000000000000052 /* LittleMenaceUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LittleMenaceUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		4C0000000000000000000053 /* LittleMenaceTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LittleMenaceTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
+
+/* Begin PBXContainerItemProxy section */
+		4C0000000000000000000070 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 4C0000000000000000000006 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 4C0000000000000000000005;
+			remoteInfo = LittleMenace;
+		};
+		4C0000000000000000000071 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 4C0000000000000000000006 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 4C0000000000000000000005;
+			remoteInfo = LittleMenace;
+		};
+/* End PBXContainerItemProxy section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		4C0000000000000000000002 /* App */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = App;
+			sourceTree = "<group>";
+		};
+		4C0000000000000000000050 /* LittleMenaceUITests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = LittleMenaceUITests;
+			sourceTree = "<group>";
+		};
+		4C0000000000000000000051 /* LittleMenaceTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = LittleMenaceTests;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -33,6 +63,20 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		4C0000000000000000000060 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		4C0000000000000000000063 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -42,6 +86,8 @@
 				4C0000000000000000000002 /* App */,
 				4C0000000000000000000007 /* MenaceCore */,
 				4C0000000000000000000009 /* Config */,
+				4C0000000000000000000051 /* LittleMenaceTests */,
+				4C0000000000000000000050 /* LittleMenaceUITests */,
 				4C0000000000000000000004 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -50,6 +96,8 @@
 			isa = PBXGroup;
 			children = (
 				4C0000000000000000000001 /* LittleMenace.app */,
+				4C0000000000000000000053 /* LittleMenaceTests.xctest */,
+				4C0000000000000000000052 /* LittleMenaceUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -88,6 +136,48 @@
 			productReference = 4C0000000000000000000001 /* LittleMenace.app */;
 			productType = "com.apple.product-type.application";
 		};
+		4C0000000000000000000054 /* LittleMenaceUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 4C0000000000000000000084 /* Build configuration list for PBXNativeTarget "LittleMenaceUITests" */;
+			buildPhases = (
+				4C0000000000000000000061 /* Sources */,
+				4C0000000000000000000060 /* Frameworks */,
+				4C0000000000000000000062 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				4C0000000000000000000072 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				4C0000000000000000000050 /* LittleMenaceUITests */,
+			);
+			name = LittleMenaceUITests;
+			productName = LittleMenaceUITests;
+			productReference = 4C0000000000000000000052 /* LittleMenaceUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+		4C0000000000000000000055 /* LittleMenaceTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 4C0000000000000000000085 /* Build configuration list for PBXNativeTarget "LittleMenaceTests" */;
+			buildPhases = (
+				4C0000000000000000000064 /* Sources */,
+				4C0000000000000000000063 /* Frameworks */,
+				4C0000000000000000000065 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				4C0000000000000000000073 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				4C0000000000000000000051 /* LittleMenaceTests */,
+			);
+			name = LittleMenaceTests;
+			productName = LittleMenaceTests;
+			productReference = 4C0000000000000000000053 /* LittleMenaceTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -100,6 +190,14 @@
 				TargetAttributes = {
 					4C0000000000000000000005 = {
 						CreatedOnToolsVersion = 16.0;
+					};
+					4C0000000000000000000054 = {
+						CreatedOnToolsVersion = 16.0;
+						TestTargetID = 4C0000000000000000000005;
+					};
+					4C0000000000000000000055 = {
+						CreatedOnToolsVersion = 16.0;
+						TestTargetID = 4C0000000000000000000005;
 					};
 				};
 			};
@@ -121,6 +219,8 @@
 			projectRoot = "";
 			targets = (
 				4C0000000000000000000005 /* LittleMenace */,
+				4C0000000000000000000055 /* LittleMenaceTests */,
+				4C0000000000000000000054 /* LittleMenaceUITests */,
 			);
 		};
 /* End PBXProject section */
@@ -130,6 +230,21 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		4C0000000000000000000062 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		4C0000000000000000000065 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				4C0000000000000000000090 /* LittleMenace.storekit in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -143,7 +258,34 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		4C0000000000000000000061 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		4C0000000000000000000064 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		4C0000000000000000000072 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 4C0000000000000000000005 /* LittleMenace */;
+			targetProxy = 4C0000000000000000000070 /* PBXContainerItemProxy */;
+		};
+		4C0000000000000000000073 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 4C0000000000000000000005 /* LittleMenace */;
+			targetProxy = 4C0000000000000000000071 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		4C0000000000000000000040 /* Debug */ = {
@@ -267,6 +409,80 @@
 			};
 			name = Release;
 		};
+		4C0000000000000000000080 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				PRODUCT_BUNDLE_IDENTIFIER = app.littlemenace.LittleMenaceUITests;
+				TEST_TARGET_NAME = LittleMenace;
+			};
+			name = Debug;
+		};
+		4C0000000000000000000081 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				PRODUCT_BUNDLE_IDENTIFIER = app.littlemenace.LittleMenaceUITests;
+				TEST_TARGET_NAME = LittleMenace;
+			};
+			name = Release;
+		};
+		4C0000000000000000000082 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				PRODUCT_BUNDLE_IDENTIFIER = app.littlemenace.LittleMenaceTests;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/LittleMenace.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/LittleMenace";
+			};
+			name = Debug;
+		};
+		4C0000000000000000000083 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				PRODUCT_BUNDLE_IDENTIFIER = app.littlemenace.LittleMenaceTests;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/LittleMenace.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/LittleMenace";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -284,6 +500,24 @@
 			buildConfigurations = (
 				4C0000000000000000000040 /* Debug */,
 				4C0000000000000000000041 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		4C0000000000000000000084 /* Build configuration list for PBXNativeTarget "LittleMenaceUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				4C0000000000000000000080 /* Debug */,
+				4C0000000000000000000081 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		4C0000000000000000000085 /* Build configuration list for PBXNativeTarget "LittleMenaceTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				4C0000000000000000000082 /* Debug */,
+				4C0000000000000000000083 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

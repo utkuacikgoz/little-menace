@@ -64,7 +64,6 @@ Core tests run anywhere Swift runs:
 
 - **Art:** the vector Crumb is a stand-in for commissioned or generated character art. The rig's parameters are the contract a future art pass should keep.
 - **Speech lines:** there are 79 short contextual lines and 36 mischief lines. The brief's prototype had 330, which were not available.
-- **App Review:** the paid collection only appears after attachment (level 3 + 2 days). Reviewers may need a way to reach it, such as a review note or a Settings entry for the collection. This is a decision for the owner.
 - **Links:** privacy and support URLs are placeholders (`AppLinks`).
 - **Analytics:** none. Add them only with a documented, minimal event list.
 - **Android:** not started, since it is not agreed.

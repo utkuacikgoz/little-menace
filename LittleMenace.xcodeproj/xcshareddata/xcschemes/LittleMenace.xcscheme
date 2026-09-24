@@ -32,10 +32,20 @@
             skipped = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "MenaceCoreTests"
-               BuildableName = "MenaceCoreTests"
-               BlueprintName = "MenaceCoreTests"
-               ReferencedContainer = "container:MenaceCore">
+               BlueprintIdentifier = "4C0000000000000000000055"
+               BuildableName = "LittleMenaceTests.xctest"
+               BlueprintName = "LittleMenaceTests"
+               ReferencedContainer = "container:LittleMenace.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
+         <TestableReference
+            skipped = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "4C0000000000000000000054"
+               BuildableName = "LittleMenaceUITests.xctest"
+               BlueprintName = "LittleMenaceUITests"
+               ReferencedContainer = "container:LittleMenace.xcodeproj">
             </BuildableReference>
          </TestableReference>
       </Testables>

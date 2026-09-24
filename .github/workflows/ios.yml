@@ -30,7 +30,29 @@ jobs:
             | grep -E "error:|warning: .*(deprecated|never|unused)|BUILD (SUCCEEDED|FAILED)" || true
           test -d build/Build/Products/Debug-iphonesimulator/LittleMenace.app
 
+      - name: App unit + UI tests
+        run: |
+          set -o pipefail
+          xcodebuild test -project LittleMenace.xcodeproj -scheme LittleMenace \
+            -destination 'platform=iOS Simulator,name=iPhone 16 Pro Max' \
+            -derivedDataPath build-test -resultBundlePath TestResults.xcresult \
+            CODE_SIGNING_ALLOWED=NO 2>&1 \
+            | grep -E "Test Case .*(passed|failed)|error:|AUDIT|Executed|TEST (SUCCEEDED|FAILED)|\*\* " || true
+          xcrun xcresulttool get test-results summary --path TestResults.xcresult --compact 2>/dev/null | head -c 4000 || true
+          xcrun xcresulttool get test-results tests --path TestResults.xcresult 2>/dev/null \
+            | python3 -c "import json,sys
+          d=json.load(sys.stdin)
+          def walk(n,depth=0):
+              r=n.get('result','')
+              if n.get('nodeType') in ('Test Case','Failure Message'):
+                  print(('  '*depth)+f\"{r:8} {n.get('name')}\")
+              for c in n.get('children',[]): walk(c,depth+1)
+          for t in d.get('testNodes',[]): walk(t)" || true
+          # Fail the job if any test failed.
+          ! xcrun xcresulttool get test-results summary --path TestResults.xcresult --compact 2>/dev/null | grep -q '"result":"Failed"'
+
       - name: Screenshot tour
+        if: always()
         run: |
           set -e
           mkdir -p shots
