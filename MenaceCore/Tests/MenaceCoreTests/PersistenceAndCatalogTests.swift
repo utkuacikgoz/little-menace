@@ -29,7 +29,8 @@ final class PersistenceTests: XCTestCase {
         let json = #"{"version":1,"state":{"lastSimulated":1790000000,"xp":50}}"#
         let s = try SaveCodec.decode(Data(json.utf8))
         XCTAssertEqual(s.xp, 50)
-        XCTAssertEqual(s.name, "Crumb")
+        XCTAssertEqual(s.name, "")
+        XCTAssertEqual(s.displayName, "your gremlin")
         XCTAssertEqual(s.wardrobe.theme, Catalog.defaultTheme)
     }
 
@@ -173,6 +174,25 @@ final class ReminderTests: XCTestCase {
         XCTAssertEqual(Set(plan.map { utc.dayKey($0.date) }).count, plan.count)
         XCTAssertFalse(plan.contains { utc.dayKey($0.date) == utc.dayKey(now) }, "never nudges on a day already visited")
         XCTAssertTrue(plan.allSatisfy { $0.date > now })
+    }
+
+    func testNudgesUseTheChosenName() {
+        var s = PetState(now: now)
+        s.prefs.remindersEnabled = true
+        XCTAssertTrue(ReminderPolicy.plan(s, now: now, days: utc).allSatisfy { !$0.body.contains("{name}") })
+        s.rename("Mo")
+        let bodies = ReminderPolicy.plan(s, now: now, days: utc).map(\.body)
+        XCTAssertTrue(bodies.contains { $0.contains("Mo") })
+    }
+
+    func testRenameCleansInput() {
+        var s = PetState(now: now)
+        s.rename("  Sir Nibbles the Unstoppable\n ")
+        XCTAssertEqual(s.name, String("Sir Nibbles the Unstoppable".prefix(PetState.maxNameLength)))
+        s.rename("   ")
+        XCTAssertEqual(s.titleName, "Your gremlin")
+        let back = try! SaveCodec.decode(try! SaveCodec.encode({ var t = s; t.rename("Mo"); return t }()))
+        XCTAssertEqual(back.name, "Mo")
     }
 
     func testNapAddsWakeNote() {

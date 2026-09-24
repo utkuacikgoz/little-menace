@@ -18,7 +18,7 @@ struct CollectionView: View {
             VStack(spacing: 18) {
                 ZStack {
                     ThemeBackground(themeID: preview.theme)
-                    CrumbView(pose: model.specialPose ?? .pose(for: .mischief), hat: preview.hat, neck: preview.neck, size: 170)
+                    GremlinView(pose: model.specialPose ?? .pose(for: .mischief), hat: preview.hat, neck: preview.neck, size: 170)
                     if let sock = collection.itemIDs.first(where: { Catalog.item($0)?.slot == .sock }) {
                         SockView(style: sock).scaleEffect(0.45).rotationEffect(.degrees(-20))
                             .frame(width: 50, height: 80).offset(x: 120, y: 60)
@@ -27,7 +27,7 @@ struct CollectionView: View {
                 .frame(height: 260)
                 .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
                 .accessibilityElement(children: .ignore)
-                .accessibilityLabel("Crumb wearing the \(collection.name) collection")
+                .accessibilityLabel("\(model.state.titleName) wearing the \(collection.name) collection")
 
                 VStack(alignment: .leading, spacing: 8) {
                     ForEach(collection.itemIDs, id: \.self) { id in

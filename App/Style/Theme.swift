@@ -45,7 +45,7 @@ enum Ink {
     static let cream = Color(hex: 0xFFF3DF)
 }
 
-/// Full-bleed theme background: one colour, a soft glow behind Crumb, stars for Midnight.
+/// Full-bleed theme background: one colour, a soft glow behind the gremlin, stars for Midnight.
 struct ThemeBackground: View {
     let themeID: String
     var dimmed = false

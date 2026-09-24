@@ -22,7 +22,7 @@ final class GameModel {
     private(set) var now = Date()
     private(set) var transient: Reaction?
     /// A collection reaction in progress overrides everything else.
-    private(set) var specialPose: CrumbPose?
+    private(set) var specialPose: GremlinPose?
     private(set) var specialProp: String?
     var look: CGSize = .zero
     private(set) var bubble: Bubble?
@@ -30,6 +30,7 @@ final class GameModel {
     var activity: ActivityKind?
     private(set) var session: ActivitySession?
     var showReminderOffer = false
+    var showNamePrompt = false
     private(set) var notificationsDenied = false
 
     let purchases = PurchaseManager()
@@ -49,7 +50,7 @@ final class GameModel {
 
     init() {
         #if DEBUG
-        // UI tests: `-LMReset YES` starts from a fresh Crumb.
+        // UI tests: `-LMReset YES` starts from a fresh the gremlin.
         if UserDefaults.standard.bool(forKey: "LMReset") { store.wipe() }
         #endif
         let (loaded, _) = store.load(now: Date())
@@ -119,9 +120,9 @@ final class GameModel {
 
     // MARK: Pose
 
-    var pose: CrumbPose {
+    var pose: GremlinPose {
         if let specialPose { return specialPose }
-        var p = transient.map(CrumbPose.pose(for:)) ?? CrumbPose.base(asleep: state.isAsleep, energy: state.needs.energy)
+        var p = transient.map(GremlinPose.pose(for:)) ?? GremlinPose.base(asleep: state.isAsleep, energy: state.needs.energy)
         if transient == nil || transient == .attention { p.look = look }
         return p
     }
@@ -152,7 +153,7 @@ final class GameModel {
             guard !Task.isCancelled else { return }
             self?.bubble = nil
         }
-        UIAccessibility.post(notification: .announcement, argument: "Crumb: \(line)")
+        UIAccessibility.post(notification: .announcement, argument: "\(state.titleName): \(line)")
     }
 
     /// Long press: an owned collection reaction, or just a sly grin.
@@ -173,7 +174,7 @@ final class GameModel {
         specialTask?.cancel()
         specialProp = special.prop
         bubble = Bubble(text: special.line)
-        UIAccessibility.post(notification: .announcement, argument: "Crumb: \(special.line)")
+        UIAccessibility.post(notification: .announcement, argument: "\(state.titleName): \(special.line)")
         sounds.play(.boing)
         specialTask = Task { [weak self] in
             for beat in special.beats {
@@ -201,12 +202,17 @@ final class GameModel {
             haptics.play(.squish)
             sounds.play(.pop)
             say(.touch, chance: 0.2)
+            // Meet it first, then name it: the prompt appears once, after the first pet.
+            if state.name.isEmpty && !state.namePromptShown {
+                game.state.namePromptShown = true
+                showNamePrompt = true
+            }
         }
         handle(out.events)
         save()
     }
 
-    /// Returns whether Crumb ate. The feed gesture uses it to decide where the snack goes.
+    /// Returns whether the gremlin ate. The feed gesture uses it to decide where the snack goes.
     @discardableResult
     func feed() -> Bool {
         let out = game.feed(now: Date())
@@ -404,6 +410,13 @@ final class GameModel {
         replanReminders()
     }
 
+    func rename(_ name: String) {
+        game.state.rename(name)
+        showNamePrompt = false
+        save()
+        replanReminders()
+    }
+
     func dismissReminderOffer() {
         showReminderOffer = false
     }
@@ -465,6 +478,7 @@ final class GameModel {
 
     private func replanReminders() {
         let plan = ReminderPolicy.plan(state, now: Date(), days: game.days)
-        Task { await reminders.apply(plan) }
+        let title = state.name.isEmpty ? "Little Menace" : state.name
+        Task { await reminders.apply(plan, title: title) }
     }
 }

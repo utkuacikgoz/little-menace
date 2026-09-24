@@ -1,6 +1,6 @@
 import Foundation
 
-/// Crumb's rare speech. Short on purpose: the character carries the toy, text only garnishes.
+/// The gremlin's rare speech. Short on purpose: the character carries the toy, text only garnishes.
 public enum Lines {
     static let table: [Reaction: [String]] = [
         .idle: ["hm.", "…what.", "bored. entertain me.", "I'm plotting nothing.", "snack o'clock?", "hi. again."],

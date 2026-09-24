@@ -1,6 +1,6 @@
 # Little Menace
 
-A native iPhone pet toy. It has one chaotic little gremlin (Crumb), one bold background, and almost no text. It is written in SwiftUI for iOS 17+, with no third-party packages, no accounts and no backend.
+A native iPhone pet toy. It has one chaotic little gremlin that players name themselves, one bold background, and almost no text. It is written in SwiftUI for iOS 17+, with no third-party packages, no accounts and no backend.
 
 > **Honest status:** this repository started empty. The prototype, the original `DESIGN.md`/`GAMEPLAY.md` and the generated mascot art named in the brief were not present, so everything here was rebuilt from the brief. The character is a vector placeholder. The rules engine (`MenaceCore`) is compiled and tested. The iOS app builds and launches in CI on simulators, but nobody has played it on a device yet (see *Validation*).
 
@@ -8,7 +8,7 @@ A native iPhone pet toy. It has one chaotic little gremlin (Crumb), one bold bac
 
 ```
 LittleMenace.xcodeproj    App target (Xcode 16+, synchronized App/ folder) + shared scheme
-App/                      SwiftUI app: Home, Crumb rig, Activities, Sheets, Services, assets, sounds
+App/                      SwiftUI app: Home, gremlin rig, Activities, Sheets, Services, assets, sounds
 MenaceCore/               Swift package: state, time model, rules, progression, save store (+ tests)
 Config/LittleMenace.storekit   Local StoreKit sandbox config (one non-consumable)
 .github/workflows/ios.yml  macOS CI: core tests, simulator build, screenshots
@@ -31,10 +31,10 @@ Core tests run anywhere Swift runs:
 
 ## What works
 
-- **Character rig.** A parametric vector Crumb with 17 animated parameters and 18 reaction poses: idle, attention, touch, feed, play, sleepy, asleep, wake, grumpy wake, mischief, refusals, win/lose and more. Breathing, blinking, tail wag, and eyes that track your finger and the snack.
-- **Touch.** Tap to pet. Drag stretches Crumb with a bounded rubber band and springs back on release, and a cancelled drag resets cleanly. Long press plays a reaction.
+- **Character rig.** A parametric vector gremlin with 17 animated parameters and 18 reaction poses: idle, attention, touch, feed, play, sleepy, asleep, wake, grumpy wake, mischief, refusals, win/lose and more. Breathing, blinking, tail wag, and eyes that track your finger and the snack.
+- **Touch.** Tap to pet. Drag stretches the gremlin with a bounded rubber band and springs back on release, and a cancelled drag resets cleanly. Long press plays a reaction.
 - **Care.**
-  - Feed: tap the cookie, or drag it to Crumb's mouth.
+  - Feed: tap the cookie, or drag it to the gremlin's mouth.
   - Nap and wake, with refusals at the thresholds.
   - A capped, floored, clock-safe time model. Naps continue while the app is closed.
 - **Three toys:** snack toss (analytic catch physics), sock tug (timing-based; nonstop yanking loses), cushion hunt. Each has a replay/done result card and an accessible path.
@@ -62,7 +62,7 @@ Core tests run anywhere Swift runs:
 
 ## Known gaps / next steps
 
-- **Art:** the vector Crumb is a stand-in for commissioned or generated character art. The rig's parameters are the contract a future art pass should keep.
+- **Art:** the vector gremlin is a stand-in for commissioned or generated character art. The rig's parameters are the contract a future art pass should keep.
 - **Speech lines:** there are 79 short contextual lines and 36 mischief lines. The brief's prototype had 330, which were not available.
 - **Links:** privacy and support URLs are placeholders (`AppLinks`).
 - **Analytics:** none. Add them only with a documented, minimal event list.
