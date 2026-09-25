@@ -36,6 +36,15 @@ struct HomeView: View {
 
                 gremlin(size: petSize, center: center)
 
+                if model.transient == .touch && GremlinPose.touchStyle == "c" {
+                    Image(systemName: "heart.fill")
+                        .font(.system(size: 36, weight: .bold))
+                        .foregroundStyle(Ink.blush)
+                        .position(x: center.x + petSize * 0.32, y: center.y - petSize * 0.62)
+                        .transition(.scale.combined(with: .opacity))
+                        .accessibilityHidden(true)
+                }
+
                 if let bubble = model.bubble, !model.showNamePrompt, !model.showReminderOffer {
                     Text(bubble.text)
                         .font(.system(.body, design: .rounded).weight(.semibold))
@@ -278,7 +287,7 @@ struct HomeView: View {
         #if DEBUG
         if let raw = UserDefaults.standard.string(forKey: "LMNeeds"), let s = NeedStyle(rawValue: raw) { return s }
         #endif
-        return .number
+        return .lack // owner's pick
     }
 
     private func percent(_ value: Double) -> String { "\(Int(max(0, min(100, value)).rounded()))%" }

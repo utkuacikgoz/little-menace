@@ -25,6 +25,8 @@ if [ "$PART" = a ]; then
   shot "$PM" 01d-home-needs-hungry-sleepy -LMScreen home -LMNeeds d
   shot "$PM" 02-name-prompt -LMScreen namePrompt
   shot "$PM" 03-touch -LMScreen touch
+  shot "$PM" 03b-touch-purr -LMScreen touch -LMTouch b
+  shot "$PM" 03c-touch-giggle -LMScreen touch -LMTouch c
   shot "$PM" 04-feed -LMScreen feed
   shot "$PM" 05-refuse-food -LMScreen refuse
   shot "$PM" 06-dialogue -LMScreen dialogue
