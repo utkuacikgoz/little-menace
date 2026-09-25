@@ -31,12 +31,7 @@ struct GremlinPose: Equatable {
     }
 
     /// Petting reaction options for review: a grin (current), b purr, c giggle with a heart.
-    static var touchStyle: String {
-        #if DEBUG
-        if let s = UserDefaults.standard.string(forKey: "LMTouch") { return s }
-        #endif
-        return "a"
-    }
+    static var touchStyle: String { Alt.current }
 
     static func pose(for reaction: Reaction) -> GremlinPose {
         var p = GremlinPose()
@@ -55,7 +50,13 @@ struct GremlinPose: Equatable {
                 p.eyeHappy = 1; p.mouthOpen = 0.5; p.mouthSmile = 1; p.squash = 0.93; p.blush = 1; p.tailWag = 2.2
             }
         case .feed:
-            p.eyeHappy = 0.7; p.mouthOpen = 0.95; p.mouthSmile = 0.6; p.squash = 0.96; p.blush = 0.7
+            if Alt.b { // chewing: puffed cheeks, closed mouth
+                p.eyeHappy = 1; p.mouthOpen = 0.08; p.mouthSmile = 0.6; p.squash = 1.06; p.blush = 0.9; p.tailWag = 1.6
+            } else if Alt.c { // lick: looks up for more, little hop
+                p.eyeOpen = 1.1; p.look = CGSize(width: 0, height: -1); p.mouthOpen = 0.55; p.mouthSmile = 1; p.armsUp = 0.4; p.hop = 6; p.tailWag = 2.5
+            } else {
+                p.eyeHappy = 0.7; p.mouthOpen = 0.95; p.mouthSmile = 0.6; p.squash = 0.96; p.blush = 0.7
+            }
         case .play:
             p.eyeOpen = 1.1; p.mouthOpen = 0.45; p.mouthSmile = 0.85; p.armsUp = 0.6; p.lean = 5; p.tailWag = 2
         case .sleepy:
@@ -65,11 +66,23 @@ struct GremlinPose: Equatable {
         case .wake:
             p.eyeOpen = 1.2; p.mouthOpen = 0.85; p.mouthSmile = 0.2; p.armsUp = 1; p.squash = 1.08; p.earDroop = -8
         case .grumpyWake:
-            p.eyeOpen = 0.55; p.browTilt = 16; p.mouthSmile = -0.6; p.mouthOpen = 0.1; p.fang = 1; p.earDroop = 10
+            if Alt.b { // huff: turns away, arms up, big frown
+                p.eyeOpen = 0.45; p.browTilt = 20; p.mouthSmile = -0.8; p.armsUp = 0.3; p.lean = -6; p.look = CGSize(width: -1, height: 0); p.fang = 1
+            } else if Alt.c { // groggy: droopy ears and a yawn
+                p.eyeOpen = 0.3; p.browTilt = -6; p.earDroop = 24; p.mouthOpen = 0.55; p.mouthSmile = 0; p.squash = 0.94; p.tailWag = 0.2
+            } else {
+                p.eyeOpen = 0.55; p.browTilt = 16; p.mouthSmile = -0.6; p.mouthOpen = 0.1; p.fang = 1; p.earDroop = 10
+            }
         case .mischief:
             p.eyeOpen = 0.7; p.browAsym = 1; p.mouthSmile = 0.95; p.mouthOpen = 0.05; p.fang = 1; p.lean = 7; p.tailWag = 1.6
         case .refuseFood:
-            p.eyeOpen = 0.6; p.mouthSmile = -0.3; p.mouthOpen = 0; p.lean = -9; p.look = CGSize(width: -1, height: 0); p.fang = 0
+            if Alt.b { // pout: brows down, arms half up, fang out
+                p.eyeOpen = 0.5; p.browTilt = 14; p.mouthSmile = -0.7; p.mouthOpen = 0; p.armsUp = 0.3; p.fang = 1
+            } else if Alt.c { // stuffed: round and blissful
+                p.eyeHappy = 0.6; p.mouthOpen = 0.25; p.mouthSmile = 0.2; p.squash = 1.12; p.blush = 1; p.lean = -4; p.tailWag = 0.4
+            } else {
+                p.eyeOpen = 0.6; p.mouthSmile = -0.3; p.mouthOpen = 0; p.lean = -9; p.look = CGSize(width: -1, height: 0); p.fang = 0
+            }
         case .refuseNap:
             p.eyeOpen = 1.15; p.browLift = 6; p.mouthSmile = 0.7; p.mouthOpen = 0.3; p.armsUp = 0.5; p.hop = 8
         case .tooSleepy:
