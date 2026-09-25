@@ -4,6 +4,7 @@ import MenaceCore
 /// This week's stamps, today's challenge, level and discoveries. Icons and numbers only.
 struct StampCardView: View {
     @Environment(GameModel.self) private var model
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     var body: some View {
         let s = model.state
@@ -14,7 +15,7 @@ struct StampCardView: View {
         ScrollView {
             VStack(spacing: 28) {
                 // Week: seven stamps, Monday first. Missed days are just empty.
-                HStack(spacing: Alt.c ? 6 : 10) {
+                HStack(spacing: 6) {
                     ForEach(0..<7, id: \.self) { i in
                         let key = dayKey(offset: i - today)
                         let gold = s.stamps.goldDays.contains(key)
@@ -25,17 +26,14 @@ struct StampCardView: View {
                                 Circle().fill(stamped ? (gold ? Color(hex: 0xFFC83D) : Ink.body) : Ink.body.opacity(0.08))
                                 if stamped {
                                     Image(systemName: gold ? "star.fill" : "pawprint.fill")
-                                        .font(.system(size: Alt.c ? 20 : 16, weight: .bold))
+                                        .font(.system(size: 20, weight: .bold))
                                         .foregroundStyle(gold ? Ink.body : Ink.eye)
-                                } else if Alt.c {
-                                    Text(letter).font(.system(.headline, design: .rounded).weight(.heavy)).opacity(0.5)
+                                } else {
+                                    Text(letter).font(.system(.headline, design: .rounded).weight(.heavy)).dynamicTypeSize(...DynamicTypeSize.xLarge).opacity(0.5)
                                 }
                                 if i == today { Circle().stroke(Ink.body, lineWidth: 3).padding(-4) }
                             }
-                            .frame(width: Alt.c ? 42 : 36, height: Alt.c ? 42 : 36)
-                            if Alt.b {
-                                Text(letter).font(.system(.caption, design: .rounded).weight(.heavy)).opacity(i == today ? 1 : 0.6)
-                            }
+                            .frame(width: 42, height: 42)
                         }
                     }
                 }
@@ -95,7 +93,7 @@ struct StampCardView: View {
             .padding(24)
         }
         .foregroundStyle(Ink.body)
-        .presentationDetents([.medium, .large])
+        .presentationDetents(dynamicTypeSize.isAccessibilitySize ? [.large] : [.medium, .large]) // big text needs the full height
         .presentationBackground(Ink.eye)
     }
 

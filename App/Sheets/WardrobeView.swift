@@ -40,11 +40,9 @@ struct WardrobeView: View {
                         VStack(spacing: 2) {
                             Image(systemName: symbol(for: s))
                                 .font(.title3.weight(.bold))
-                            if Alt.b {
-                                Text(slotName(s)).font(.system(.caption2, design: .rounded).weight(.heavy))
-                            }
+                            Text(slotName(s)).font(.system(.caption2, design: .rounded).weight(.heavy))
                         }
-                            .frame(maxWidth: .infinity, minHeight: Alt.b ? 56 : 48)
+                            .frame(maxWidth: .infinity, minHeight: 56)
                             .background(Ink.body.opacity(slot == s ? 1 : 0.08), in: Capsule())
                             .foregroundStyle(slot == s ? Ink.eye : Ink.body)
                     }
@@ -54,7 +52,7 @@ struct WardrobeView: View {
             }
 
             ScrollView {
-                LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 12), count: Alt.c ? 3 : 4), spacing: 12) {
+                LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 12), count: 4), spacing: 12) {
                     if slot == .hat || slot == .neck {
                         cell(nil)
                     }
@@ -131,8 +129,7 @@ struct WardrobeView: View {
         } label: {
             ZStack(alignment: .topTrailing) {
                 swatch(item)
-                    .scaleEffect(Alt.c ? 1.3 : 1)
-                    .frame(width: Alt.c ? 88 : 64, height: Alt.c ? 88 : 64)
+                    .frame(width: 64, height: 64)
                     .background(Ink.body.opacity(0.06), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
                     .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous)
                         .stroke(Ink.body, lineWidth: equipped || previewing ? 3 : 0))

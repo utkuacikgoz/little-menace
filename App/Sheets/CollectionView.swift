@@ -24,48 +24,26 @@ struct CollectionView: View {
                 Text("A nightcap, moon charm, starry sky, glow sock and three little performances.")
                     .font(.subheadline)
                     .multilineTextAlignment(.center)
-                if Alt.c {
-                    // C: list what the collection contains.
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("What's inside").font(.system(.headline, design: .rounded).weight(.heavy))
-                        ForEach(collection.itemIDs, id: \.self) { id in
-                            if let item = Catalog.item(id) {
-                                Label(item.name, systemImage: "checkmark.circle.fill")
-                            }
+                // What the collection contains.
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("What's inside").font(.system(.headline, design: .rounded).weight(.heavy))
+                    ForEach(collection.itemIDs, id: \.self) { id in
+                        if let item = Catalog.item(id) {
+                            Label(item.name, systemImage: "checkmark.circle.fill")
                         }
                     }
-                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
-                if Alt.b {
-                    // B: performances as a row of chips.
-                    HStack(spacing: 8) {
-                        ForEach(collection.reactionIDs, id: \.self) { id in
-                            if let special = SpecialReaction.find(id) {
-                                Button { model.performSpecial(id) } label: {
-                                    Label(special.name, systemImage: "play.fill")
-                                        .font(.system(.subheadline, design: .rounded).weight(.heavy))
-                                        .lineLimit(1)
-                                        .minimumScaleFactor(0.8)
-                                        .padding(.horizontal, 12)
-                                        .frame(minHeight: 44)
-                                        .background(Ink.body.opacity(0.08), in: Capsule())
-                                }
-                                .accessibilityLabel("Preview \(special.name)")
+                .frame(maxWidth: .infinity, alignment: .leading)
+                VStack(spacing: 10) {
+                    ForEach(collection.reactionIDs, id: \.self) { id in
+                        if let special = SpecialReaction.find(id) {
+                            Button { model.performSpecial(id) } label: {
+                                Label(special.name, systemImage: "play.fill")
+                                    .frame(maxWidth: .infinity, minHeight: 48, alignment: .leading)
+                                    .padding(.horizontal, 16)
+                                    .background(Ink.body.opacity(0.06), in: RoundedRectangle(cornerRadius: 16))
                             }
-                        }
-                    }
-                } else {
-                    VStack(spacing: 10) {
-                        ForEach(collection.reactionIDs, id: \.self) { id in
-                            if let special = SpecialReaction.find(id) {
-                                Button { model.performSpecial(id) } label: {
-                                    Label(special.name, systemImage: "play.fill")
-                                        .frame(maxWidth: .infinity, minHeight: 48, alignment: .leading)
-                                        .padding(.horizontal, 16)
-                                        .background(Ink.body.opacity(0.06), in: RoundedRectangle(cornerRadius: 16))
-                                }
-                                .accessibilityLabel("Preview \(special.name)")
-                            }
+                            .accessibilityLabel("Preview \(special.name)")
                         }
                     }
                 }
