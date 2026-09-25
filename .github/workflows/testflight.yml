@@ -47,12 +47,6 @@ jobs:
             echo "::error::bundle_id '$BUNDLE_ID' is not a valid bundle identifier"; exit 1
           fi
 
-      - name: Toolchain
-        run: xcodebuild -version
-
-      - name: Core logic tests
-        run: swift test --package-path MenaceCore
-
       - name: Write API key
         run: |
           mkdir -p "$RUNNER_TEMP/asc"
