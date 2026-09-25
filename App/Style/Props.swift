@@ -36,24 +36,39 @@ struct CushionView: View {
 struct RingButton<Icon: View>: View {
     var ring: Double?
     var label: String
+    /// Short text under the button, e.g. the need as a percentage.
+    var caption: String? = nil
     var action: () -> Void
     @ViewBuilder var icon: () -> Icon
 
     var body: some View {
         Button(action: action) {
-            ZStack {
-                Circle().fill(.white.opacity(0.22))
-                if let ring {
-                    Circle().stroke(.white.opacity(0.25), lineWidth: 4)
-                    Circle().trim(from: 0, to: max(0.02, ring))
-                        .stroke(.white, style: StrokeStyle(lineWidth: 4, lineCap: .round))
-                        .rotationEffect(.degrees(-90))
-                        .animation(.easeOut(duration: 0.5), value: ring)
+            VStack(spacing: 6) {
+                ZStack {
+                    Circle().fill(.white.opacity(0.22))
+                    if let ring {
+                        Circle().stroke(.white.opacity(0.25), lineWidth: 4)
+                        Circle().trim(from: 0, to: max(0.02, ring))
+                            .stroke(.white, style: StrokeStyle(lineWidth: 4, lineCap: .round))
+                            .rotationEffect(.degrees(-90))
+                            .animation(.easeOut(duration: 0.5), value: ring)
+                    }
+                    icon()
                 }
-                icon()
+                .frame(width: 66, height: 66)
+                .contentShape(Circle())
+                if let caption {
+                    // Dark pill: readable on every theme, light or dark.
+                    Text(caption)
+                        .font(.system(.caption, design: .rounded).weight(.heavy))
+                        .monospacedDigit()
+                        .foregroundStyle(Ink.eye)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 3)
+                        .background(Ink.body.opacity(0.85), in: Capsule())
+                        .accessibilityHidden(true)
+                }
             }
-            .frame(width: 66, height: 66)
-            .contentShape(Circle())
         }
         .buttonStyle(SquishButtonStyle())
         .accessibilityLabel(label)

@@ -45,6 +45,15 @@ struct ActivityContainer: View {
             .opacity(result == nil ? 1 : 0)
         }
         .animation(.spring(response: 0.4, dampingFraction: 0.75), value: result)
+        #if DEBUG
+        .onAppear {
+            // Screenshot tours: `-LMResult win|lose` shows the result card straight away.
+            if let r = UserDefaults.standard.string(forKey: "LMResult") {
+                earnedXP = r == "win" ? 26 : 8
+                result = ActivityResult(kind: kind, quality: r == "win" ? 0.8 : 0.25, score: 3, won: r == "win")
+            }
+        }
+        #endif
     }
 
     @ViewBuilder private var game: some View {

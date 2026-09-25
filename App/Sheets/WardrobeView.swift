@@ -70,6 +70,17 @@ struct WardrobeView: View {
         .presentationBackground(Ink.eye)
         .animation(.spring(response: 0.35, dampingFraction: 0.8), value: preview)
         .onDisappear { model.cancelSpecial() }
+        #if DEBUG
+        .onAppear {
+            // Screenshot tours: `-LMSlot neck` opens a tab, `-LMPreview nightcap` previews a paid item.
+            let d = UserDefaults.standard
+            if let raw = d.string(forKey: "LMSlot"), let s = Slot(rawValue: raw) { slot = s }
+            if let id = d.string(forKey: "LMPreview"), let item = Catalog.item(id) {
+                slot = item.slot
+                preview = item
+            }
+        }
+        #endif
     }
 
     private var visibleItems: [Item] {
