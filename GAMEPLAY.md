@@ -95,7 +95,7 @@ The menu has a **Share** item. It renders a 1080×1350 card from the real state:
 
 ## Paid collection (hypothesis, sandbox only)
 
-- **Midnight Snack**, `app.littlemenace.collection.midnight`, non-consumable. The proposed US launch price is $3.99, matching the local test configuration. Production pricing must still be configured in App Store Connect; the app reads localized prices from StoreKit.
+- **Midnight Snack**, `com.belevate.littlemenace.midnight`, non-consumable. The proposed US launch price is $3.99, matching the local test configuration. Production pricing must still be configured in App Store Connect; the app reads localized prices from StoreKit.
 - Contents:
   - Nightcap, Moon Charm, Midnight background (starry)
   - **Glow Sock**, a themed toy variation for sock tug

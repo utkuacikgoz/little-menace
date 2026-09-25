@@ -21,7 +21,8 @@ docs/AppStore.md          Draft metadata + privacy answers
 1. Open `LittleMenace.xcodeproj` in Xcode 16 or later.
 2. Pick the **LittleMenace** scheme and an iPhone simulator, then Run.
 3. Purchases use the local StoreKit config, so no real money is involved. If the store shows "Store unavailable", set **Scheme › Run › Options › StoreKit Configuration** to `Config/LittleMenace.storekit`. The scheme references it, but Xcode's relative-path handling for that field varies.
-4. For a device: set your team under Signing and change the bundle ID (`app.littlemenace.LittleMenace` is a placeholder).
+4. For a device: set your team under Signing. The bundle ID is `com.belevate.littlemenace`.
+5. TestFlight: run the **TestFlight** workflow from the Actions tab. It needs the `APPLE_TEAM_ID`, `ASC_KEY_ID`, `ASC_ISSUER_ID` and `ASC_KEY_P8` repository secrets (an App Store Connect API key with the Admin role).
 
 Core tests run anywhere Swift runs:
 

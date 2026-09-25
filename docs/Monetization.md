@@ -2,7 +2,7 @@
 
 ## Offer
 
-Launch one permanent collection: **Midnight Snack**, proposed US price **$3.99**. Product ID: `app.littlemenace.collection.midnight`. Type: non-consumable. Enable Family Sharing if the App Store Connect setup supports the intended release.
+Launch one permanent collection: **Midnight Snack**, proposed US price **$3.99**. Product ID: `com.belevate.littlemenace.midnight`. Type: non-consumable. Enable Family Sharing if the App Store Connect setup supports the intended release.
 
 Included: nightcap, moon charm, starry background, glow sock, Fridge Raid, Moon Howl, Blanket Cape. All reactions can be previewed. A preview neither equips an unowned item nor purchases anything. Owners can equip the collection together. Refunded or revoked items are removed from the equipped outfit.
 

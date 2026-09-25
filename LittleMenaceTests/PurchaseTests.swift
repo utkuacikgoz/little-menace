@@ -5,7 +5,7 @@ import StoreKitTest
 /// Runs inside the app against the local StoreKit configuration. No real money, no network.
 @MainActor
 final class PurchaseTests: XCTestCase {
-    let productID = "app.littlemenace.collection.midnight"
+    let productID = "com.belevate.littlemenace.midnight"
     var session: SKTestSession!
 
     override func setUp() async throws {
