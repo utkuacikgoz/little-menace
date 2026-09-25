@@ -1,6 +1,6 @@
 import Foundation
 
-/// What Crumb does in response. Drives the animation rig and the (rare) speech line.
+/// What the gremlin does in response. Drives the animation rig and the (rare) speech line.
 public enum Reaction: String, CaseIterable, Sendable {
     case idle, attention, touch, feed, play, sleepy, asleep, wake, grumpyWake, mischief
     case refuseFood, refuseNap, tooSleepy, busy, win, lose, levelUp, discovery
@@ -313,6 +313,7 @@ public struct Game: Sendable {
 
     public mutating func reset(now: Date) {
         let prefs = state.prefs
+        // A new gremlin starts unnamed; only sound and haptics carry over.
         state = PetState(now: now)
         state.prefs.sound = prefs.sound
         state.prefs.haptics = prefs.haptics

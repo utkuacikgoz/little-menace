@@ -1,7 +1,7 @@
 import XCTest
 
 /// Drives the real app through its accessibility tree. `-LMReset YES` starts from a fresh
-/// Crumb; `-LMScreen home` (DEBUG) sets level 4, two visit days and mid-range needs.
+/// The gremlin; `-LMScreen home` (DEBUG) sets level 4, two visit days and mid-range needs.
 final class LittleMenaceUITests: XCTestCase {
     var app: XCUIApplication!
 
@@ -13,15 +13,17 @@ final class LittleMenaceUITests: XCTestCase {
     private func launch(_ extra: [String] = [], reset: Bool = true) {
         app.launchArguments = (reset ? ["-LMReset", "YES"] : []) + extra
         app.launch()
-        XCTAssertTrue(crumb.waitForExistence(timeout: 10))
+        XCTAssertTrue(pet.waitForExistence(timeout: 10))
     }
 
-    private var crumb: XCUIElement { app.otherElements["Crumb"].firstMatch.exists ? app.otherElements["Crumb"].firstMatch : app.buttons["Crumb"].firstMatch }
-    private var crumbValue: String { (crumb.value as? String) ?? "" }
+    private var pet: XCUIElement { app.descendants(matching: .any)["pet"].firstMatch }
+    private var buyButton: XCUIElement { app.descendants(matching: .any)["buy"].firstMatch }
+    private var ownedMarker: XCUIElement { app.descendants(matching: .any)["owned"].firstMatch }
+    private var petValue: String { (pet.value as? String) ?? "" }
 
     private func waitForValue(containing text: String, timeout: TimeInterval = 5) -> Bool {
         let predicate = NSPredicate(format: "value CONTAINS %@", text)
-        let exp = expectation(for: predicate, evaluatedWith: crumb)
+        let exp = expectation(for: predicate, evaluatedWith: pet)
         return XCTWaiter.wait(for: [exp], timeout: timeout) == .completed
     }
 
@@ -38,24 +40,42 @@ final class LittleMenaceUITests: XCTestCase {
 
     func testPetDragAndFeedUntilFull() {
         launch()
-        crumb.tap()
-        let center = crumb.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
+        pet.tap()
+        let center = pet.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
         center.press(forDuration: 0.1, thenDragTo: center.withOffset(CGVector(dx: 120, dy: -80)))
-        XCTAssertTrue(crumb.isHittable, "Crumb springs back after a drag")
+        XCTAssertTrue(pet.isHittable, "the gremlin springs back after a drag")
 
         // Fresh fullness is 60: two snacks reach Full, the third is refused.
         app.buttons["Feed"].tap()
         app.buttons["Feed"].tap()
         XCTAssertTrue(waitForValue(containing: "Full"))
         app.buttons["Feed"].tap()
-        XCTAssertTrue(crumbValue.contains("Full"))
+        XCTAssertTrue(petValue.contains("Full"))
+    }
+
+    func testNamePromptAfterFirstPet() {
+        launch()
+        XCTAssertEqual(pet.label, "Your gremlin")
+        pet.tap()
+        let field = app.textFields["Name"]
+        XCTAssertTrue(field.waitForExistence(timeout: 3), "prompt appears after the first pet")
+        field.tap()
+        field.typeText("Mo Fang")
+        app.buttons["Save name"].tap()
+        XCTAssertEqual(pet.label, "Mo Fang")
+
+        app.terminate()
+        launch(reset: false)
+        XCTAssertEqual(pet.label, "Mo Fang", "name persists")
+        pet.tap()
+        XCTAssertFalse(app.textFields["Name"].waitForExistence(timeout: 2), "prompt is shown only once")
     }
 
     func testDragSnackToMouth() {
         launch()
         let feed = app.buttons["Feed"]
-        feed.press(forDuration: 0.1, thenDragTo: crumb)
-        XCTAssertTrue(crumb.isHittable)
+        feed.press(forDuration: 0.1, thenDragTo: pet)
+        XCTAssertTrue(pet.isHittable)
     }
 
     func testNapWakeAndSurvivesRelaunch() {
@@ -67,8 +87,23 @@ final class LittleMenaceUITests: XCTestCase {
         launch(reset: false)
         XCTAssertTrue(waitForValue(containing: "Asleep"), "a nap persists across termination")
 
-        app.buttons["Wake Crumb"].tap()
+        app.buttons["Wake"].tap()
         XCTAssertFalse(waitForValue(containing: "Asleep", timeout: 2))
+    }
+
+    func testCollectionPreviewsShowTheirPunchlineWithoutBuying() {
+        launch()
+        menu("Settings")
+        app.buttons["Midnight Snack"].tap()
+        let preview = app.buttons["Preview Fridge Raid"]
+        XCTAssertTrue(preview.waitForExistence(timeout: 5))
+        if !preview.isHittable { app.swipeUp() }
+        preview.tap()
+        let caption = app.staticTexts["collection-caption"]
+        if !caption.isHittable { app.swipeDown() }
+        XCTAssertTrue(caption.waitForExistence(timeout: 3))
+        XCTAssertEqual(caption.label, "midnight snack run.")
+        XCTAssertFalse(app.buttons["wear-collection"].exists, "previewing never grants ownership")
     }
 
     // MARK: Toys
@@ -153,7 +188,9 @@ final class LittleMenaceUITests: XCTestCase {
         let nightcap = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Nightcap'")).firstMatch
         XCTAssertTrue(nightcap.exists, "paid items are visible after attachment")
         nightcap.tap()
-        XCTAssertTrue(app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Buy' OR label == 'Unavailable offline'")).firstMatch.waitForExistence(timeout: 3))
+        // Not owned: the preview shows the buy bar. Owned (e.g. a leftover sandbox purchase): it equips.
+        let offered = buyButton.waitForExistence(timeout: 5)
+        XCTAssertTrue(offered || nightcap.label.contains("wearing"), "paid item previews with a buy button, or equips if owned")
     }
 
     func testReviewerCanReachCollectionFromSettingsOnDayOne() {
@@ -162,7 +199,8 @@ final class LittleMenaceUITests: XCTestCase {
         let row = app.buttons["Midnight Snack"]
         XCTAssertTrue(row.waitForExistence(timeout: 3))
         row.tap()
-        XCTAssertTrue(app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Buy' OR label == 'Unavailable offline'")).firstMatch.waitForExistence(timeout: 5))
+        let offered = buyButton.waitForExistence(timeout: 5)
+        XCTAssertTrue(offered || ownedMarker.exists, "collection page shows the buy button, or 'Owned' if already bought")
     }
 
     func testSettingsResetNeedsConfirmation() {
@@ -178,15 +216,27 @@ final class LittleMenaceUITests: XCTestCase {
 
     func testDeniedNotificationsAreHandled() {
         launch()
+        // Fallback: fires on the next interaction if the alert is not handled directly below.
+        addUIInterruptionMonitor(withDescription: "Notifications") { alert in
+            let deny = alert.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Don'")).firstMatch
+            guard deny.exists else { return false }
+            deny.tap()
+            return true
+        }
         menu("Settings")
         let toggle = app.switches["Reminders"]
         XCTAssertTrue(toggle.waitForExistence(timeout: 3))
-        toggle.tap()
+        // Tap the switch itself; tapping a SwiftUI toggle's centre can land on its label.
+        toggle.coordinate(withNormalizedOffset: CGVector(dx: 0.93, dy: 0.5)).tap()
         let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
         let deny = springboard.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Don'")).firstMatch
-        if deny.waitForExistence(timeout: 5) { deny.tap() }
+        if deny.waitForExistence(timeout: 10) {
+            deny.tap()
+        } else {
+            app.navigationBars.firstMatch.tap() // lets the interruption monitor run
+        }
         let note = app.buttons["Notifications are off in iOS Settings"]
-        XCTAssertTrue(note.waitForExistence(timeout: 8))
+        XCTAssertTrue(note.waitForExistence(timeout: 10), "denied permission is explained in Settings")
         XCTAssertEqual(toggle.value as? String, "0", "the toggle stays off when permission is denied")
     }
 

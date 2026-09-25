@@ -15,6 +15,11 @@ final class PurchaseTests: XCTestCase {
         session.clearTransactions()
     }
 
+    /// Leave no sandbox purchases behind: the UI tests run on the same simulator next.
+    override func tearDown() async throws {
+        session?.clearTransactions()
+    }
+
     func testProductLoadsWithLocalizedPrice() async {
         let pm = PurchaseManager()
         await pm.loadProducts()
@@ -30,7 +35,12 @@ final class PurchaseTests: XCTestCase {
 
         let transaction = try XCTUnwrap(session.allTransactions().first { $0.productIdentifier == productID })
         try session.refundTransaction(identifier: transaction.identifier)
-        await pm.refreshEntitlements()
+        // The sandbox records the refund asynchronously; give it a few seconds.
+        for _ in 0..<30 {
+            await pm.refreshEntitlements()
+            if !pm.entitlements.contains(productID) { break }
+            try await Task.sleep(for: .milliseconds(100))
+        }
         XCTAssertFalse(pm.entitlements.contains(productID), "refund removes ownership")
     }
 
@@ -43,8 +53,8 @@ final class PurchaseTests: XCTestCase {
         XCTAssertFalse(pm.entitlements.contains(productID))
     }
 
-    func testFailedPurchaseSurfacesError() async {
-        session.failTransactionsEnabled = true
+    func testFailedPurchaseSurfacesError() async throws {
+        try await session.setSimulatedError(.generic(.networkError(URLError(.notConnectedToInternet))), forAPI: .purchase)
         let pm = PurchaseManager()
         await pm.loadProducts()
         await pm.purchase(productID)
@@ -52,10 +62,25 @@ final class PurchaseTests: XCTestCase {
         XCTAssertFalse(pm.entitlements.contains(productID))
     }
 
+    func testOwnedCollectionCannotBePurchasedTwice() async {
+        let pm = PurchaseManager()
+        await pm.loadProducts()
+        await pm.purchase(productID)
+        XCTAssertTrue(pm.entitlements.contains(productID))
+        let count = session.allTransactions().count
+        await pm.purchase(productID)
+        XCTAssertEqual(session.allTransactions().count, count)
+    }
+
     func testRestoreFindsPriorPurchase() async throws {
         try await session.buyProduct(identifier: productID)
         let pm = PurchaseManager()
-        await pm.refreshEntitlements()
+        // The sandbox records the purchase asynchronously; give it a few seconds.
+        for _ in 0..<30 where !pm.entitlements.contains(productID) {
+            await pm.refreshEntitlements()
+            if pm.entitlements.contains(productID) { break }
+            try await Task.sleep(for: .milliseconds(100))
+        }
         XCTAssertTrue(pm.entitlements.contains(productID))
     }
 }

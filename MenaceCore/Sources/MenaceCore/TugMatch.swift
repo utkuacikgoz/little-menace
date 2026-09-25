@@ -1,20 +1,20 @@
 import Foundation
 
-/// Sock tug rules. Crumb alternates strong pulls with short tired windows; pulling during
+/// Sock tug rules. The gremlin alternates strong pulls with short tired windows; pulling during
 /// a tired window is what wins. Pure and stepped by the view each frame, so it is testable
 /// and a cancelled gesture (pull 0) can never leave the rope stuck.
 public struct TugMatch: Sendable {
     public static let warmup = 1.2
     public static let duration = 20.0
-    static let crumbStrong = 0.3
-    static let crumbTired = 0.05
+    static let gremlinStrong = 0.3
+    static let gremlinTired = 0.05
     static let playerInStrong = 0.15
-    /// Yanking while Crumb pulls strong makes the sock slip (quadratic, so light tension is fine).
+    /// Yanking while the gremlin pulls strong makes the sock slip (quadratic, so light tension is fine).
     static let slip = 0.35
     static let playerInTired = 1.1
     static let tiredLength = 0.75
 
-    /// −1 Crumb has the sock … +1 the player has it.
+    /// −1 the gremlin has the sock … +1 the player has it.
     public private(set) var rope = 0.0
     public private(set) var elapsed = 0.0
     public private(set) var outcome: Bool?
@@ -34,7 +34,7 @@ public struct TugMatch: Sendable {
     }
 
     public var isWarmingUp: Bool { elapsed < Self.warmup }
-    public var crumbTired: Bool { windows.contains { $0.contains(elapsed) } }
+    public var gremlinTired: Bool { windows.contains { $0.contains(elapsed) } }
     public var timeLeft: Double { max(0, Self.duration - elapsed) }
 
     /// `pull` is 0…1 (drag depth). Large dt (a hitch) is split so outcomes do not depend on frame rate.
@@ -49,18 +49,18 @@ public struct TugMatch: Sendable {
     }
 
     private mutating func advance(_ h: Double, pull: Double) {
-        let wasTired = crumbTired
+        let wasTired = gremlinTired
         elapsed += h
         if isWarmingUp { return }
-        let tired = crumbTired
+        let tired = gremlinTired
         if tired != wasTired { usedCurrent = false }
-        let crumb = tired ? Self.crumbTired : Self.crumbStrong
+        let gremlin = tired ? Self.gremlinTired : Self.gremlinStrong
         let player = tired ? pull * Self.playerInTired : pull * Self.playerInStrong - pull * pull * Self.slip
         if tired && pull > 0.3 && !usedCurrent {
             usedCurrent = true
             windowsUsed += 1
         }
-        rope = max(-1, min(1, rope + (player - crumb) * h))
+        rope = max(-1, min(1, rope + (player - gremlin) * h))
         if rope >= 1 { outcome = true }
         else if rope <= -1 { outcome = false }
         else if elapsed >= Self.duration { outcome = rope > 0 }

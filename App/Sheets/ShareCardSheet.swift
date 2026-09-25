@@ -1,11 +1,11 @@
 import SwiftUI
 import MenaceCore
 
-/// A card rendered from the player's actual Crumb (theme, outfit, level, week, mood),
+/// A card rendered from the player's actual the gremlin (theme, outfit, level, week, mood),
 /// handed to the system share sheet. Nothing is posted automatically.
 struct ShareCardView: View {
     let state: PetState
-    let pose: CrumbPose
+    let pose: GremlinPose
 
     var body: some View {
         let palette = ThemePalette.forID(state.wardrobe.theme)
@@ -14,8 +14,8 @@ struct ShareCardView: View {
             RadialGradient(colors: [palette.glow.opacity(0.6), .clear], center: .init(x: 0.5, y: 0.45), startRadius: 10, endRadius: 260)
             VStack(spacing: 10) {
                 Spacer(minLength: 12)
-                CrumbView(pose: pose, hat: state.wardrobe.hat, neck: state.wardrobe.neck, size: 190, animated: false)
-                Text(state.name)
+                GremlinView(pose: pose, hat: state.wardrobe.hat, neck: state.wardrobe.neck, size: 190, animated: false)
+                Text(state.titleName)
                     .font(.system(size: 40, weight: .black, design: .rounded))
                 Text(Self.title(for: state.personality))
                     .font(.system(size: 18, weight: .heavy, design: .rounded))
@@ -56,8 +56,8 @@ struct ShareCardSheet: View {
                     .scaledToFit()
                     .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
                     .shadow(color: .black.opacity(0.15), radius: 10, y: 4)
-                    .accessibilityLabel("Share card of \(model.state.name), level \(model.state.level)")
-                ShareLink(item: image, preview: SharePreview(model.state.name, image: image)) {
+                    .accessibilityLabel("Share card of \(model.state.titleName), level \(model.state.level)")
+                ShareLink(item: image, preview: SharePreview(model.state.titleName, image: image)) {
                     Label("Share", systemImage: "square.and.arrow.up")
                         .font(.system(.headline, design: .rounded).weight(.heavy))
                         .frame(maxWidth: .infinity, minHeight: 52)

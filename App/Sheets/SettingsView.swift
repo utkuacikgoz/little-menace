@@ -2,21 +2,31 @@ import SwiftUI
 import UIKit
 import MenaceCore
 
-/// Replace before App Store submission. Kept in one place so they are easy to find.
+/// Public product support and privacy pages, versioned with the app.
 enum AppLinks {
-    static let privacy = URL(string: "https://example.com/little-menace/privacy")!
-    static let support = URL(string: "https://example.com/little-menace/support")!
+    static let privacy = URL(string: "https://github.com/utkuacikgoz/little-menace-/blob/main/docs/Privacy.md")!
+    static let support = URL(string: "https://github.com/utkuacikgoz/little-menace-/blob/main/docs/Support.md")!
 }
 
 struct SettingsView: View {
     @Environment(GameModel.self) private var model
     @Environment(\.dismiss) private var dismiss
     @State private var confirmReset = false
+    /// Edited locally and committed on return or close, so spaces survive typing.
+    @State private var nameDraft = ""
 
     var body: some View {
         let prefs = model.state.prefs
         NavigationStack {
             Form {
+                Section {
+                    TextField("Name", text: $nameDraft, prompt: Text("Your gremlin"))
+                        .onSubmit { model.rename(nameDraft) }
+                        .textInputAutocapitalization(.words)
+                        .autocorrectionDisabled()
+                        .accessibilityLabel("Name")
+                }
+
                 Section {
                     Toggle(isOn: Binding(get: { prefs.sound }, set: { model.setSound($0) })) {
                         Label("Sound", systemImage: "speaker.wave.2.fill")
@@ -71,16 +81,19 @@ struct SettingsView: View {
                         Label("Start Over", systemImage: "arrow.counterclockwise")
                     }
                 } footer: {
-                    Text("Start Over resets \(model.state.name)'s level, stamps and discoveries. Purchases stay yours.")
+                    Text("Start Over resets \(model.state.displayName)'s level, stamps and discoveries. Purchases stay yours.")
                 }
             }
+            .onAppear { nameDraft = model.state.name }
+            .onDisappear { if nameDraft != model.state.name { model.rename(nameDraft) } }
             .navigationTitle("Settings")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) { Button("Done") { dismiss() } }
             }
-            .confirmationDialog("Start over with a new Crumb?", isPresented: $confirmReset, titleVisibility: .visible) {
+            .confirmationDialog("Start over with a new gremlin?", isPresented: $confirmReset, titleVisibility: .visible) {
                 Button("Start Over", role: .destructive) {
+                    nameDraft = ""
                     model.reset()
                     dismiss()
                 }

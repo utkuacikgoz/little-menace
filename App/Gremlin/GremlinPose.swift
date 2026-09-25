@@ -1,9 +1,9 @@
 import SwiftUI
 import MenaceCore
 
-/// Every expressive parameter of Crumb's rig. Poses are values; SwiftUI springs between them,
+/// Every expressive parameter of the gremlin's rig. Poses are values; SwiftUI springs between them,
 /// so any reaction can interrupt any other without snapping.
-struct CrumbPose: Equatable {
+struct GremlinPose: Equatable {
     var eyeOpen: CGFloat = 1        // 0 closed … 1.2 wide
     var eyeHappy: CGFloat = 0       // 1 = ^ ^ squint
     var browTilt: CGFloat = 0       // + cross, − worried (degrees)
@@ -22,16 +22,16 @@ struct CrumbPose: Equatable {
     var look: CGSize = .zero        // −1…1 pupil direction
     var sleeping = false
 
-    static let idle = CrumbPose()
+    static let idle = GremlinPose()
 
-    static func base(asleep: Bool, energy: Double) -> CrumbPose {
+    static func base(asleep: Bool, energy: Double) -> GremlinPose {
         if asleep { return pose(for: .asleep) }
         if energy < 30 { return pose(for: .sleepy) }
         return .idle
     }
 
-    static func pose(for reaction: Reaction) -> CrumbPose {
-        var p = CrumbPose()
+    static func pose(for reaction: Reaction) -> GremlinPose {
+        var p = GremlinPose()
         switch reaction {
         case .idle:
             break

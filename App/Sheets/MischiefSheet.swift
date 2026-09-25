@@ -1,7 +1,7 @@
 import SwiftUI
 import MenaceCore
 
-/// Crumb is up to something. One line, two choices, both fine.
+/// The gremlin is up to something. One line, two choices, both fine.
 struct MischiefSheet: View {
     let event: MischiefEvent
     let choose: (Bool) -> Void
@@ -10,7 +10,7 @@ struct MischiefSheet: View {
     var body: some View {
         VStack(spacing: 18) {
             HStack(spacing: 14) {
-                CrumbView(pose: .pose(for: .mischief), hat: model.state.wardrobe.hat, neck: model.state.wardrobe.neck, size: 96)
+                GremlinView(pose: .pose(for: .mischief), hat: model.state.wardrobe.hat, neck: model.state.wardrobe.neck, size: 96)
                     .accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: 8) {
                     Image(systemName: event.prop).font(.title2.weight(.bold))

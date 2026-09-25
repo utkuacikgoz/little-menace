@@ -27,7 +27,7 @@ jobs:
           xcodebuild -project LittleMenace.xcodeproj -scheme LittleMenace \
             -destination 'generic/platform=iOS Simulator' -configuration Debug \
             -derivedDataPath build CODE_SIGNING_ALLOWED=NO build 2>&1 \
-            | grep -E "error:|warning: .*(deprecated|never|unused)|BUILD (SUCCEEDED|FAILED)" || true
+            | tee /tmp/menace-build.log | grep -E "error:|warning: .*(deprecated|never|unused)|BUILD (SUCCEEDED|FAILED)"
           test -d build/Build/Products/Debug-iphonesimulator/LittleMenace.app
 
       - name: App unit + UI tests
@@ -37,7 +37,7 @@ jobs:
             -destination 'platform=iOS Simulator,name=iPhone 16 Pro Max' \
             -derivedDataPath build-test -resultBundlePath TestResults.xcresult \
             CODE_SIGNING_ALLOWED=NO 2>&1 \
-            | grep -E "Test Case .*(passed|failed)|error:|AUDIT|Executed|TEST (SUCCEEDED|FAILED)|\*\* " || true
+            | tee /tmp/menace-tests.log | grep -E "Test Case .*(passed|failed)|error:|AUDIT|Executed|TEST (SUCCEEDED|FAILED)|\*\* "
           xcrun xcresulttool get test-results summary --path TestResults.xcresult --compact 2>/dev/null | head -c 4000 || true
           xcrun xcresulttool get test-results tests --path TestResults.xcresult 2>/dev/null \
             | python3 -c "import json,sys
@@ -88,7 +88,7 @@ jobs:
           ls shots
 
       - name: Publish screenshots to docs/screenshots (manual runs only)
-        if: github.event_name == 'workflow_dispatch'
+        if: always() && github.event_name == 'workflow_dispatch'
         run: |
           rm -rf docs/screenshots && mkdir -p docs/screenshots
           for f in shots/*.png; do
@@ -99,6 +99,8 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add docs/screenshots
           git commit -m "Update simulator screenshots [skip ci]" || exit 0
+          # The branch may have moved while this ran; land the screenshots on top of it.
+          git pull --rebase origin ${GITHUB_REF_NAME}
           git push origin HEAD:${GITHUB_REF_NAME}
 
       - uses: actions/upload-artifact@v4

@@ -1,10 +1,10 @@
 import SwiftUI
 import MenaceCore
 
-/// Crumb, drawn as a vector rig in a 200×220 design space and scaled to `size`.
+/// The gremlin, drawn as a vector rig in a 200×220 design space and scaled to `size`.
 /// Pose changes spring; breathing, blinking and tail wag run on a timeline.
-struct CrumbView: View {
-    var pose: CrumbPose
+struct GremlinView: View {
+    var pose: GremlinPose
     var hat: String?
     var neck: String?
     var size: CGFloat = 220
@@ -41,7 +41,7 @@ struct CrumbView: View {
         let lean = Double(pose.lean) + Double(stretch.width) / 12
 
         return ZStack {
-            // Shadow stays on the ground while Crumb hops.
+            // Shadow stays on the ground while the gremlin hops.
             Ellipse().fill(.black.opacity(0.18))
                 .frame(width: 130 - pose.hop * 2, height: 16)
                 .position(x: 100, y: 210)
@@ -63,16 +63,32 @@ struct CrumbView: View {
                 arm(left: true)
                 arm(left: false)
 
-                Ellipse().fill(Ink.body)
-                    .frame(width: 164, height: 156)
+                // Head tuft sits behind the body outline so only the spikes show.
+                TuftShape().fill(Ink.body)
+                    .frame(width: 44, height: 30)
+                    .rotationEffect(.degrees(Double(pose.lean) * 0.6), anchor: .bottom)
+                    .position(x: 104, y: 50)
+
+                FluffShape(bumps: 26, depth: 3.2)
+                    .fill(RadialGradient(colors: [Ink.bodyLight, Ink.body, Ink.bodyDark],
+                                         center: UnitPoint(x: 0.36, y: 0.28), startRadius: 8, endRadius: 120))
+                    .overlay(
+                        // Rim light on the upper-left edge.
+                        FluffShape(bumps: 26, depth: 3.2)
+                            .stroke(LinearGradient(colors: [.white.opacity(0.22), .clear],
+                                                   startPoint: .topLeading, endPoint: .center), lineWidth: 2.5)
+                    )
+                    .frame(width: 166, height: 158)
                     .position(x: 100, y: 128)
-                Ellipse().fill(Ink.belly)
+
+                FluffShape(bumps: 14, depth: 2.2)
+                    .fill(LinearGradient(colors: [Ink.belly, Ink.bellyDark], startPoint: .top, endPoint: .bottom))
                     .frame(width: 92, height: 70)
                     .position(x: 100, y: 170)
 
                 HStack(spacing: 60) {
-                    Ellipse().fill(Ink.body).frame(width: 40, height: 22)
-                    Ellipse().fill(Ink.body).frame(width: 40, height: 22)
+                    Foot()
+                    Foot()
                 }
                 .position(x: 100, y: 203)
 
@@ -160,9 +176,11 @@ struct CrumbView: View {
             Ellipse().fill(Ink.eye)
                 .frame(width: 38, height: height)
                 .overlay(
-                    Circle().fill(Ink.pupil)
-                        .frame(width: 19, height: 19)
-                        .overlay(Circle().fill(.white).frame(width: 6, height: 6).offset(x: 4, y: -4))
+                    Circle().fill(RadialGradient(colors: [Ink.irisLight, Ink.iris], center: .center, startRadius: 2, endRadius: 13))
+                        .frame(width: 25, height: 25)
+                        .overlay(Circle().fill(Ink.pupil).frame(width: 14, height: 14))
+                        .overlay(Circle().fill(.white).frame(width: 7, height: 7).offset(x: 5, y: -5))
+                        .overlay(Circle().fill(.white.opacity(0.7)).frame(width: 3, height: 3).offset(x: -5, y: 5))
                         .offset(x: pose.look.width * 8, y: pose.look.height * 8 + (1 - min(1, open)) * 6)
                 )
                 .clipShape(Ellipse())
@@ -187,6 +205,62 @@ struct CrumbView: View {
 }
 
 // MARK: Shapes
+
+/// An ellipse whose edge is a ring of soft bumps: reads as fur without texture assets.
+struct FluffShape: Shape {
+    var bumps: Int
+    var depth: CGFloat
+
+    func path(in r: CGRect) -> Path {
+        var p = Path()
+        let steps = bumps * 8
+        let cx = r.midX, cy = r.midY, rx = r.width / 2, ry = r.height / 2
+        for i in 0...steps {
+            let t = Double(i) / Double(steps) * 2 * .pi
+            // |sin| makes rounded scallops rather than a sine wobble.
+            let bump = depth * CGFloat(abs(sin(t * Double(bumps) / 2)))
+            let x = cx + (rx - depth + bump) * CGFloat(cos(t))
+            let y = cy + (ry - depth + bump) * CGFloat(sin(t))
+            if i == 0 { p.move(to: CGPoint(x: x, y: y)) } else { p.addLine(to: CGPoint(x: x, y: y)) }
+        }
+        p.closeSubpath()
+        return p
+    }
+}
+
+/// Three curled spikes of hair on top of the head.
+struct TuftShape: Shape {
+    func path(in r: CGRect) -> Path {
+        var p = Path()
+        let base = r.maxY
+        let tips: [(CGFloat, CGFloat, CGFloat)] = [(0.2, 0.35, -0.12), (0.5, 0.0, 0.1), (0.8, 0.3, 0.14)]
+        p.move(to: CGPoint(x: r.minX, y: base))
+        for (x, y, lean) in tips {
+            let tip = CGPoint(x: r.minX + r.width * (x + lean), y: r.minY + r.height * y)
+            p.addQuadCurve(to: tip, control: CGPoint(x: r.minX + r.width * (x - 0.12), y: r.minY + r.height * 0.55))
+            p.addQuadCurve(to: CGPoint(x: r.minX + r.width * (x + 0.12), y: base - r.height * 0.1),
+                           control: CGPoint(x: r.minX + r.width * (x + 0.08), y: r.minY + r.height * 0.5))
+        }
+        p.addLine(to: CGPoint(x: r.maxX, y: base))
+        p.closeSubpath()
+        return p
+    }
+}
+
+private struct Foot: View {
+    var body: some View {
+        ZStack {
+            Ellipse().fill(LinearGradient(colors: [Ink.bodyLight, Ink.bodyDark], startPoint: .top, endPoint: .bottom))
+            HStack(spacing: 6) {
+                ForEach(0..<3, id: \.self) { _ in
+                    Capsule().fill(Ink.bodyDark.opacity(0.9)).frame(width: 2, height: 7)
+                }
+            }
+            .offset(y: 3)
+        }
+        .frame(width: 42, height: 22)
+    }
+}
 
 struct EarShape: InsettableShape {
     var inset: CGFloat = 0

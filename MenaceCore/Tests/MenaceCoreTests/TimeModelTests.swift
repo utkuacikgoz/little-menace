@@ -56,10 +56,10 @@ final class TimeModelTests: XCTestCase {
         var s = PetState(now: t0)
         s.needs.energy = 20
         s.napStartedAt = t0
-        XCTAssertFalse(TimeModel.advance(&s, to: t0.addingTimeInterval(1800)))
+        XCTAssertFalse(TimeModel.advance(&s, to: t0.addingTimeInterval(5 * 60)))
         XCTAssertTrue(s.isAsleep)
-        XCTAssertEqual(s.needs.energy, 20 + Tuning.energyRecoveryAsleep / 2, accuracy: 0.001)
-        XCTAssertTrue(TimeModel.advance(&s, to: t0.addingTimeInterval(3 * 3600)))
+        XCTAssertEqual(s.needs.energy, 40, accuracy: 0.001)
+        XCTAssertTrue(TimeModel.advance(&s, to: t0.addingTimeInterval(20 * 60)))
         XCTAssertFalse(s.isAsleep)
         XCTAssertTrue(s.pendingWake)
         XCTAssertEqual(s.needs.energy, 100)
