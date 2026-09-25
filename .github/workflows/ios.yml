@@ -1,141 +1,100 @@
 name: iOS build
 
+# Pushes to main and every PR run the tests; the screenshot tour runs only when started by hand.
 on:
   push:
+    branches: [main]
   pull_request:
   workflow_dispatch:
 
+# A newer push to the same branch cancels the older run.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  build:
-    runs-on: macos-15
-    timeout-minutes: 40
+  core:
+    name: Core tests
+    runs-on: ubuntu-latest
+    container: swift:6.1
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
+      - run: swift test --package-path MenaceCore
 
-      - name: Toolchain
-        run: xcodebuild -version && swift --version
-
-      - name: Core logic tests
-        run: swift test --package-path MenaceCore
-
-      - name: Build app for simulator
+  app-tests:
+    name: App tests (${{ matrix.shard }}/3)
+    runs-on: macos-15
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1, 2]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test
         run: |
           set -o pipefail
-          xcodebuild -project LittleMenace.xcodeproj -scheme LittleMenace \
-            -destination 'generic/platform=iOS Simulator' -configuration Debug \
-            -derivedDataPath build CODE_SIGNING_ALLOWED=NO build 2>&1 \
-            | tee /tmp/menace-build.log | grep -E "error:|warning: .*(deprecated|never|unused)|BUILD (SUCCEEDED|FAILED)"
-          test -d build/Build/Products/Debug-iphonesimulator/LittleMenace.app
-
-      - name: App unit + UI tests
-        run: |
-          set -o pipefail
+          # UI tests are dealt round-robin across the shards; shard 0 also runs the StoreKit unit tests.
+          ARGS=()
+          i=0
+          for t in $(grep -oE 'func test[A-Za-z0-9_]+' LittleMenaceUITests/LittleMenaceUITests.swift | cut -d' ' -f2); do
+            if [ $((i % 3)) -eq ${{ matrix.shard }} ]; then ARGS+=("-only-testing:LittleMenaceUITests/LittleMenaceUITests/$t"); fi
+            i=$((i + 1))
+          done
+          if [ ${{ matrix.shard }} -eq 0 ]; then ARGS+=("-only-testing:LittleMenaceTests"); fi
           xcodebuild test -project LittleMenace.xcodeproj -scheme LittleMenace \
             -destination 'platform=iOS Simulator,name=iPhone 16 Pro Max' \
-            -derivedDataPath build-test -resultBundlePath TestResults.xcresult \
-            CODE_SIGNING_ALLOWED=NO 2>&1 \
-            | tee /tmp/menace-tests.log | grep -E "Test Case .*(passed|failed)|error:|AUDIT|Executed|TEST (SUCCEEDED|FAILED)|\*\* "
-          xcrun xcresulttool get test-results summary --path TestResults.xcresult --compact 2>/dev/null | head -c 4000 || true
-          xcrun xcresulttool get test-results tests --path TestResults.xcresult 2>/dev/null \
-            | python3 -c "import json,sys
-          d=json.load(sys.stdin)
-          def walk(n,depth=0):
-              r=n.get('result','')
-              if n.get('nodeType') in ('Test Case','Failure Message'):
-                  print(('  '*depth)+f\"{r:8} {n.get('name')}\")
-              for c in n.get('children',[]): walk(c,depth+1)
-          for t in d.get('testNodes',[]): walk(t)" || true
-          # Fail the job if any test failed.
-          ! xcrun xcresulttool get test-results summary --path TestResults.xcresult --compact 2>/dev/null | grep -q '"result":"Failed"'
+            -derivedDataPath build CODE_SIGNING_ALLOWED=NO "${ARGS[@]}" 2>&1 \
+            | grep -E "Test Case .*(passed|failed)|error:|AUDIT|Executed|\*\* TEST"
 
-      - name: Screenshot tour
-        if: always()
+  screenshots:
+    name: Screenshots (${{ matrix.part }})
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: macos-15
+    timeout-minutes: 20
+    strategy:
+      matrix:
+        part: [a, b]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build
         run: |
-          set -e
-          mkdir -p shots
-          APP=build/Build/Products/Debug-iphonesimulator/LittleMenace.app
-          BID=com.belevate.littlemenace
-          udid() { xcrun simctl list devices available | grep -F "$1 (" | head -1 | sed -E 's/.*\(([0-9A-F-]{36})\).*/\1/'; }
-          boot() { xcrun simctl boot "$1" || true; xcrun simctl bootstatus "$1" -b; xcrun simctl install "$1" "$APP"; }
-          shot() { # udid name [launch args...]
-            local U=$1 N=$2; shift 2
-            xcrun simctl launch --terminate-running-process "$U" $BID -LMReset YES "$@" >/dev/null
-            sleep 4
-            xcrun simctl io "$U" screenshot "shots/$N.png" >/dev/null 2>&1
-          }
-          SE=$(udid "iPhone SE (3rd generation)")
-          if [ -n "$SE" ]; then
-            boot "$SE"
-            shot "$SE" 30-se-home -LMScreen home
-            xcrun simctl ui "$SE" content_size accessibility-extra-extra-extra-large
-            shot "$SE" 31-se-home-largest-text -LMScreen home
-            shot "$SE" 32-se-stamps-largest-text -LMScreen stamps
-            xcrun simctl ui "$SE" content_size large
-            xcrun simctl shutdown "$SE"
-          fi
-          PM=$(udid "iPhone 16 Pro Max")
-          boot "$PM"
-          # Every screen and interaction state. Names are numbered in review order.
-          shot "$PM" 01-home -LMScreen home
-          shot "$PM" 01b-home-needs-words -LMScreen home -LMNeeds b
-          shot "$PM" 01c-home-needs-badge -LMScreen home -LMNeeds c
-          shot "$PM" 01d-home-needs-hungry-sleepy -LMScreen home -LMNeeds d
-          shot "$PM" 02-name-prompt -LMScreen namePrompt
-          shot "$PM" 03-touch -LMScreen touch
-          shot "$PM" 04-feed -LMScreen feed
-          shot "$PM" 05-refuse-food -LMScreen refuse
-          shot "$PM" 06-dialogue -LMScreen dialogue
-          shot "$PM" 07-play-picker -LMScreen playPicker
-          shot "$PM" 08-snack-toss -LMScreen snackToss
-          shot "$PM" 09-sock-tug -LMScreen sockTug -LMFreeze YES
-          shot "$PM" 10-cushion-hunt -LMScreen cushionHunt
-          shot "$PM" 11-result-win -LMScreen snackToss -LMResult win
-          shot "$PM" 12-result-lose -LMScreen sockTug -LMFreeze YES -LMResult lose
-          shot "$PM" 13-mischief -LMScreen mischief
-          shot "$PM" 14-mischief-choice -LMScreen mischiefSheet
-          shot "$PM" 15-asleep -LMScreen asleep
-          shot "$PM" 16-grumpy-wake -LMScreen grumpy
-          shot "$PM" 17-reminder-offer -LMScreen reminderOffer
-          shot "$PM" 18-wardrobe-hats -LMScreen wardrobe
-          shot "$PM" 19-wardrobe-neck -LMScreen wardrobe -LMSlot neck
-          shot "$PM" 20-wardrobe-backgrounds -LMScreen wardrobe -LMSlot theme
-          shot "$PM" 21-wardrobe-socks -LMScreen wardrobe -LMSlot sock
-          shot "$PM" 22-wardrobe-preview-paid -LMScreen wardrobe -LMPreview nightcap
-          shot "$PM" 23-midnight-snack -LMScreen collection
-          shot "$PM" 24-stamps -LMScreen stamps
-          shot "$PM" 25-share -LMScreen share
-          shot "$PM" 26-settings -LMScreen settings
-          shot "$PM" 27-settings-reminders -LMScreen reminders
-          xcrun simctl ui "$PM" appearance dark
-          shot "$PM" 28-dark-grape -LMScreen touch -LMTheme grape -LMHat leaf
-          shot "$PM" 29-dark-settings -LMScreen settings
-          xcrun simctl ui "$PM" appearance light
-          xcrun simctl spawn "$PM" log show --last 5m --predicate 'process == "LittleMenace" AND (messageType == error OR messageType == fault)' --style compact | grep -v "PrototypeTools\|getpwuid" | tail -30 || true
-          xcrun simctl shutdown "$PM"
-          ls shots
+          set -o pipefail
+          xcodebuild build -project LittleMenace.xcodeproj -scheme LittleMenace \
+            -destination 'generic/platform=iOS Simulator' -configuration Debug \
+            -derivedDataPath build CODE_SIGNING_ALLOWED=NO 2>&1 | grep -E "error:|\*\* BUILD"
+      - name: Tour
+        run: scripts/screenshot-tour.sh ${{ matrix.part }} build/Build/Products/Debug-iphonesimulator/LittleMenace.app shots
+      - uses: actions/upload-artifact@v4
+        with:
+          name: shots-${{ matrix.part }}
+          path: shots/
 
-      - name: Publish screenshots to docs/screenshots (manual runs only)
-        if: always() && github.event_name == 'workflow_dispatch'
+  publish:
+    name: Publish screenshots
+    needs: screenshots
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: shots-*
+          merge-multiple: true
+          path: shots
+      - name: Commit to docs/screenshots
         run: |
-          rm -rf docs/screenshots && mkdir -p docs/screenshots
-          for f in shots/*.png; do
-            n=$(basename "$f" .png)
-            sips -s format jpeg -s formatOptions 70 --resampleWidth 430 "$f" --out "docs/screenshots/$n.jpg" >/dev/null
-          done
+          rm -rf docs/screenshots && mv shots docs/screenshots
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add docs/screenshots
+          git add -A docs/screenshots
           git commit -m "Update simulator screenshots [skip ci]" || exit 0
-          # The branch may have moved while this ran; land the screenshots on top of it.
-          git pull --rebase origin ${GITHUB_REF_NAME}
-          git push origin HEAD:${GITHUB_REF_NAME}
-
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: screenshots
-          path: shots/
-          if-no-files-found: ignore
+          git pull --rebase origin "${{ github.ref_name }}"
+          git push origin "HEAD:${{ github.ref_name }}"
