@@ -3,6 +3,10 @@ import MenaceCore
 
 enum HomeSheet: String, Identifiable {
     case wardrobe, stamps, share, settings
+    #if DEBUG
+    /// Screenshot tours only: the Midnight Snack page on its own.
+    case collection
+    #endif
     var id: String { rawValue }
 }
 
@@ -39,7 +43,7 @@ struct HomeView: View {
                         .multilineTextAlignment(.center)
                         .accessibilityIdentifier("pet-dialogue")
                         .frame(maxWidth: geo.size.width - 64)
-                        .position(x: center.x, y: min(center.y + petSize * 0.68, geo.size.height - 155))
+                        .position(x: center.x, y: min(center.y + petSize * 0.68, geo.size.height - 180))
                         .transition(.opacity)
                         .id(bubble.id)
                 }
@@ -112,6 +116,9 @@ struct HomeView: View {
             case .stamps: StampCardView()
             case .share: ShareCardSheet()
             case .settings: SettingsView()
+            #if DEBUG
+            case .collection: NavigationStack { CollectionView(collection: Catalog.collections[0]) }
+            #endif
             }
         }
         .sheet(isPresented: $showMischief) {
@@ -127,7 +134,14 @@ struct HomeView: View {
             ActivityContainer(kind: kind)
         }
         #if DEBUG
-        .task { if let s = model.applyDebugLaunch() { sheet = s } }
+        .task {
+            if let s = model.applyDebugLaunch() { sheet = s }
+            switch UserDefaults.standard.string(forKey: "LMScreen") {
+            case "playPicker": showPlay = true
+            case "mischiefSheet": showMischief = true
+            default: break
+            }
+        }
         #endif
     }
 
@@ -234,7 +248,7 @@ struct HomeView: View {
             }
             HStack(spacing: 28) {
                 feedButton(fullness: needs.fullness / 100, mouth: mouth)
-                RingButton(ring: needs.joy / 100, label: "Play", action: {
+                RingButton(ring: needs.joy / 100, label: "Play", caption: percent(needs.joy), action: {
                     withAnimation(.spring(response: 0.35, dampingFraction: 0.7)) { showPlay.toggle() }
                     model.haptics.play(.tap)
                 }) {
@@ -242,7 +256,8 @@ struct HomeView: View {
                         .font(.system(size: 28, weight: .bold))
                         .foregroundStyle(.white)
                 }
-                RingButton(ring: needs.energy / 100, label: model.state.isAsleep ? "Wake" : "Nap", action: {
+                RingButton(ring: needs.energy / 100, label: model.state.isAsleep ? "Wake" : "Nap",
+                           caption: percent(needs.energy), action: {
                     showPlay = false
                     model.toggleSleep()
                 }) {
@@ -253,6 +268,8 @@ struct HomeView: View {
             }
         }
     }
+
+    private func percent(_ value: Double) -> String { "\(Int(max(0, min(100, value)).rounded()))%" }
 
     /// Tap: The gremlin gets a snack tossed in. Drag: carry the snack to the gremlin's mouth yourself.
     private func feedButton(fullness: Double, mouth: CGPoint) -> some View {
@@ -265,7 +282,7 @@ struct HomeView: View {
                 let close = hypot(v.location.x - mouth.x, v.location.y - mouth.y) < 80
                 deliverSnack(from: v.location, to: mouth, dropped: !close)
             }
-        return RingButton(ring: fullness, label: "Feed", action: {
+        return RingButton(ring: fullness, label: "Feed", caption: percent(fullness * 100), action: {
             showPlay = false
             model.feed()
         }) {
