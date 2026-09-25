@@ -25,21 +25,16 @@ struct ActivityContainer: View {
                     .transition(.scale(scale: 0.8).combined(with: .opacity))
             }
 
-            if result == nil && (Alt.b || Alt.c) {
-                // B: a one-line hint at the top. C: the same hint at the bottom with a hand icon.
+            if result == nil {
+                // A one-line hint at the top while a round is on.
                 VStack {
-                    if Alt.c { Spacer() }
-                    HStack(spacing: 8) {
-                        if Alt.c { Image(systemName: "hand.tap.fill") }
-                        Text(hint)
-                    }
-                    .font(.system(.subheadline, design: .rounded).weight(.heavy))
-                    .foregroundStyle(Alt.c ? Ink.body : Ink.eye)
-                    .padding(.horizontal, 14).padding(.vertical, 8)
-                    .background(Alt.c ? Ink.eye : Ink.body.opacity(0.85), in: Capsule())
-                    .padding(.top, Alt.b ? 70 : 0)
-                    .padding(.bottom, Alt.c ? 48 : 0)
-                    if Alt.b { Spacer() }
+                    Text(hint)
+                        .font(.system(.subheadline, design: .rounded).weight(.heavy))
+                        .foregroundStyle(Ink.eye)
+                        .padding(.horizontal, 14).padding(.vertical, 8)
+                        .background(Ink.body.opacity(0.85), in: Capsule())
+                        .padding(.top, 70)
+                    Spacer()
                 }
                 .allowsHitTesting(false)
             }
@@ -51,6 +46,7 @@ struct ActivityContainer: View {
                     } label: {
                         Image(systemName: "xmark")
                             .font(.title3.weight(.heavy))
+                            .dynamicTypeSize(...DynamicTypeSize.xxLarge)
                             .foregroundStyle(.white)
                             .frame(width: 48, height: 48)
                             .background(.white.opacity(0.18), in: Circle())
@@ -131,60 +127,31 @@ private struct ResultCard: View {
             .accessibilityElement(children: .ignore)
             .accessibilityLabel("\(result.won ? "Won" : "Lost"). Plus \(xp) experience")
 
-            if Alt.b {
-                // B: worded buttons.
-                HStack(spacing: 14) {
-                    Button(action: replay) {
-                        Label("Again", systemImage: "arrow.counterclockwise")
-                            .font(.system(.headline, design: .rounded).weight(.heavy))
-                            .frame(minWidth: 120, minHeight: 56)
-                            .background(Ink.eye, in: Capsule())
-                            .foregroundStyle(Ink.body)
-                    }
-                    .buttonStyle(SquishButtonStyle())
-                    .accessibilityLabel("Play again")
-                    Button(action: done) {
-                        Label("Done", systemImage: "checkmark")
-                            .font(.system(.headline, design: .rounded).weight(.heavy))
-                            .frame(minWidth: 120, minHeight: 56)
-                            .background(Ink.body, in: Capsule())
-                            .foregroundStyle(Ink.eye)
-                    }
-                    .buttonStyle(SquishButtonStyle())
-                    .accessibilityLabel("Done")
+            HStack(spacing: 24) {
+                Button(action: replay) {
+                    Image(systemName: "arrow.counterclockwise")
+                        .font(.title.weight(.heavy))
+                        .frame(width: 72, height: 72)
+                        .background(Ink.body.opacity(0.1), in: Circle())
+                        .foregroundStyle(Ink.body)
                 }
-            } else {
-                HStack(spacing: 24) {
-                    Button(action: replay) {
-                        Image(systemName: "arrow.counterclockwise")
-                            .font(.title.weight(.heavy))
-                            .frame(width: 72, height: 72)
-                            .background(Alt.c ? Ink.body.opacity(0.1) : Ink.eye, in: Circle()) // stays visible on the cream card
-                            .foregroundStyle(Ink.body)
-                    }
-                    .buttonStyle(SquishButtonStyle())
-                    .accessibilityLabel("Play again")
-                    Button(action: done) {
-                        Image(systemName: "checkmark")
-                            .font(.title.weight(.heavy))
-                            .frame(width: 72, height: 72)
-                            .background(Ink.body, in: Circle())
-                            .foregroundStyle(Ink.eye)
-                    }
-                    .buttonStyle(SquishButtonStyle())
-                    .accessibilityLabel("Done")
+                .buttonStyle(SquishButtonStyle())
+                .accessibilityLabel("Play again")
+                Button(action: done) {
+                    Image(systemName: "checkmark")
+                        .font(.title.weight(.heavy))
+                        .frame(width: 72, height: 72)
+                        .background(Ink.body, in: Circle())
+                        .foregroundStyle(Ink.eye)
                 }
+                .buttonStyle(SquishButtonStyle())
+                .accessibilityLabel("Done")
             }
         }
         .padding(28)
-        .background {
-            // C: everything on one cream card.
-            if Alt.c {
-                RoundedRectangle(cornerRadius: 32, style: .continuous)
-                    .fill(Ink.eye)
-                    .shadow(color: .black.opacity(0.2), radius: 16, y: 6)
-            }
-        }
-        .padding(.horizontal, Alt.c ? 24 : 0)
+        // Everything on one cream card.
+        .background(Ink.eye, in: RoundedRectangle(cornerRadius: 32, style: .continuous))
+        .shadow(color: .black.opacity(0.2), radius: 16, y: 6)
+        .padding(.horizontal, 24)
     }
 }

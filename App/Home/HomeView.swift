@@ -14,7 +14,6 @@ enum HomeSheet: String, Identifiable {
 struct HomeView: View {
     @Environment(GameModel.self) private var model
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @Environment(\.colorScheme) private var colorScheme
 
     @State private var sheet: HomeSheet?
     @State private var showPlay = false
@@ -34,7 +33,8 @@ struct HomeView: View {
             ZStack {
                 ThemeBackground(themeID: model.state.wardrobe.theme, dimmed: model.state.isAsleep)
 
-                if model.state.isAsleep && Alt.c {
+                if model.state.isAsleep {
+                    // Night while it naps: a darker sky with a moon.
                     Color.black.opacity(0.25).ignoresSafeArea().allowsHitTesting(false)
                     Image(systemName: "moon.stars.fill")
                         .font(.system(size: 44, weight: .bold))
@@ -45,31 +45,14 @@ struct HomeView: View {
 
                 gremlin(size: petSize, center: center)
 
-                if model.transient == .touch && GremlinPose.touchStyle == "c" {
-                    Image(systemName: "heart.fill")
-                        .font(.system(size: 36, weight: .bold))
-                        .foregroundStyle(Ink.blush)
-                        .position(x: center.x + petSize * 0.32, y: center.y - petSize * 0.62)
-                        .transition(.scale.combined(with: .opacity))
-                        .accessibilityHidden(true)
-                }
-
                 if let bubble = model.bubble, !model.showNamePrompt, !model.showReminderOffer {
-                    dialogue(bubble.text)
+                    // Speech bubble above the head; below the gremlin while the mischief chip holds that spot.
+                    SpeechBubble(text: bubble.text)
                         .accessibilityIdentifier("pet-dialogue")
                         .frame(maxWidth: geo.size.width - 64)
-                        .position(x: center.x, y: Alt.b ? center.y - petSize * 0.72 : min(center.y + petSize * 0.68, geo.size.height - 180))
+                        .position(x: center.x, y: model.pendingMischief == nil ? center.y - petSize * 0.72 : min(center.y + petSize * 0.68, geo.size.height - 180))
                         .transition(.opacity)
                         .id(bubble.id)
-                }
-
-                if model.state.isAsleep && Alt.b, let wake = TimeModel.expectedWake(model.state) {
-                    Text("Wakes in \(max(1, Int(wake.timeIntervalSince(model.now) / 60))) min")
-                        .font(.system(.subheadline, design: .rounded).weight(.heavy))
-                        .foregroundStyle(Ink.eye)
-                        .padding(.horizontal, 14).padding(.vertical, 8)
-                        .background(Ink.body.opacity(0.85), in: Capsule())
-                        .position(x: center.x, y: min(center.y + petSize * 0.68, geo.size.height - 180))
                 }
 
                 if let prop = model.specialProp {
@@ -83,8 +66,7 @@ struct HomeView: View {
 
                 if let event = model.pendingMischief {
                     mischiefProp(event)
-                        .position(x: Alt.c ? center.x : center.x + petSize * 0.52,
-                                  y: Alt.c ? center.y - petSize * 0.85 : center.y + petSize * 0.12)
+                        .position(x: center.x, y: center.y - petSize * 0.85)
                 }
 
                 if let snackAt {
@@ -251,6 +233,7 @@ struct HomeView: View {
             } label: {
                 Image(systemName: "ellipsis")
                     .font(.title2.weight(.heavy))
+                    .dynamicTypeSize(...DynamicTypeSize.xxLarge) // stays inside its circle
                     .foregroundStyle(.white)
                     .frame(width: 48, height: 48)
                     .background(.white.opacity(0.18), in: Circle())
@@ -273,7 +256,7 @@ struct HomeView: View {
             }
             HStack(spacing: 28) {
                 feedButton(fullness: needs.fullness / 100, mouth: mouth)
-                RingButton(ring: needs.joy / 100, label: "Play", caption: needCaption(.joy, needs.joy), badge: needBadge(needs.joy), action: {
+                RingButton(ring: needs.joy / 100, label: "Play", caption: needCaption(.joy, needs.joy), action: {
                     withAnimation(.spring(response: 0.35, dampingFraction: 0.7)) { showPlay.toggle() }
                     model.haptics.play(.tap)
                 }) {
@@ -282,7 +265,7 @@ struct HomeView: View {
                         .foregroundStyle(.white)
                 }
                 RingButton(ring: needs.energy / 100, label: model.state.isAsleep ? "Wake" : "Nap",
-                           caption: needCaption(.energy, needs.energy), badge: needBadge(needs.energy), action: {
+                           caption: needCaption(.energy, needs.energy), action: {
                     showPlay = false
                     model.toggleSleep()
                 }) {
@@ -296,39 +279,14 @@ struct HomeView: View {
 
     private enum Need { case fullness, joy, energy }
 
-    /// How the needs read under the buttons. Options for review; the owner picks one.
-    private enum NeedStyle: String { case number = "a", words = "b", badge = "c", lack = "d" }
-
-    private var needStyle: NeedStyle {
-        #if DEBUG
-        if let raw = UserDefaults.standard.string(forKey: "LMNeeds"), let s = NeedStyle(rawValue: raw) { return s }
-        #endif
-        return .lack // owner's pick
-    }
-
-    private func percent(_ value: Double) -> String { "\(Int(max(0, min(100, value)).rounded()))%" }
-
-    private func needCaption(_ need: Need, _ value: Double) -> String? {
-        switch needStyle {
-        case .number: return percent(value)
-        case .badge: return nil
-        case .words:
-            switch need {
-            case .fullness: return "Full \(percent(value))"
-            case .joy: return "Joy \(percent(value))"
-            case .energy: return "Energy \(percent(value))"
-            }
-        case .lack:
-            switch need {
-            case .fullness: return "Hungry \(percent(100 - value))"
-            case .joy: return "Bored \(percent(100 - value))"
-            case .energy: return "Sleepy \(percent(100 - value))"
-            }
+    /// Needs read as what the gremlin lacks: Hungry / Bored / Sleepy, counting up.
+    private func needCaption(_ need: Need, _ value: Double) -> String {
+        let lack = "\(Int(max(0, min(100, 100 - value)).rounded()))%"
+        switch need {
+        case .fullness: return "Hungry \(lack)"
+        case .joy: return "Bored \(lack)"
+        case .energy: return "Sleepy \(lack)"
         }
-    }
-
-    private func needBadge(_ value: Double) -> String? {
-        needStyle == .badge ? "\(Int(max(0, min(100, value)).rounded()))" : nil
     }
 
     /// Tap: The gremlin gets a snack tossed in. Drag: carry the snack to the gremlin's mouth yourself.
@@ -342,7 +300,7 @@ struct HomeView: View {
                 let close = hypot(v.location.x - mouth.x, v.location.y - mouth.y) < 80
                 deliverSnack(from: v.location, to: mouth, dropped: !close)
             }
-        return RingButton(ring: fullness, label: "Feed", caption: needCaption(.fullness, fullness * 100), badge: needBadge(fullness * 100), action: {
+        return RingButton(ring: fullness, label: "Feed", caption: needCaption(.fullness, fullness * 100), action: {
             showPlay = false
             model.feed()
         }) {
@@ -374,56 +332,18 @@ struct HomeView: View {
         }
     }
 
-    /// Speech: A plain text under the gremlin, B a bubble above its head, C a dark pill.
-    @ViewBuilder private func dialogue(_ text: String) -> some View {
-        if Alt.b {
-            SpeechBubble(text: text)
-        } else if Alt.c {
-            Text(text)
-                .font(.system(.body, design: .rounded).weight(.semibold))
-                .foregroundStyle(Ink.eye)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 14).padding(.vertical, 8)
-                .background(Ink.body.opacity(0.9), in: Capsule())
-        } else {
-            Text(text)
-                .font(.system(.body, design: .rounded).weight(.semibold))
-                .foregroundStyle(colorScheme == .dark || ["grape", "midnight"].contains(model.state.wardrobe.theme) ? Ink.eye : Ink.body)
-                .multilineTextAlignment(.center)
-        }
-    }
-
     private func mischiefProp(_ event: MischiefEvent) -> some View {
         Button { showMischief = true } label: {
-            if Alt.c {
-                // C: a chip above the gremlin that says what's going on.
-                HStack(spacing: 8) {
-                    Image(systemName: event.prop)
-                    Text("Up to something…")
-                }
-                .font(.system(.headline, design: .rounded).weight(.heavy))
-                .foregroundStyle(Ink.body)
-                .padding(.horizontal, 16).padding(.vertical, 10)
-                .background(Ink.eye, in: Capsule())
-                .shadow(color: .black.opacity(0.2), radius: 6, y: 3)
-            } else {
-                // A: small prop bubble. B: bigger, with an alert badge.
+            // A chip above the gremlin that says what's going on.
+            HStack(spacing: 8) {
                 Image(systemName: event.prop)
-                    .font(.system(size: Alt.b ? 32 : 24, weight: .bold))
-                    .foregroundStyle(Ink.body)
-                    .frame(width: Alt.b ? 68 : 52, height: Alt.b ? 68 : 52)
-                    .background(Ink.eye, in: Circle())
-                    .overlay(alignment: .topTrailing) {
-                        if Alt.b {
-                            Text("!")
-                                .font(.system(.headline, design: .rounded).weight(.black))
-                                .foregroundStyle(.white)
-                                .frame(width: 24, height: 24)
-                                .background(Color(hex: 0xC5283D), in: Circle())
-                        }
-                    }
-                    .shadow(color: .black.opacity(0.2), radius: 6, y: 3)
+                Text("Up to something…")
             }
+            .font(.system(.headline, design: .rounded).weight(.heavy))
+            .foregroundStyle(Ink.body)
+            .padding(.horizontal, 16).padding(.vertical, 10)
+            .background(Ink.eye, in: Capsule())
+            .shadow(color: .black.opacity(0.2), radius: 6, y: 3)
         }
         .buttonStyle(SquishButtonStyle())
         .phaseAnimator(reduceMotion ? [0.0] : [0.0, -8.0]) { view, y in
@@ -437,16 +357,9 @@ private struct PlayPicker: View {
     var pick: (ActivityKind) -> Void
 
     var body: some View {
-        if Alt.c {
-            // C: a short menu of named toys.
-            VStack(spacing: 8) { options }
-                .padding(10)
-                .background(.white.opacity(0.22), in: RoundedRectangle(cornerRadius: 28, style: .continuous))
-        } else {
-            HStack(spacing: 18) { options }
-                .padding(10)
-                .background(.white.opacity(0.22), in: Capsule())
-        }
+        HStack(spacing: 18) { options }
+            .padding(10)
+            .background(.white.opacity(0.22), in: Capsule())
     }
 
     @ViewBuilder private var options: some View {
@@ -461,27 +374,13 @@ private struct PlayPicker: View {
 
     private func option<Icon: View>(_ kind: ActivityKind, _ label: String, short: String, @ViewBuilder icon: () -> Icon) -> some View {
         Button { pick(kind) } label: {
-            if Alt.c {
-                HStack(spacing: 12) {
-                    icon().frame(width: 44, height: 44)
-                    Text(label).font(.system(.headline, design: .rounded).weight(.heavy))
-                    Spacer(minLength: 0)
-                }
-                .foregroundStyle(Ink.body)
-                .padding(.horizontal, 12)
-                .frame(width: 210, height: 56)
-                .background(Ink.eye, in: Capsule())
-            } else {
-                VStack(spacing: 4) {
-                    icon()
-                        .frame(width: 56, height: 56)
-                        .background(.white.opacity(0.25), in: Circle())
-                    if Alt.b {
-                        Text(short)
-                            .font(.system(.caption, design: .rounded).weight(.heavy))
-                            .foregroundStyle(Ink.body)
-                    }
-                }
+            VStack(spacing: 4) {
+                icon()
+                    .frame(width: 56, height: 56)
+                    .background(.white.opacity(0.25), in: Circle())
+                Text(short)
+                    .font(.system(.caption, design: .rounded).weight(.heavy))
+                    .foregroundStyle(Ink.body)
             }
         }
         .buttonStyle(SquishButtonStyle())
@@ -533,26 +432,11 @@ private struct ReminderOffer: View {
     @Environment(GameModel.self) private var model
 
     var body: some View {
-        if Alt.b || Alt.c { worded } else { compact }
-    }
-
-    private func accept() {
-        model.dismissReminderOffer()
-        Task { await model.setReminders(true) }
-    }
-
-    /// B: the same row with worded buttons. C: a small card that explains the promise.
-    private var worded: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(spacing: 12) {
                 Image(systemName: "bell.badge.fill").font(.title2)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(Alt.c ? "Want a nudge?" : "Nudge me later?")
-                        .font(.system(.headline, design: .rounded).weight(.heavy))
-                    if Alt.c {
-                        Text("One a day at most. Stops if you're away.").font(.subheadline)
-                    }
-                }
+                Text("Nudge me later?")
+                    .font(.system(.headline, design: .rounded).weight(.heavy))
             }
             HStack(spacing: 10) {
                 Button(action: accept) {
@@ -574,30 +458,8 @@ private struct ReminderOffer: View {
         .transition(.move(edge: .bottom).combined(with: .opacity))
     }
 
-    private var compact: some View {
-        HStack(spacing: 14) {
-            Image(systemName: "bell.badge.fill").font(.title2).foregroundStyle(Ink.body)
-            Text("Nudge me later?")
-                .font(.system(.headline, design: .rounded).weight(.heavy))
-                .foregroundStyle(Ink.body)
-            Spacer(minLength: 0)
-            Button {
-                model.dismissReminderOffer()
-                Task { await model.setReminders(true) }
-            } label: {
-                Image(systemName: "checkmark").font(.headline.weight(.heavy))
-                    .frame(width: 40, height: 40).background(Ink.body, in: Circle()).foregroundStyle(Ink.eye)
-            }
-            .accessibilityLabel("Yes, remind me")
-            Button { model.dismissReminderOffer() } label: {
-                Image(systemName: "xmark").font(.headline.weight(.heavy))
-                    .frame(width: 40, height: 40).background(Ink.body.opacity(0.12), in: Circle()).foregroundStyle(Ink.body)
-            }
-            .accessibilityLabel("No thanks")
-        }
-        .padding(12)
-        .background(Ink.eye, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
-        .padding(.bottom, 12)
-        .transition(.move(edge: .bottom).combined(with: .opacity))
+    private func accept() {
+        model.dismissReminderOffer()
+        Task { await model.setReminders(true) }
     }
 }

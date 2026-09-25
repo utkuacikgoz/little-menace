@@ -32,23 +32,14 @@ struct MischiefSheet: View {
     }
 
     private func choice(_ c: MischiefEvent.Choice, indulge: Bool) -> some View {
-        // A: icon only. B: icon and a word. C: tall cards with the word under the icon.
+        // Tall cards: icon over a short word.
         let word = indulge ? "Let it" : "Stop it"
         return Button { choose(indulge) } label: {
-            Group {
-                if Alt.b {
-                    Label(word, systemImage: c.symbol)
-                        .font(.system(.title3, design: .rounded).weight(.heavy))
-                } else if Alt.c {
-                    VStack(spacing: 8) {
-                        Image(systemName: c.symbol).font(.largeTitle.weight(.heavy))
-                        Text(word).font(.system(.headline, design: .rounded).weight(.heavy))
-                    }
-                } else {
-                    Image(systemName: c.symbol).font(.title.weight(.heavy))
-                }
+            VStack(spacing: 8) {
+                Image(systemName: c.symbol).font(.largeTitle.weight(.heavy))
+                Text(word).font(.system(.headline, design: .rounded).weight(.heavy))
             }
-            .frame(maxWidth: .infinity, minHeight: Alt.c ? 120 : 64)
+            .frame(maxWidth: .infinity, minHeight: 120)
             .background(indulge ? Ink.body : Ink.body.opacity(0.1), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
             .foregroundStyle(indulge ? Ink.eye : Ink.body)
         }
