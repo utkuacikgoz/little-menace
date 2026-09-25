@@ -52,6 +52,7 @@ struct SettingsView: View {
                     }
                 } footer: {
                     Text("At most one gentle nudge a day, and they stop if you're away for a few days.")
+                        .foregroundStyle(Color.primary.opacity(0.8))
                 }
 
                 Section {
@@ -82,6 +83,7 @@ struct SettingsView: View {
                     }
                 } footer: {
                     Text("Start Over resets \(model.state.displayName)'s level, stamps and discoveries. Purchases stay yours.")
+                        .foregroundStyle(Color.primary.opacity(0.8))
                 }
             }
             .onAppear { nameDraft = model.state.name }
