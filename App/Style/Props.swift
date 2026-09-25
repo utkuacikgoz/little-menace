@@ -38,6 +38,8 @@ struct RingButton<Icon: View>: View {
     var label: String
     /// Short text under the button, e.g. the need as a percentage.
     var caption: String? = nil
+    /// Short text in a badge on the ring's top-right edge.
+    var badge: String? = nil
     var action: () -> Void
     @ViewBuilder var icon: () -> Icon
 
@@ -56,6 +58,18 @@ struct RingButton<Icon: View>: View {
                     icon()
                 }
                 .frame(width: 66, height: 66)
+                .overlay(alignment: .topTrailing) {
+                    if let badge {
+                        Text(badge)
+                            .font(.system(.caption2, design: .rounded).weight(.heavy))
+                            .monospacedDigit()
+                            .foregroundStyle(Ink.eye)
+                            .frame(minWidth: 26, minHeight: 26)
+                            .background(Ink.body, in: Circle())
+                            .offset(x: 6, y: -6)
+                            .accessibilityHidden(true)
+                    }
+                }
                 .contentShape(Circle())
                 if let caption {
                     // Dark pill: readable on every theme, light or dark.

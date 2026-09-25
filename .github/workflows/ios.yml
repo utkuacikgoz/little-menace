@@ -80,6 +80,9 @@ jobs:
           boot "$PM"
           # Every screen and interaction state. Names are numbered in review order.
           shot "$PM" 01-home -LMScreen home
+          shot "$PM" 01b-home-needs-words -LMScreen home -LMNeeds b
+          shot "$PM" 01c-home-needs-badge -LMScreen home -LMNeeds c
+          shot "$PM" 01d-home-needs-hungry-sleepy -LMScreen home -LMNeeds d
           shot "$PM" 02-name-prompt -LMScreen namePrompt
           shot "$PM" 03-touch -LMScreen touch
           shot "$PM" 04-feed -LMScreen feed
