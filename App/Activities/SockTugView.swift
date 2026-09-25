@@ -78,8 +78,16 @@ struct SockTugView: View {
         return p
     }
 
+    #if DEBUG
+    /// Screenshot tours: `-LMFreeze YES` holds the round at its start.
+    private static let frozen = UserDefaults.standard.bool(forKey: "LMFreeze")
+    #endif
+
     private func step(to date: Date) {
         defer { lastFrame = date }
+        #if DEBUG
+        if Self.frozen { return }
+        #endif
         guard let last = lastFrame, match.outcome == nil else { return }
         let pull = max(Double(depth / Self.maxDepth), date < assistUntil ? 1 : 0)
         match.step(dt: date.timeIntervalSince(last), pull: pull)

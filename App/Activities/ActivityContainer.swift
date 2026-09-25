@@ -13,9 +13,11 @@ struct ActivityContainer: View {
         ZStack {
             ThemeBackground(themeID: model.state.wardrobe.theme)
 
+            // The finished round steps aside so the result card is the only gremlin on screen.
             game
                 .id(round)
                 .disabled(result != nil)
+                .opacity(result == nil ? 1 : 0)
 
             if let result {
                 ResultCard(result: result, xp: earnedXP, hat: model.state.wardrobe.hat, neck: model.state.wardrobe.neck,
