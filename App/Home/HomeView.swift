@@ -248,7 +248,7 @@ struct HomeView: View {
             }
             HStack(spacing: 28) {
                 feedButton(fullness: needs.fullness / 100, mouth: mouth)
-                RingButton(ring: needs.joy / 100, label: "Play", caption: percent(needs.joy), action: {
+                RingButton(ring: needs.joy / 100, label: "Play", caption: needCaption(.joy, needs.joy), badge: needBadge(needs.joy), action: {
                     withAnimation(.spring(response: 0.35, dampingFraction: 0.7)) { showPlay.toggle() }
                     model.haptics.play(.tap)
                 }) {
@@ -257,7 +257,7 @@ struct HomeView: View {
                         .foregroundStyle(.white)
                 }
                 RingButton(ring: needs.energy / 100, label: model.state.isAsleep ? "Wake" : "Nap",
-                           caption: percent(needs.energy), action: {
+                           caption: needCaption(.energy, needs.energy), badge: needBadge(needs.energy), action: {
                     showPlay = false
                     model.toggleSleep()
                 }) {
@@ -269,7 +269,42 @@ struct HomeView: View {
         }
     }
 
+    private enum Need { case fullness, joy, energy }
+
+    /// How the needs read under the buttons. Options for review; the owner picks one.
+    private enum NeedStyle: String { case number = "a", words = "b", badge = "c", lack = "d" }
+
+    private var needStyle: NeedStyle {
+        #if DEBUG
+        if let raw = UserDefaults.standard.string(forKey: "LMNeeds"), let s = NeedStyle(rawValue: raw) { return s }
+        #endif
+        return .number
+    }
+
     private func percent(_ value: Double) -> String { "\(Int(max(0, min(100, value)).rounded()))%" }
+
+    private func needCaption(_ need: Need, _ value: Double) -> String? {
+        switch needStyle {
+        case .number: return percent(value)
+        case .badge: return nil
+        case .words:
+            switch need {
+            case .fullness: return "Full \(percent(value))"
+            case .joy: return "Joy \(percent(value))"
+            case .energy: return "Energy \(percent(value))"
+            }
+        case .lack:
+            switch need {
+            case .fullness: return "Hungry \(percent(100 - value))"
+            case .joy: return "Bored \(percent(100 - value))"
+            case .energy: return "Sleepy \(percent(100 - value))"
+            }
+        }
+    }
+
+    private func needBadge(_ value: Double) -> String? {
+        needStyle == .badge ? "\(Int(max(0, min(100, value)).rounded()))" : nil
+    }
 
     /// Tap: The gremlin gets a snack tossed in. Drag: carry the snack to the gremlin's mouth yourself.
     private func feedButton(fullness: Double, mouth: CGPoint) -> some View {
@@ -282,7 +317,7 @@ struct HomeView: View {
                 let close = hypot(v.location.x - mouth.x, v.location.y - mouth.y) < 80
                 deliverSnack(from: v.location, to: mouth, dropped: !close)
             }
-        return RingButton(ring: fullness, label: "Feed", caption: percent(fullness * 100), action: {
+        return RingButton(ring: fullness, label: "Feed", caption: needCaption(.fullness, fullness * 100), badge: needBadge(fullness * 100), action: {
             showPlay = false
             model.feed()
         }) {
