@@ -82,12 +82,16 @@ private struct ResultCard: View {
     var body: some View {
         VStack(spacing: 18) {
             GremlinView(pose: .pose(for: result.won ? .win : .lose), hat: hat, neck: neck, size: 150)
+            // Dark pill so the reward reads on every background (white on orange was ~2.6:1).
             HStack(spacing: 8) {
                 Image(systemName: "sparkles")
                 Text("+\(xp)")
             }
             .font(.system(.title2, design: .rounded).weight(.heavy))
-            .foregroundStyle(.white)
+            .foregroundStyle(Ink.eye)
+            .padding(.horizontal, 18)
+            .padding(.vertical, 8)
+            .background(Ink.body, in: Capsule())
             .accessibilityElement(children: .ignore)
             .accessibilityLabel("\(result.won ? "Won" : "Lost"). Plus \(xp) experience")
 
