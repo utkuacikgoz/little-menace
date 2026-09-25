@@ -79,7 +79,7 @@ jobs:
           boot "$PM"
           shot "$PM" home
           for S in touch mischief snackToss sockTug cushionHunt wardrobe stamps share settings asleep; do
-            shot "$PM" "$S" -LMScreen "$S"
+            if [ "$S" = sockTug ]; then shot "$PM" "$S" -LMScreen "$S" -LMFreeze YES; else shot "$PM" "$S" -LMScreen "$S"; fi
           done
           xcrun simctl ui "$PM" appearance dark
           shot "$PM" dark-grape -LMScreen touch -LMTheme grape -LMHat leaf
