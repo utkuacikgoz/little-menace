@@ -17,6 +17,8 @@ shot() { # udid name [launch args...]; every shot starts from a fresh gremlin
 }
 
 PM=$(udid "iPhone 16 Pro Max")
+# Runner images differ: fall back to the newest Pro Max available.
+[ -n "$PM" ] || PM=$(xcrun simctl list devices available | grep -E "iPhone [0-9]+ Pro Max \(" | tail -1 | sed -E 's/.*\(([0-9A-F-]{36})\).*/\1/')
 boot "$PM"
 if [ "$PART" = a ]; then
   shot "$PM" 01-home -LMScreen home

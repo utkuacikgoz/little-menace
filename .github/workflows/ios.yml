@@ -48,8 +48,14 @@ jobs:
             i=$((i + 1))
           done
           if [ ${{ matrix.shard }} -eq 0 ]; then ARGS+=("-only-testing:LittleMenaceTests"); fi
+          # Runner images differ: prefer an iPhone 16 Pro Max, else the newest Pro Max, else any iPhone.
+          SIM=$(xcrun simctl list devices available -j | python3 -c '
+          import json, sys
+          phones = [d for rt, ds in json.load(sys.stdin)["devices"].items() if "iOS" in rt for d in ds if d["name"].startswith("iPhone")]
+          pick = [d for d in phones if d["name"] == "iPhone 16 Pro Max"] or [d for d in phones if "Pro Max" in d["name"]] or phones
+          print(pick[-1]["udid"])')
           xcodebuild test -project LittleMenace.xcodeproj -scheme LittleMenace \
-            -destination 'platform=iOS Simulator,name=iPhone 16 Pro Max' \
+            -destination "id=$SIM" \
             -derivedDataPath build CODE_SIGNING_ALLOWED=NO "${ARGS[@]}" 2>&1 \
             | grep -E "Test Case .*(passed|failed)|error:|AUDIT|Executed|\*\* TEST"
 
