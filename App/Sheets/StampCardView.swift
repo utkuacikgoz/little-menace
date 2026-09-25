@@ -14,21 +14,29 @@ struct StampCardView: View {
         ScrollView {
             VStack(spacing: 28) {
                 // Week: seven stamps, Monday first. Missed days are just empty.
-                HStack(spacing: 10) {
+                HStack(spacing: Alt.c ? 6 : 10) {
                     ForEach(0..<7, id: \.self) { i in
                         let key = dayKey(offset: i - today)
                         let gold = s.stamps.goldDays.contains(key)
                         let stamped = s.stamps.days.contains(key)
-                        ZStack {
-                            Circle().fill(stamped ? (gold ? Color(hex: 0xFFC83D) : Ink.body) : Ink.body.opacity(0.08))
-                            if stamped {
-                                Image(systemName: gold ? "star.fill" : "pawprint.fill")
-                                    .font(.system(size: 16, weight: .bold))
-                                    .foregroundStyle(gold ? Ink.body : Ink.eye)
+                        let letter = ["M", "T", "W", "T", "F", "S", "S"][i]
+                        VStack(spacing: 4) {
+                            ZStack {
+                                Circle().fill(stamped ? (gold ? Color(hex: 0xFFC83D) : Ink.body) : Ink.body.opacity(0.08))
+                                if stamped {
+                                    Image(systemName: gold ? "star.fill" : "pawprint.fill")
+                                        .font(.system(size: Alt.c ? 20 : 16, weight: .bold))
+                                        .foregroundStyle(gold ? Ink.body : Ink.eye)
+                                } else if Alt.c {
+                                    Text(letter).font(.system(.headline, design: .rounded).weight(.heavy)).opacity(0.5)
+                                }
+                                if i == today { Circle().stroke(Ink.body, lineWidth: 3).padding(-4) }
                             }
-                            if i == today { Circle().stroke(Ink.body, lineWidth: 3).padding(-4) }
+                            .frame(width: Alt.c ? 42 : 36, height: Alt.c ? 42 : 36)
+                            if Alt.b {
+                                Text(letter).font(.system(.caption, design: .rounded).weight(.heavy)).opacity(i == today ? 1 : 0.6)
+                            }
                         }
-                        .frame(width: 36, height: 36)
                     }
                 }
                 .accessibilityElement(children: .ignore)

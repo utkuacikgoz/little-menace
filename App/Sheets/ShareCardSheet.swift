@@ -10,11 +10,12 @@ struct ShareCardView: View {
     var body: some View {
         let palette = ThemePalette.forID(state.wardrobe.theme)
         ZStack {
-            palette.day
-            RadialGradient(colors: [palette.glow.opacity(0.6), .clear], center: .init(x: 0.5, y: 0.45), startRadius: 10, endRadius: 260)
+            // A: theme colour. B: square. C: dark ink card.
+            Alt.c ? Ink.body : palette.day
+            RadialGradient(colors: [(Alt.c ? Ink.iris : palette.glow).opacity(Alt.c ? 0.35 : 0.6), .clear], center: .init(x: 0.5, y: 0.45), startRadius: 10, endRadius: 260)
             VStack(spacing: 10) {
                 Spacer(minLength: 12)
-                GremlinView(pose: pose, hat: state.wardrobe.hat, neck: state.wardrobe.neck, size: 190, animated: false)
+                GremlinView(pose: pose, hat: state.wardrobe.hat, neck: state.wardrobe.neck, size: Alt.b ? 150 : 190, animated: false)
                 Text(state.titleName)
                     .font(.system(size: 40, weight: .black, design: .rounded))
                 Text(Self.title(for: state.personality))
@@ -32,9 +33,9 @@ struct ShareCardView: View {
                     .opacity(0.7)
                     .padding(.bottom, 14)
             }
-            .foregroundStyle(.white)
+            .foregroundStyle(Alt.c ? Ink.eye : .white)
         }
-        .frame(width: 360, height: 450)
+        .frame(width: 360, height: Alt.b ? 380 : 450)
     }
 
     static func title(for personality: Double) -> String {

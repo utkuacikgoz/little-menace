@@ -32,6 +32,19 @@ struct CushionView: View {
     }
 }
 
+/// Design options for owner review. DEBUG builds read `-LMAlt b|c`; release builds always show "a".
+enum Alt {
+    static var current: String {
+        #if DEBUG
+        return UserDefaults.standard.string(forKey: "LMAlt") ?? "a"
+        #else
+        return "a"
+        #endif
+    }
+    static var b: Bool { current == "b" }
+    static var c: Bool { current == "c" }
+}
+
 /// Round icon button with an optional thin ring that shows a need (0…1).
 struct RingButton<Icon: View>: View {
     var ring: Double?
@@ -76,6 +89,9 @@ struct RingButton<Icon: View>: View {
                     Text(caption)
                         .font(.system(.caption, design: .rounded).weight(.heavy))
                         .monospacedDigit()
+                        .lineLimit(1)
+                        .fixedSize()
+                        .dynamicTypeSize(...DynamicTypeSize.xLarge) // stays one line at the largest sizes
                         .foregroundStyle(Ink.eye)
                         .padding(.horizontal, 8)
                         .padding(.vertical, 3)
@@ -128,5 +144,12 @@ struct ToastChip: View {
         .background(Ink.eye, in: Capsule())
         .shadow(color: .black.opacity(0.15), radius: 6, y: 3)
         .accessibilityHidden(true)
+    }
+}
+
+/// Settings option B hides row icons.
+struct AltLabelStyle: LabelStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        if Alt.b { configuration.title } else { Label(configuration) }
     }
 }

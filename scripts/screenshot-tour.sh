@@ -18,39 +18,36 @@ shot() { # udid name [launch args...]; every shot starts from a fresh gremlin
 
 PM=$(udid "iPhone 16 Pro Max")
 boot "$PM"
+# alt <name> <args...>: the current design plus options b and c.
+alt() { local N=$1; shift; shot "$PM" "$N" "$@"; shot "$PM" "${N}b" "$@" -LMAlt b; shot "$PM" "${N}c" "$@" -LMAlt c; }
 if [ "$PART" = a ]; then
   shot "$PM" 01-home -LMScreen home
-  shot "$PM" 01b-home-needs-words -LMScreen home -LMNeeds b
-  shot "$PM" 01c-home-needs-badge -LMScreen home -LMNeeds c
-  shot "$PM" 01d-home-needs-hungry-sleepy -LMScreen home -LMNeeds d
   shot "$PM" 02-name-prompt -LMScreen namePrompt
-  shot "$PM" 03-touch -LMScreen touch
-  shot "$PM" 03b-touch-purr -LMScreen touch -LMTouch b
-  shot "$PM" 03c-touch-giggle -LMScreen touch -LMTouch c
-  shot "$PM" 04-feed -LMScreen feed
-  shot "$PM" 05-refuse-food -LMScreen refuse
-  shot "$PM" 06-dialogue -LMScreen dialogue
-  shot "$PM" 07-play-picker -LMScreen playPicker
-  shot "$PM" 08-snack-toss -LMScreen snackToss
-  shot "$PM" 09-sock-tug -LMScreen sockTug -LMFreeze YES
-  shot "$PM" 10-cushion-hunt -LMScreen cushionHunt
-  shot "$PM" 11-result-win -LMScreen snackToss -LMResult win
-  shot "$PM" 12-result-lose -LMScreen sockTug -LMFreeze YES -LMResult lose
-  shot "$PM" 13-mischief -LMScreen mischief
-  shot "$PM" 14-mischief-choice -LMScreen mischiefSheet
-  shot "$PM" 15-asleep -LMScreen asleep
-  shot "$PM" 16-grumpy-wake -LMScreen grumpy
+  alt 03-touch -LMScreen touch
+  alt 04-feed -LMScreen feed
+  alt 05-refuse-food -LMScreen refuse
+  alt 06-dialogue -LMScreen dialogue
+  alt 07-play-picker -LMScreen playPicker
+  alt 08-snack-toss -LMScreen snackToss
+  alt 09-sock-tug -LMScreen sockTug -LMFreeze YES
+  alt 10-cushion-hunt -LMScreen cushionHunt
+  alt 11-result-win -LMScreen snackToss -LMResult win
+  alt 12-result-lose -LMScreen sockTug -LMFreeze YES -LMResult lose
+  alt 13-mischief -LMScreen mischief
 else
-  shot "$PM" 17-reminder-offer -LMScreen reminderOffer
-  shot "$PM" 18-wardrobe-hats -LMScreen wardrobe
+  alt 14-mischief-choice -LMScreen mischiefSheet
+  alt 15-asleep -LMScreen asleep
+  alt 16-grumpy-wake -LMScreen grumpy
+  alt 17-reminder-offer -LMScreen reminderOffer
+  alt 18-wardrobe-hats -LMScreen wardrobe
   shot "$PM" 19-wardrobe-neck -LMScreen wardrobe -LMSlot neck
   shot "$PM" 20-wardrobe-backgrounds -LMScreen wardrobe -LMSlot theme
   shot "$PM" 21-wardrobe-socks -LMScreen wardrobe -LMSlot sock
   shot "$PM" 22-wardrobe-preview-paid -LMScreen wardrobe -LMPreview nightcap
-  shot "$PM" 23-midnight-snack -LMScreen collection
-  shot "$PM" 24-stamps -LMScreen stamps
-  shot "$PM" 25-share -LMScreen share
-  shot "$PM" 26-settings -LMScreen settings
+  alt 23-midnight-snack -LMScreen collection
+  alt 24-stamps -LMScreen stamps
+  alt 25-share -LMScreen share
+  alt 26-settings -LMScreen settings
   shot "$PM" 27-settings-reminders -LMScreen reminders
   xcrun simctl ui "$PM" appearance dark
   shot "$PM" 28-dark-grape -LMScreen touch -LMTheme grape -LMHat leaf

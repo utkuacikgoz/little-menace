@@ -25,7 +25,7 @@ struct SettingsView: View {
                         .textInputAutocapitalization(.words)
                         .autocorrectionDisabled()
                         .accessibilityLabel("Name")
-                }
+                } header: { altHeader("Name") }
 
                 Section {
                     Toggle(isOn: Binding(get: { prefs.sound }, set: { model.setSound($0) })) {
@@ -34,7 +34,7 @@ struct SettingsView: View {
                     Toggle(isOn: Binding(get: { prefs.haptics }, set: { model.setHaptics($0) })) {
                         Label("Haptics", systemImage: "hand.tap.fill")
                     }
-                }
+                } header: { altHeader("Feel") }
 
                 Section {
                     Toggle(isOn: Binding(get: { prefs.remindersEnabled }, set: { on in Task { await model.setReminders(on) } })) {
@@ -50,7 +50,7 @@ struct SettingsView: View {
                         }
                         .font(.footnote)
                     }
-                } footer: {
+                } header: { altHeader("Reminders") } footer: {
                     Text("At most one gentle nudge a day, and they stop if you're away for a few days.")
                         .foregroundStyle(Color.primary.opacity(0.8))
                 }
@@ -75,17 +75,18 @@ struct SettingsView: View {
                     }
                     Link(destination: AppLinks.privacy) { Label("Privacy", systemImage: "hand.raised.fill") }
                     Link(destination: AppLinks.support) { Label("Support", systemImage: "questionmark.circle.fill") }
-                }
+                } header: { altHeader("Purchases & help") }
 
                 Section {
                     Button(role: .destructive) { confirmReset = true } label: {
                         Label("Start Over", systemImage: "arrow.counterclockwise")
                     }
-                } footer: {
+                } header: { altHeader("Start over") } footer: {
                     Text("Start Over resets \(model.state.displayName)'s level, stamps and discoveries. Purchases stay yours.")
                         .foregroundStyle(Color.primary.opacity(0.8))
                 }
             }
+            .labelStyle(AltLabelStyle()) // option B hides row icons
             .onAppear { nameDraft = model.state.name }
             .onDisappear { if nameDraft != model.state.name { model.rename(nameDraft) } }
             .navigationTitle("Settings")
@@ -104,6 +105,11 @@ struct SettingsView: View {
                 Text("This can't be undone.")
             }
         }
+    }
+
+    /// Option C adds short section titles.
+    @ViewBuilder private func altHeader(_ title: String) -> some View {
+        if Alt.c { Text(title) }
     }
 
     private func reminderTime(_ prefs: Preferences) -> Date {
