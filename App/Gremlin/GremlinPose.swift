@@ -30,6 +30,14 @@ struct GremlinPose: Equatable {
         return .idle
     }
 
+    /// Petting reaction options for review: a grin (current), b purr, c giggle with a heart.
+    static var touchStyle: String {
+        #if DEBUG
+        if let s = UserDefaults.standard.string(forKey: "LMTouch") { return s }
+        #endif
+        return "a"
+    }
+
     static func pose(for reaction: Reaction) -> GremlinPose {
         var p = GremlinPose()
         switch reaction {
@@ -38,7 +46,14 @@ struct GremlinPose: Equatable {
         case .attention, .busy, .discovery:
             p.eyeOpen = 1.15; p.mouthOpen = 0.35; p.mouthSmile = 0.3; p.earDroop = -12; p.squash = 1.04; p.browLift = 4
         case .touch:
-            p.eyeHappy = 1; p.mouthOpen = 0.5; p.mouthSmile = 1; p.squash = 0.93; p.blush = 1; p.tailWag = 2.2
+            switch touchStyle {
+            case "b": // purr: closed smile, leans into the hand, ears soften
+                p.eyeHappy = 1; p.mouthOpen = 0.05; p.mouthSmile = 0.8; p.lean = 10; p.earDroop = 14; p.squash = 0.97; p.blush = 0.9; p.tailWag = 0.5
+            case "c": // giggle: hop, arms up, ears perk (HomeView adds a heart)
+                p.eyeHappy = 1; p.mouthOpen = 0.8; p.mouthSmile = 1; p.armsUp = 0.8; p.hop = 10; p.earDroop = -14; p.squash = 1.05; p.blush = 1; p.tailWag = 3
+            default:
+                p.eyeHappy = 1; p.mouthOpen = 0.5; p.mouthSmile = 1; p.squash = 0.93; p.blush = 1; p.tailWag = 2.2
+            }
         case .feed:
             p.eyeHappy = 0.7; p.mouthOpen = 0.95; p.mouthSmile = 0.6; p.squash = 0.96; p.blush = 0.7
         case .play:
