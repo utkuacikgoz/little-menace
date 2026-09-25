@@ -10,6 +10,7 @@ enum HomeSheet: String, Identifiable {
 struct HomeView: View {
     @Environment(GameModel.self) private var model
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.colorScheme) private var colorScheme
 
     @State private var sheet: HomeSheet?
     @State private var showPlay = false
@@ -22,20 +23,24 @@ struct HomeView: View {
     var body: some View {
         @Bindable var model = model
         GeometryReader { geo in
-            let crumbSize = min(geo.size.width * 0.72, 300)
+            let petSize = min(geo.size.width * 0.72, 300)
             let center = CGPoint(x: geo.size.width / 2, y: geo.size.height * 0.46)
-            let mouth = CGPoint(x: center.x, y: center.y + crumbSize * 0.08)
+            let mouth = CGPoint(x: center.x, y: center.y + petSize * 0.08)
 
             ZStack {
                 ThemeBackground(themeID: model.state.wardrobe.theme, dimmed: model.state.isAsleep)
 
-                crumb(size: crumbSize, center: center)
+                gremlin(size: petSize, center: center)
 
-                if let bubble = model.bubble {
-                    SpeechBubble(text: bubble.text)
+                if let bubble = model.bubble, !model.showNamePrompt, !model.showReminderOffer {
+                    Text(bubble.text)
+                        .font(.system(.body, design: .rounded).weight(.semibold))
+                        .foregroundStyle(colorScheme == .dark || ["grape", "midnight"].contains(model.state.wardrobe.theme) ? Ink.eye : Ink.body)
+                        .multilineTextAlignment(.center)
+                        .accessibilityIdentifier("pet-dialogue")
                         .frame(maxWidth: geo.size.width - 64)
-                        .position(x: center.x, y: center.y - crumbSize * 0.72)
-                        .transition(.scale(scale: 0.6).combined(with: .opacity))
+                        .position(x: center.x, y: min(center.y + petSize * 0.68, geo.size.height - 155))
+                        .transition(.opacity)
                         .id(bubble.id)
                 }
 
@@ -43,14 +48,14 @@ struct HomeView: View {
                     Image(systemName: prop)
                         .font(.system(size: 34, weight: .bold))
                         .foregroundStyle(.white)
-                        .position(x: center.x - crumbSize * 0.55, y: center.y - crumbSize * 0.2)
+                        .position(x: center.x - petSize * 0.55, y: center.y - petSize * 0.2)
                         .transition(.scale.combined(with: .opacity))
                         .accessibilityHidden(true)
                 }
 
                 if let event = model.pendingMischief {
                     mischiefProp(event)
-                        .position(x: center.x + crumbSize * 0.52, y: center.y + crumbSize * 0.12)
+                        .position(x: center.x + petSize * 0.52, y: center.y + petSize * 0.12)
                 }
 
                 if let snackAt {
@@ -64,7 +69,8 @@ struct HomeView: View {
                 VStack {
                     topBar
                     Spacer()
-                    if model.showReminderOffer { ReminderOffer() }
+                    if model.showNamePrompt { NamePrompt() }
+                    else if model.showReminderOffer { ReminderOffer() }
                     controls(mouth: mouth)
                 }
                 .padding(.horizontal, 16)
@@ -81,6 +87,11 @@ struct HomeView: View {
             .animation(.spring(response: 0.35, dampingFraction: 0.7), value: model.bubble)
             .animation(.spring(response: 0.35, dampingFraction: 0.7), value: model.toast)
             .animation(.spring(response: 0.4, dampingFraction: 0.7), value: model.showReminderOffer)
+            .animation(.spring(response: 0.4, dampingFraction: 0.7), value: model.showNamePrompt)
+            .onChange(of: sheet != nil || showMischief || model.activity != nil) { _, covered in
+                model.homeObscured = covered
+                if !covered { model.cancelSpecial() }
+            }
             .onChange(of: model.activity) { _, _ in snackAt = nil }
             .onChange(of: sheet) { _, _ in snackAt = nil }
             .onChange(of: stretch) { _, value in
@@ -89,7 +100,7 @@ struct HomeView: View {
             }
             .onChange(of: snackAt) { _, point in
                 guard let point else { model.endAttention(); return }
-                guard !snackEaten else { return }
+                guard !snackEaten, !model.state.isAsleep else { return }
                 let d = hypot(point.x - mouth.x, point.y - mouth.y)
                 model.look = CGSize(width: max(-1, min(1, (point.x - mouth.x) / 120)), height: max(-1, min(1, (point.y - mouth.y) / 120)))
                 if d < 160 && model.transient == nil { model.react(.attention, for: 0.6) }
@@ -120,14 +131,15 @@ struct HomeView: View {
         #endif
     }
 
-    // MARK: Crumb
+    // MARK: Gremlin
 
-    private func crumb(size: CGFloat, center: CGPoint) -> some View {
+    private func gremlin(size: CGFloat, center: CGPoint) -> some View {
         let drag = DragGesture(minimumDistance: 6)
             .updating($stretch) { value, state, _ in
                 state = Self.rubberBand(value.translation, limit: 70)
             }
             .onChanged { value in
+                guard !model.state.isAsleep else { return }
                 if model.transient != .attention { model.react(.attention, for: 10) }
                 model.look = CGSize(width: max(-1, min(1, value.translation.width / 80)),
                                     height: max(-1, min(1, value.translation.height / 80)))
@@ -144,7 +156,7 @@ struct HomeView: View {
                 model.haptics.play(.thud, intensity: min(1, pull / 120))
             }
 
-        return CrumbView(pose: model.pose,
+        return GremlinView(pose: model.pose,
                          hat: model.state.wardrobe.hat,
                          neck: model.state.wardrobe.neck,
                          size: size,
@@ -155,7 +167,8 @@ struct HomeView: View {
             .gesture(drag)
             .position(center)
             .accessibilityElement()
-            .accessibilityLabel("Crumb")
+            .accessibilityLabel(model.state.titleName)
+            .accessibilityIdentifier("pet")
             .accessibilityValue(spokenState)
             .accessibilityHint("Double tap to pet.")
             .accessibilityAddTraits(.isButton)
@@ -229,7 +242,7 @@ struct HomeView: View {
                         .font(.system(size: 28, weight: .bold))
                         .foregroundStyle(.white)
                 }
-                RingButton(ring: needs.energy / 100, label: model.state.isAsleep ? "Wake Crumb" : "Nap", action: {
+                RingButton(ring: needs.energy / 100, label: model.state.isAsleep ? "Wake" : "Nap", action: {
                     showPlay = false
                     model.toggleSleep()
                 }) {
@@ -241,7 +254,7 @@ struct HomeView: View {
         }
     }
 
-    /// Tap: Crumb gets a snack tossed in. Drag: carry the snack to Crumb's mouth yourself.
+    /// Tap: The gremlin gets a snack tossed in. Drag: carry the snack to the gremlin's mouth yourself.
     private func feedButton(fullness: Double, mouth: CGPoint) -> some View {
         let drag = DragGesture(minimumDistance: 4, coordinateSpace: .named("home"))
             .onChanged { v in
@@ -297,7 +310,7 @@ struct HomeView: View {
         .phaseAnimator(reduceMotion ? [0.0] : [0.0, -8.0]) { view, y in
             view.offset(y: y)
         } animation: { _ in .easeInOut(duration: 0.8) }
-        .accessibilityLabel("Crumb is up to something")
+        .accessibilityLabel("\(model.state.titleName) is up to something")
     }
 }
 
@@ -326,6 +339,46 @@ private struct PlayPicker: View {
         }
         .buttonStyle(SquishButtonStyle())
         .accessibilityLabel(label)
+    }
+}
+
+/// One line, one field: shown once after the first pet. Skipping keeps "your gremlin";
+/// a name can be given later in Settings.
+private struct NamePrompt: View {
+    @Environment(GameModel.self) private var model
+    @State private var name = ""
+    @FocusState private var focused: Bool
+
+    var body: some View {
+        HStack(spacing: 12) {
+            TextField("Name me?", text: $name)
+                .font(.system(.title3, design: .rounded).weight(.heavy))
+                .foregroundStyle(Ink.body)
+                .textInputAutocapitalization(.words)
+                .autocorrectionDisabled()
+                .submitLabel(.done)
+                .focused($focused)
+                .onSubmit { model.rename(name) }
+                .onChange(of: name) { _, new in
+                    if new.count > PetState.maxNameLength { name = String(new.prefix(PetState.maxNameLength)) }
+                }
+                .accessibilityLabel("Name")
+            Button { model.rename(name) } label: {
+                Image(systemName: "checkmark").font(.headline.weight(.heavy))
+                    .frame(width: 40, height: 40).background(Ink.body, in: Circle()).foregroundStyle(Ink.eye)
+            }
+            .disabled(name.trimmingCharacters(in: .whitespaces).isEmpty)
+            .accessibilityLabel("Save name")
+            Button { model.rename("") } label: {
+                Image(systemName: "xmark").font(.headline.weight(.heavy))
+                    .frame(width: 40, height: 40).background(Ink.body.opacity(0.12), in: Circle()).foregroundStyle(Ink.body)
+            }
+            .accessibilityLabel("Not now")
+        }
+        .padding(12)
+        .background(Ink.eye, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .padding(.bottom, 12)
+        .transition(.move(edge: .bottom).combined(with: .opacity))
     }
 }
 

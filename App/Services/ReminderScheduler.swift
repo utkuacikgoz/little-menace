@@ -17,13 +17,13 @@ final class ReminderScheduler {
         return settings.authorizationStatus == .authorized || settings.authorizationStatus == .provisional
     }
 
-    func apply(_ plan: [PlannedReminder]) async {
+    func apply(_ plan: [PlannedReminder], title: String) async {
         let pending = await center.pendingNotificationRequests()
         center.removePendingNotificationRequests(withIdentifiers: pending.map(\.identifier).filter { $0.hasPrefix(prefix) })
         guard !plan.isEmpty, await isAuthorized() else { return }
         for reminder in plan {
             let content = UNMutableNotificationContent()
-            content.title = "Crumb"
+            content.title = title
             content.body = reminder.body
             content.sound = .default
             let comps = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute, .second], from: reminder.date)

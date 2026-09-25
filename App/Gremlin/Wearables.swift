@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Hats and neckwear, drawn in Crumb's 200×220 design space so they follow every pose.
+/// Hats and neckwear, drawn in the gremlin's 200×220 design space so they follow every pose.
 struct Wearables: View {
     var hat: String?
     var neck: String?

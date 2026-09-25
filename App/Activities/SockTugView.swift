@@ -2,7 +2,7 @@ import SwiftUI
 import UIKit
 import MenaceCore
 
-/// Drag the sock down. Crumb yanks back hard, then tires for a moment: that's when to pull.
+/// Drag the sock down. The gremlin yanks back hard, then tires for a moment: that's when to pull.
 struct SockTugView: View {
     var sock: String
     var finish: (ActivityResult) -> Void
@@ -21,16 +21,16 @@ struct SockTugView: View {
     var body: some View {
         GeometryReader { geo in
             let h = geo.size.height
-            let crumbY = h * 0.28 + CGFloat(match.rope) * 50
+            let gremlinY = h * 0.28 + CGFloat(match.rope) * 50
             let gripY = h * 0.66 + depth * 0.5 + CGFloat(match.rope) * 40
             TimelineView(.animation) { ctx in
                 ZStack {
-                    SockView(style: sock, stretch: max(0, gripY - crumbY - 150))
+                    SockView(style: sock, stretch: max(0, gripY - gremlinY - 150))
                         .rotationEffect(.degrees(180))
-                        .position(x: geo.size.width / 2 + 10, y: (crumbY + gripY) / 2 + 20)
+                        .position(x: geo.size.width / 2 + 10, y: (gremlinY + gripY) / 2 + 20)
 
-                    CrumbView(pose: pose, hat: model.state.wardrobe.hat, neck: model.state.wardrobe.neck, size: 170)
-                        .position(x: geo.size.width / 2, y: crumbY)
+                    GremlinView(pose: pose, hat: model.state.wardrobe.hat, neck: model.state.wardrobe.neck, size: 170)
+                        .position(x: geo.size.width / 2, y: gremlinY)
 
                     Image(systemName: "hand.draw.fill")
                         .font(.system(size: 30, weight: .bold))
@@ -59,16 +59,16 @@ struct SockTugView: View {
             )
             .accessibilityElement()
             .accessibilityLabel("Sock tug")
-            .accessibilityValue(match.crumbTired ? "Crumb is tired. Pull now!" : "Crumb is pulling hard")
+            .accessibilityValue(match.gremlinTired ? "Tired. Pull now!" : "Pulling hard")
             .accessibilityAction(named: "Pull") { assistUntil = Date().addingTimeInterval(0.4) }
         }
     }
 
-    private var pose: CrumbPose {
+    private var pose: GremlinPose {
         if let outcome = match.outcome { return .pose(for: outcome ? .lose : .win) }
         if match.isWarmingUp { return .pose(for: .mischief) }
-        var p = CrumbPose()
-        if match.crumbTired {
+        var p = GremlinPose()
+        if match.gremlinTired {
             p.eyeOpen = 0.45; p.mouthOpen = 0.55; p.mouthSmile = 0; p.browTilt = -10; p.earDroop = 20; p.squash = 1.03
         } else {
             p.eyeOpen = 0.75; p.browTilt = 16; p.fang = 1; p.mouthSmile = -0.2; p.mouthOpen = 0.2; p.squash = 0.93; p.earDroop = -6
@@ -84,13 +84,13 @@ struct SockTugView: View {
         let pull = max(Double(depth / Self.maxDepth), date < assistUntil ? 1 : 0)
         match.step(dt: date.timeIntervalSince(last), pull: pull)
 
-        if match.crumbTired != wasTired {
-            wasTired = match.crumbTired
+        if match.gremlinTired != wasTired {
+            wasTired = match.gremlinTired
             if wasTired {
                 model.haptics.play(.tap, intensity: 1)
                 UIAccessibility.post(notification: .announcement, argument: "Now!")
             }
-        } else if pull > 0.6 && !match.crumbTired && !match.isWarmingUp && date.timeIntervalSince(lastSlip) > 0.25 {
+        } else if pull > 0.6 && !match.gremlinTired && !match.isWarmingUp && date.timeIntervalSince(lastSlip) > 0.25 {
             lastSlip = date
             model.haptics.play(.squish, intensity: 0.4) // the sock slipping
         }

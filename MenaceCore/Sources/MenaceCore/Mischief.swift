@@ -1,6 +1,6 @@
 import Foundation
 
-/// A brief authored moment: Crumb is up to something, the player picks one of two responses.
+/// A brief authored moment: The gremlin is up to something, the player picks one of two responses.
 /// Indulging nudges personality toward menace (+), redirecting toward sweet (−).
 public struct MischiefEvent: Identifiable, Equatable, Sendable {
     public struct Choice: Equatable, Sendable {
@@ -13,7 +13,7 @@ public struct MischiefEvent: Identifiable, Equatable, Sendable {
     }
 
     public let id: String
-    /// SF Symbol of the prop Crumb is holding; it is the only on-screen hint.
+    /// SF Symbol of the prop the gremlin is holding; it is the only on-screen hint.
     public let prop: String
     public let line: String
     public let indulge: Choice
@@ -41,7 +41,7 @@ public enum MischiefBook {
         .init(id: "keys", prop: "key", line: "Shiny jangly things. Hidden.",
               indulge: c("hand.thumbsup", "Play hunt the keys", 0.1, joy: 8, "Warmer. Colder. Mine."),
               redirect: c("arrow.uturn.backward", "Ask nicely for them", -0.14, joy: 3, "...here. Nicely.")),
-        .init(id: "crumbs", prop: "birthday.cake", line: "Crumbs on the counter. My name!",
+        .init(id: "crumbs", prop: "birthday.cake", line: "Crumbs on the counter. Mine!",
               indulge: c("hand.thumbsup", "Let it vacuum them", 0.1, fullness: 8, "Nom. Evidence gone."),
               redirect: c("arrow.uturn.backward", "Offer a proper plate", -0.1, fullness: 12, "Fancy crumbs.")),
         .init(id: "paper", prop: "doc", line: "Important paper. Now confetti.",
@@ -57,7 +57,7 @@ public enum MischiefBook {
               indulge: c("hand.thumbsup", "Admire the portrait", 0.1, joy: 10, "Masterpiece. Obviously."),
               redirect: c("arrow.uturn.backward", "Offer real paper", -0.14, joy: 6, "Gallery opening soon.")),
         .init(id: "remote", prop: "tv", line: "The remote lives here now.",
-              indulge: c("hand.thumbsup", "Let it pick the show", 0.12, joy: 6, "Channel: Crumb TV."),
+              indulge: c("hand.thumbsup", "Let it pick the show", 0.12, joy: 6, "Channel: Menace TV."),
               redirect: c("arrow.uturn.backward", "Trade for belly rubs", -0.12, joy: 10, "Deal. Rub.")),
         .init(id: "sneeze", prop: "wind", line: "I sneezed on purpose.",
               indulge: c("hand.thumbsup", "Say bless you", 0.06, joy: 6, "Bless ME. Correct."),

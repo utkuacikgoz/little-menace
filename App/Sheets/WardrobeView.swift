@@ -1,7 +1,7 @@
 import SwiftUI
 import MenaceCore
 
-/// Owned items equip on tap. Paid items preview on Crumb first; buying is a separate, explicit tap.
+/// Owned items equip on tap. Paid items preview on the gremlin first; buying is a separate, explicit tap.
 struct WardrobeView: View {
     @Environment(GameModel.self) private var model
     @State private var slot: Slot = .hat
@@ -16,12 +16,20 @@ struct WardrobeView: View {
                 if slot == .sock {
                     SockView(style: wardrobe.sock).rotationEffect(.degrees(12))
                 } else {
-                    CrumbView(pose: model.specialPose ?? .pose(for: preview == nil ? .idle : .touch), hat: wardrobe.hat, neck: wardrobe.neck, size: 150)
+                    GremlinView(pose: model.specialPose ?? .pose(for: preview == nil ? .idle : .touch), hat: wardrobe.hat, neck: wardrobe.neck, size: 150)
+                }
+            }
+            .overlay(alignment: .topLeading) {
+                if let prop = model.specialProp {
+                    Image(systemName: prop).font(.title).foregroundStyle(Ink.eye).padding(20)
                 }
             }
             .frame(height: 210)
             .accessibilityElement(children: .ignore)
             .accessibilityLabel(previewLabel)
+            if preview != nil, let line = model.specialLine {
+                Text(line).font(.system(.subheadline, design: .rounded)).multilineTextAlignment(.center)
+            }
 
             HStack(spacing: 10) {
                 ForEach(Slot.allCases, id: \.self) { s in
@@ -61,6 +69,7 @@ struct WardrobeView: View {
         .presentationDetents([.large])
         .presentationBackground(Ink.eye)
         .animation(.spring(response: 0.35, dampingFraction: 0.8), value: preview)
+        .onDisappear { model.cancelSpecial() }
     }
 
     private var visibleItems: [Item] {
@@ -81,7 +90,7 @@ struct WardrobeView: View {
     private var previewLabel: String {
         let w = shownWardrobe
         let parts = [w.hat, w.neck, w.theme].compactMap { $0 }.compactMap { Catalog.item($0)?.name }
-        return "Crumb wearing " + (parts.isEmpty ? "nothing" : parts.joined(separator: ", "))
+        return "\(model.state.titleName) wearing " + (parts.isEmpty ? "nothing" : parts.joined(separator: ", "))
     }
 
     @ViewBuilder private func cell(_ item: Item?) -> some View {
@@ -195,6 +204,7 @@ struct WardrobeView: View {
 
 struct BuyBar: View {
     let productID: String
+    var showsReactions = true
     @Environment(GameModel.self) private var model
 
     var body: some View {
@@ -209,7 +219,8 @@ struct BuyBar: View {
                     .font(.subheadline)
                     .foregroundStyle(Ink.body.opacity(0.7))
             }
-            // Reactions are previewable too: tap to watch Crumb do it.
+            // Reactions are previewable too: tap to watch the gremlin do it.
+            if showsReactions {
             HStack(spacing: 10) {
                 ForEach(collection?.reactionIDs ?? [], id: \.self) { id in
                     if let special = SpecialReaction.find(id) {
@@ -223,6 +234,9 @@ struct BuyBar: View {
                     }
                 }
             }
+            }
+            Text("One purchase. Yours to keep.")
+                .font(.footnote)
             Button {
                 Task { await model.purchases.purchase(productID) }
             } label: {
@@ -230,7 +244,7 @@ struct BuyBar: View {
                     switch model.purchases.state {
                     case .purchasing: ProgressView().tint(Ink.eye)
                     case .pending: Text("Waiting for approval")
-                    default: Text(product?.displayPrice ?? "Unavailable offline")
+                    default: Text(product.map { "Buy for \($0.displayPrice)" } ?? (model.purchases.isLoadingProducts ? "Loading price…" : "Store unavailable"))
                     }
                 }
                 .font(.system(.headline, design: .rounded).weight(.heavy))
@@ -239,8 +253,14 @@ struct BuyBar: View {
                 .foregroundStyle(Ink.eye)
             }
             .disabled(product == nil || model.purchases.state == .purchasing || model.purchases.state == .pending)
-            .accessibilityLabel(product.map { "Buy \(collection?.name ?? "") for \($0.displayPrice)" } ?? "Unavailable offline")
+            .accessibilityIdentifier("buy")
+            .accessibilityLabel(product.map { "Buy \(collection?.name ?? "") for \($0.displayPrice)" } ?? "Store unavailable")
 
+            if product == nil && !model.purchases.isLoadingProducts {
+                Text("You can still preview everything.").font(.footnote)
+                Button("Try store again") { Task { await model.purchases.loadProducts() } }
+                    .frame(minHeight: 44)
+            }
             if case .failed(let message) = model.purchases.state {
                 Text(message).font(.footnote).foregroundStyle(.red)
             }

@@ -1,8 +1,8 @@
 import SwiftUI
 import MenaceCore
 
-/// Flick snacks up; Crumb sways side to side and catches what reaches its mouth.
-/// Catches are decided analytically at launch (ballistic arc vs. Crumb's known sway),
+/// Flick snacks up; The gremlin sways side to side and catches what reaches its mouth.
+/// Catches are decided analytically at launch (ballistic arc vs. The gremlin's known sway),
 /// so frame drops never change the outcome.
 struct SnackTossView: View {
     var finish: (ActivityResult) -> Void
@@ -37,11 +37,11 @@ struct SnackTossView: View {
             let size = geo.size
             TimelineView(.animation) { ctx in
                 let now = ctx.date
-                let cx = crumbX(at: now, width: size.width)
-                let crumbY = size.height * 0.26
+                let cx = gremlinX(at: now, width: size.width)
+                let gremlinY = size.height * 0.26
                 ZStack {
-                    CrumbView(pose: crumbPose, hat: model.state.wardrobe.hat, neck: model.state.wardrobe.neck, size: 150)
-                        .position(x: cx, y: crumbY)
+                    GremlinView(pose: gremlinPose, hat: model.state.wardrobe.hat, neck: model.state.wardrobe.neck, size: 150)
+                        .position(x: cx, y: gremlinY)
                         .accessibilityHidden(true)
 
                     ForEach(flights) { f in
@@ -61,7 +61,7 @@ struct SnackTossView: View {
                             .accessibilityElement()
                             .accessibilityLabel("Snack")
                             .accessibilityHint("Swipe up to throw. Or use the throw action.")
-                            .accessibilityAction(named: "Throw to Crumb") { autoThrow(in: size) }
+                            .accessibilityAction(named: "Throw snack") { autoThrow(in: size) }
                     }
 
                     scoreDots
@@ -72,8 +72,8 @@ struct SnackTossView: View {
         .onAppear { roundStart = Date() }
     }
 
-    private var crumbPose: CrumbPose {
-        var p = CrumbPose.pose(for: chomp ?? .play)
+    private var gremlinPose: GremlinPose {
+        var p = GremlinPose.pose(for: chomp ?? .play)
         if chomp == nil { p.mouthOpen = 0.6 }
         return p
     }
@@ -96,7 +96,7 @@ struct SnackTossView: View {
         CGPoint(x: size.width / 2, y: size.height * 0.84)
     }
 
-    private func crumbX(at date: Date, width: CGFloat) -> CGFloat {
+    private func gremlinX(at date: Date, width: CGFloat) -> CGFloat {
         let t = date.timeIntervalSince(roundStart)
         let amplitude = width * (reduceMotion ? 0.14 : 0.28)
         let period = reduceMotion ? 5.0 : 3.2
@@ -120,13 +120,13 @@ struct SnackTossView: View {
             }
     }
 
-    /// VoiceOver / Switch Control: aims at where Crumb will be. Still misses sometimes.
+    /// VoiceOver / Switch Control: aims at where the gremlin will be. Still misses sometimes.
     private func autoThrow(in size: CGSize) {
         let origin = launchPoint(in: size)
         let mouthY = size.height * 0.26 + 150 * 0.08
         let vy: CGFloat = -1650
         guard let t = crossing(originY: origin.y, vy: vy, targetY: mouthY) else { return }
-        let target = crumbX(at: Date().addingTimeInterval(t), width: size.width) + CGFloat.random(in: -40...40)
+        let target = gremlinX(at: Date().addingTimeInterval(t), width: size.width) + CGFloat.random(in: -40...40)
         launch(from: origin, velocity: CGVector(dx: (target - origin.x) / CGFloat(t), dy: vy), size: size)
     }
 
@@ -146,8 +146,8 @@ struct SnackTossView: View {
         var catchTime: Double?
         if let t = crossing(originY: origin.y, vy: velocity.dy, targetY: mouthY) {
             let snackX = origin.x + velocity.dx * CGFloat(t)
-            let crumbAtThen = crumbX(at: now.addingTimeInterval(t), width: size.width)
-            if abs(snackX - crumbAtThen) < Self.catchRadius { catchTime = t }
+            let gremlinAtThen = gremlinX(at: now.addingTimeInterval(t), width: size.width)
+            if abs(snackX - gremlinAtThen) < Self.catchRadius { catchTime = t }
         }
         flights.append(Flight(start: now, origin: origin, velocity: velocity, caughtAfter: catchTime))
         thrown += 1

@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Crumb's snack. Also the feed button's icon.
+/// The gremlin's snack. Also the feed button's icon.
 struct CookieView: View {
     static let chips: [CGPoint] = [CGPoint(x: -0.2, y: -0.15), CGPoint(x: 0.18, y: -0.2), CGPoint(x: 0.05, y: 0.18), CGPoint(x: -0.22, y: 0.2), CGPoint(x: 0.25, y: 0.12)]
     var size: CGFloat = 36
