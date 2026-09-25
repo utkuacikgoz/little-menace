@@ -8,6 +8,7 @@ on:
       bundle_id:
         description: Bundle ID registered in your Apple Developer account
         required: true
+        default: com.belevate.littlemenace
       notes:
         description: What to test (shown in the run summary)
         required: false
@@ -44,9 +45,6 @@ jobs:
           if [ -n "$missing" ]; then echo "::error::Missing repository secrets:$missing"; exit 1; fi
           if ! echo "$BUNDLE_ID" | grep -Eq '^[A-Za-z0-9-]+(\.[A-Za-z0-9-]+)+$'; then
             echo "::error::bundle_id '$BUNDLE_ID' is not a valid bundle identifier"; exit 1
-          fi
-          if [ "$BUNDLE_ID" = "app.littlemenace.LittleMenace" ]; then
-            echo "::error::That is the placeholder bundle ID. Use the one you registered."; exit 1
           fi
 
       - name: Toolchain

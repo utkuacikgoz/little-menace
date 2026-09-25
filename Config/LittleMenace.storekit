@@ -15,7 +15,7 @@
           "locale" : "en_US"
         }
       ],
-      "productID" : "app.littlemenace.collection.midnight",
+      "productID" : "com.belevate.littlemenace.midnight",
       "referenceName" : "Midnight Snack Collection",
       "type" : "NonConsumable"
     }

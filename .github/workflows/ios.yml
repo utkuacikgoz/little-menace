@@ -57,7 +57,7 @@ jobs:
           set -e
           mkdir -p shots
           APP=build/Build/Products/Debug-iphonesimulator/LittleMenace.app
-          BID=app.littlemenace.LittleMenace
+          BID=com.belevate.littlemenace
           udid() { xcrun simctl list devices available | grep -F "$1 (" | head -1 | sed -E 's/.*\(([0-9A-F-]{36})\).*/\1/'; }
           boot() { xcrun simctl boot "$1" || true; xcrun simctl bootstatus "$1" -b; xcrun simctl install "$1" "$APP"; }
           shot() { # udid name [launch args...]

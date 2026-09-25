@@ -4,8 +4,8 @@ import MenaceCore
 
 /// Public product support and privacy pages, versioned with the app.
 enum AppLinks {
-    static let privacy = URL(string: "https://github.com/utkuacikgoz/little-menace-/blob/main/docs/Privacy.md")!
-    static let support = URL(string: "https://github.com/utkuacikgoz/little-menace-/blob/main/docs/Support.md")!
+    static let privacy = URL(string: "https://github.com/utkuacikgoz/little-menace/blob/main/docs/Privacy.md")!
+    static let support = URL(string: "https://github.com/utkuacikgoz/little-menace/blob/main/docs/Support.md")!
 }
 
 struct SettingsView: View {
