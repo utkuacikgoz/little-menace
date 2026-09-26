@@ -1,0 +1,138 @@
+[
+  {
+    "id": "01",
+    "shot": "02-home.jpg",
+    "bg": "#FFF3DF",
+    "ink": "#241F33",
+    "brand": "#FF7A2F",
+    "mark": "#FF4F9A",
+    "A": {
+      "head": "Adopt a tiny<br><mark>menace.</mark>",
+      "sub": "It has opinions. And a scoreboard."
+    },
+    "B": {
+      "head": "Tiny. Needy.<br><mark>Yours.</mark>",
+      "sub": "A pocket pet with a fang and a score."
+    },
+    "pick": "A"
+  },
+  {
+    "id": "02",
+    "shot": "01-petting.jpg",
+    "bg": "#7B4DFF",
+    "ink": "#FFF3DF",
+    "brand": "#FFF3DF",
+    "mark": "#FFD46B",
+    "A": {
+      "head": "Pet it till it<br><mark>giggles.</mark>",
+      "sub": "Just don't poke it 11 times in a row."
+    },
+    "B": {
+      "head": "Belly rubs<br><mark>welcome.</mark>",
+      "sub": "Pokes, not so much."
+    },
+    "pick": "A"
+  },
+  {
+    "id": "03",
+    "shot": "09-poked.jpg",
+    "bg": "#FF6FB5",
+    "ink": "#241F33",
+    "brand": "#241F33",
+    "mark": "#FFD46B",
+    "A": {
+      "head": "Poke it too much?<br><mark>It keeps score.</mark>",
+      "sub": "Care earns points. Neglect costs them."
+    },
+    "B": {
+      "head": "Ignore it?<br><mark>Lose points.</mark>",
+      "sub": "Hungry too long, woken too early. It notices."
+    },
+    "pick": "A"
+  },
+  {
+    "id": "04",
+    "shot": "05-round-won.jpg",
+    "bg": "#FFD46B",
+    "ink": "#241F33",
+    "brand": "#241F33",
+    "mark": "#FF4F9A",
+    "A": {
+      "head": "Three tiny games.<br><mark>Big bragging rights.</mark>",
+      "sub": "Toss, tug, hunt. Every round counts."
+    },
+    "B": {
+      "head": "Play hard.<br><mark>Score big.</mark>",
+      "sub": "Three tiny games. One very competitive gremlin."
+    },
+    "pick": "B"
+  },
+  {
+    "id": "05",
+    "shot": "06-mischief.jpg",
+    "bg": "#1D2560",
+    "ink": "#FFF3DF",
+    "brand": "#FFF3DF",
+    "mark": "#FF7A2F",
+    "A": {
+      "head": "It's up to<br><mark>something.</mark>",
+      "sub": "Let it, or stop it. It remembers."
+    },
+    "B": {
+      "head": "Who,<br><mark>me?</mark>",
+      "sub": "Mischief happens. You decide what's next."
+    },
+    "pick": "B"
+  },
+  {
+    "id": "06",
+    "shot": "07-wardrobe.jpg",
+    "bg": "#14B0E0",
+    "ink": "#241F33",
+    "brand": "#241F33",
+    "mark": "#FFD46B",
+    "A": {
+      "head": "Dress your<br><mark>menace.</mark>",
+      "sub": "Hats, scarves, socks and whole new skies."
+    },
+    "B": {
+      "head": "Fashion<br><mark>crimes.</mark>",
+      "sub": "Tiny hats. Big attitude."
+    },
+    "pick": "B"
+  },
+  {
+    "id": "07",
+    "shot": "10-points.jpg",
+    "bg": "#2BC48A",
+    "ink": "#241F33",
+    "brand": "#241F33",
+    "mark": "#FFF3DF",
+    "A": {
+      "head": "Every point<br><mark>tells a story.</mark>",
+      "sub": "Earned, lost, and totally deserved."
+    },
+    "B": {
+      "head": "Care wins.<br><mark>Neglect costs.</mark>",
+      "sub": "Watch your score climb. Or don't."
+    },
+    "pick": "B"
+  },
+  {
+    "id": "08",
+    "shot": "11-share.jpg",
+    "bg": "#FF7A2F",
+    "ink": "#241F33",
+    "brand": "#241F33",
+    "mark": "#FFF3DF",
+    "A": {
+      "head": "Show off your<br><mark>menace.</mark>",
+      "sub": "Share its card. Start a rivalry."
+    },
+    "B": {
+      "head": "Whose menace<br><mark>is worse?</mark>",
+      "sub": "Share the card. Compare the chaos."
+    },
+    "pick": "B"
+  }
+]
