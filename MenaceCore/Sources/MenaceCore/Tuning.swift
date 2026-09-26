@@ -23,7 +23,7 @@ public enum Tuning {
     public static let refuseNapAt = 75.0
     public static let tooSleepyToPlay = 15.0
     public static let maxNap: TimeInterval = 25 * 60
-    /// Waking before this counts as an early (grumpy) wake. No penalty beyond the face.
+    /// Waking before this counts as an early (grumpy) wake, which costs points.
     public static let restfulNap: TimeInterval = 5 * 60
     public static let petJoy = 2.0
 
@@ -44,6 +44,23 @@ public enum Tuning {
     public static let giftFallbackXP = 60
     public static let stampsForBonus = 3
     public static let stampsForGift = 5
+
+    // MARK: Points
+    // Every XP gain also earns the same number of points. Points can also be lost; XP and levels never are.
+    /// Fullness below this is "hungry" (the home caption reads Hungry over 75%).
+    public static let hungryBelow = 25.0
+    public static let hungryPenaltyPerHour = 3
+    public static let wokeEarlyPenalty = 5
+    /// Playing a round with energy below this (Sleepy over 70%) costs points.
+    public static let wornOutBelow = 30.0
+    public static let wornOutPenalty = 4
+    public static let forceFedPenalty = 2
+    /// More than `pokesAllowed` pets within `pokeWindow` seconds and each extra pet costs a point.
+    public static let pokeWindow: TimeInterval = 20
+    public static let pokesAllowed = 10
+    public static let pokePenalty = 1
+    public static let maxPointsLostPerDay = 40
+    public static let pointsHistoryLimit = 40
 
     // MARK: Mischief
     public static let firstMischiefDelay: TimeInterval = 90

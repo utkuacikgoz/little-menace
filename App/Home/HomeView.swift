@@ -2,7 +2,7 @@ import SwiftUI
 import MenaceCore
 
 enum HomeSheet: String, Identifiable {
-    case wardrobe, stamps, share, settings
+    case wardrobe, stamps, share, settings, points
     #if DEBUG
     /// Screenshot tours only: the Midnight Snack page on its own.
     case collection
@@ -50,7 +50,7 @@ struct HomeView: View {
                     SpeechBubble(text: bubble.text)
                         .accessibilityIdentifier("pet-dialogue")
                         .frame(maxWidth: geo.size.width - 64)
-                        .position(x: center.x, y: model.pendingMischief == nil ? center.y - petSize * 0.72 : min(center.y + petSize * 0.68, geo.size.height - 180))
+                        .position(x: center.x, y: model.pendingMischief == nil ? max(center.y - petSize * 0.72, Self.belowScore + 10) : min(center.y + petSize * 0.68, geo.size.height - 180))
                         .transition(.opacity)
                         .id(bubble.id)
                 }
@@ -66,7 +66,7 @@ struct HomeView: View {
 
                 if let event = model.pendingMischief {
                     mischiefProp(event)
-                        .position(x: center.x, y: center.y - petSize * 0.85)
+                        .position(x: center.x, y: max(center.y - petSize * 0.85, Self.belowScore))
                 }
 
                 if let snackAt {
@@ -99,7 +99,12 @@ struct HomeView: View {
             .animation(.spring(response: 0.35, dampingFraction: 0.7), value: model.toast)
             .animation(.spring(response: 0.4, dampingFraction: 0.7), value: model.showReminderOffer)
             .animation(.spring(response: 0.4, dampingFraction: 0.7), value: model.showNamePrompt)
-            .onChange(of: sheet != nil || showMischief || model.activity != nil) { _, covered in
+            .overlayPreferenceValue(CoachAnchorKey.self) { anchors in
+                if model.showHowToPlay {
+                    CoachMarks(anchors: anchors)
+                }
+            }
+            .onChange(of: sheet != nil || showMischief || model.activity != nil || model.showHowToPlay) { _, covered in
                 model.homeObscured = covered
                 if !covered { model.cancelSpecial() }
             }
@@ -123,6 +128,7 @@ struct HomeView: View {
             case .stamps: StampCardView()
             case .share: ShareCardSheet()
             case .settings: SettingsView()
+            case .points: PointsSheet()
             #if DEBUG
             case .collection: NavigationStack { CollectionView(collection: Catalog.collections[0]) }
             #endif
@@ -186,6 +192,7 @@ struct HomeView: View {
             .onTapGesture { model.pet() }
             .onLongPressGesture(minimumDuration: 0.5) { model.longPress() }
             .gesture(drag)
+            .coachTarget(.pet)
             .position(center)
             .accessibilityElement()
             .accessibilityLabel(model.state.titleName)
@@ -212,6 +219,9 @@ struct HomeView: View {
         return parts.joined(separator: ", ")
     }
 
+    /// Centre line for things placed under the scoreboard at the top.
+    static let belowScore: CGFloat = 116
+
     static func rubberBand(_ t: CGSize, limit: CGFloat) -> CGSize {
         func band(_ v: CGFloat) -> CGFloat {
             let sign: CGFloat = v < 0 ? -1 : 1
@@ -223,24 +233,33 @@ struct HomeView: View {
     // MARK: Chrome
 
     private var topBar: some View {
-        HStack {
-            Spacer()
-            Menu {
-                Button { sheet = .wardrobe } label: { Label("Wardrobe", systemImage: "tshirt") }
-                Button { sheet = .stamps } label: { Label("Stamps", systemImage: "seal") }
-                Button { sheet = .share } label: { Label("Share", systemImage: "square.and.arrow.up") }
-                Button { sheet = .settings } label: { Label("Settings", systemImage: "gearshape") }
-            } label: {
-                Image(systemName: "ellipsis")
-                    .font(.title2.weight(.heavy))
-                    .dynamicTypeSize(...DynamicTypeSize.xxLarge) // stays inside its circle
-                    .foregroundStyle(.white)
-                    .frame(width: 48, height: 48)
-                    .background(.white.opacity(0.18), in: Circle())
+        ZStack(alignment: .top) {
+            PointsBadge { sheet = .points }.coachTarget(.points)
+            HStack {
+                Spacer()
+                menu
             }
-            .accessibilityLabel("More")
         }
         .padding(.top, 4)
+        .animation(.spring(response: 0.35, dampingFraction: 0.7), value: model.pointsDelta)
+        .animation(.spring(response: 0.35, dampingFraction: 0.7), value: model.state.points.total)
+    }
+
+    private var menu: some View {
+        Menu {
+            Button { sheet = .wardrobe } label: { Label("Wardrobe", systemImage: "tshirt") }
+            Button { sheet = .stamps } label: { Label("Stamps", systemImage: "seal") }
+            Button { sheet = .share } label: { Label("Share", systemImage: "square.and.arrow.up") }
+            Button { sheet = .settings } label: { Label("Settings", systemImage: "gearshape") }
+        } label: {
+            Image(systemName: "ellipsis")
+                .font(.title2.weight(.heavy))
+                .dynamicTypeSize(...DynamicTypeSize.xxLarge) // stays inside its circle
+                .foregroundStyle(.white)
+                .frame(width: 48, height: 48)
+                .background(.white.opacity(0.18), in: Circle())
+        }
+        .accessibilityLabel("More")
     }
 
     private func controls(mouth: CGPoint) -> some View {
@@ -264,6 +283,7 @@ struct HomeView: View {
                         .font(.system(size: 28, weight: .bold))
                         .foregroundStyle(.white)
                 }
+                .coachTarget(.play)
                 RingButton(ring: needs.energy / 100, label: model.state.isAsleep ? "Wake" : "Nap",
                            caption: needCaption(.energy, needs.energy), action: {
                     showPlay = false
@@ -273,6 +293,7 @@ struct HomeView: View {
                         .font(.system(size: 28, weight: .bold))
                         .foregroundStyle(.white)
                 }
+                .coachTarget(.nap)
             }
         }
     }
@@ -307,6 +328,7 @@ struct HomeView: View {
             CookieView(size: 34)
         }
         .simultaneousGesture(drag)
+        .coachTarget(.feed)
     }
 
     private func deliverSnack(from: CGPoint, to mouth: CGPoint, dropped: Bool) {

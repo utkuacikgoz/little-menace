@@ -4,6 +4,8 @@ import Foundation
 public enum Reaction: String, CaseIterable, Sendable {
     case idle, attention, touch, feed, play, sleepy, asleep, wake, grumpyWake, mischief
     case refuseFood, refuseNap, tooSleepy, busy, win, lose, levelUp, discovery
+    /// Petted too much, too fast.
+    case annoyed
 }
 
 public enum Refusal: Error, Equatable, Sendable {
@@ -44,17 +46,30 @@ public struct Game: Sendable {
     /// Call on launch, on foreground, and periodically while open.
     public mutating func tick(now: Date) -> [GameEvent] {
         var events: [GameEvent] = []
+        let elapsed = now.timeIntervalSince(state.lastSimulated)
+        if elapsed > 0 {
+            let rate = state.isAsleep ? Tuning.fullnessDecayAsleep : Tuning.fullnessDecayAwake
+            state.points.hungryHours += TimeModel.hoursBelow(Tuning.hungryBelow, start: state.needs.fullness, rate: rate,
+                                                             floor: Tuning.absenceFloor.fullness,
+                                                             hours: min(elapsed, Tuning.maxElapsed) / 3600)
+        }
         if TimeModel.advance(&state, to: now) {
             state.counters.naps += 1
             events.append(.autoWoke)
             progressChallenge(.restfulNap, by: 1, now: now, events: &events)
-            discover(.firstNap, events: &events)
+            discover(.firstNap, now: now, events: &events)
         }
         let today = days.dayKey(now)
         if state.counters.lastVisitDay != today {
             state.counters.lastVisitDay = today
             state.counters.visitDays += 1
-            if state.counters.visitDays >= 5 { discover(.regular, events: &events) }
+            if state.counters.visitDays >= 5 { discover(.regular, now: now, events: &events) }
+        }
+        // Hunger is charged per whole hour spent hungry.
+        let hungryHours = Int(state.points.hungryHours)
+        if hungryHours > 0 {
+            state.points.hungryHours -= Double(hungryHours)
+            losePoints(hungryHours * Tuning.hungryPenaltyPerHour, .hungry, now: now, events: &events)
         }
         rollOver(now: now)
         return events
@@ -87,22 +102,38 @@ public struct Game: Sendable {
         var events = tick(now: now)
         if state.isAsleep { return .refused(.asleep) }
         if state.session != nil { return .refused(.busy) }
-        if state.needs.fullness >= Tuning.refuseFoodAt { return .refused(.full) }
+        if state.needs.fullness >= Tuning.refuseFoodAt {
+            losePoints(Tuning.forceFedPenalty, .forceFed, now: now, events: &events)
+            return Outcome(reaction: .refuseFood, refusal: .full, events: events)
+        }
         state.needs.fullness += Tuning.feedAmount
         state.needs.joy += Tuning.feedJoy
         state.needs.clamp()
+        if state.needs.fullness >= Tuning.hungryBelow { state.points.hungryHours = 0 }
         state.counters.feeds += 1
-        careXP(Tuning.feedXP, now: now, events: &events)
-        discover(.firstBite, events: &events)
+        careXP(Tuning.feedXP, .fed, now: now, events: &events)
+        discover(.firstBite, now: now, events: &events)
         return Outcome(reaction: .feed, refusal: nil, events: events)
     }
 
     public mutating func pet(now: Date) -> Outcome {
         var events = tick(now: now)
         if state.isAsleep { return Outcome(reaction: .asleep, refusal: nil, events: events) }
+        if let start = state.points.pokeBurstStart, now.timeIntervalSince(start) >= 0,
+           now.timeIntervalSince(start) <= Tuning.pokeWindow {
+            state.points.pokeBurst += 1
+        } else {
+            state.points.pokeBurstStart = now
+            state.points.pokeBurst = 1
+        }
+        if state.points.pokeBurst > Tuning.pokesAllowed {
+            // Too much, too fast: no joy, no reward, and it costs a point.
+            losePoints(Tuning.pokePenalty, .poked, now: now, events: &events)
+            return Outcome(reaction: .annoyed, refusal: nil, events: events)
+        }
         state.needs.joy = min(100, state.needs.joy + Tuning.petJoy)
         state.counters.pets += 1
-        careXP(Tuning.petXP, now: now, events: &events)
+        careXP(Tuning.petXP, .petted, now: now, events: &events)
         progressChallenge(.petEight, by: 1, now: now, events: &events)
         return Outcome(reaction: .touch, refusal: nil, events: events)
     }
@@ -125,7 +156,9 @@ public struct Game: Sendable {
         if restful {
             state.counters.naps += 1
             progressChallenge(.restfulNap, by: 1, now: now, events: &events)
-            discover(.firstNap, events: &events)
+            discover(.firstNap, now: now, events: &events)
+        } else {
+            losePoints(Tuning.wokeEarlyPenalty, .wokeEarly, now: now, events: &events)
         }
         return Outcome(reaction: restful ? .wake : .grumpyWake, refusal: nil, events: events)
     }
@@ -155,6 +188,7 @@ public struct Game: Sendable {
         state.session = nil
         var events = tick(now: now)
 
+        let wornOut = state.needs.energy < Tuning.wornOutBelow
         state.needs.energy -= Tuning.playEnergyCost
         state.needs.fullness -= Tuning.playFullnessCost
         state.needs.joy += Tuning.playJoy * (0.5 + 0.5 * result.quality)
@@ -165,27 +199,28 @@ public struct Game: Sendable {
         if result.won { state.counters.wins[key, default: 0] += 1 }
         if !state.counters.playedKinds.contains(key) { state.counters.playedKinds.append(key) }
 
-        addXP(Tuning.activityBaseXP + Int((Double(Tuning.activityBonusXP) * result.quality).rounded()), events: &events)
+        addXP(Tuning.activityBaseXP + Int((Double(Tuning.activityBonusXP) * result.quality).rounded()), .played, now: now, events: &events)
+        if wornOut { losePoints(Tuning.wornOutPenalty, .wornOut, now: now, events: &events) }
         stampToday(gold: false, now: now, events: &events)
 
         switch session.kind {
         case .snackToss:
             progressChallenge(.catchSix, toAtLeast: result.score, now: now, events: &events)
-            if result.quality >= 1 { discover(.perfectToss, events: &events) }
+            if result.quality >= 1 { discover(.perfectToss, now: now, events: &events) }
         case .sockTug:
             if result.won {
                 progressChallenge(.winTug, by: 1, now: now, events: &events)
-                discover(.firstTugWin, events: &events)
+                discover(.firstTugWin, now: now, events: &events)
             }
         case .cushionHunt:
             if result.won && result.score == 1 {
                 progressChallenge(.firstTryFind, by: 1, now: now, events: &events)
-                discover(.firstTryFind, events: &events)
+                discover(.firstTryFind, now: now, events: &events)
             }
         }
         progressChallenge(.playAllThree, toAtLeast: state.counters.playedKinds.count, now: now, events: &events)
         let hour = days.hour(now)
-        if hour < 4 { discover(.nightOwl, events: &events) }
+        if hour < 4 { discover(.nightOwl, now: now, events: &events) }
 
         return Outcome(reaction: result.won ? .win : .lose, refusal: nil, events: events)
     }
@@ -208,9 +243,9 @@ public struct Game: Sendable {
         state.counters.mischiefResolved += 1
         state.mischief.recent = Array((state.mischief.recent + [id]).suffix(8))
         state.mischief.nextAt = now.addingTimeInterval(MischiefBook.gap(seed: "\(id):\(state.counters.mischiefResolved)"))
-        addXP(Tuning.mischiefXP, events: &events)
-        if state.personality >= 0.6 { discover(.menace, events: &events) }
-        if state.personality <= -0.6 { discover(.softie, events: &events) }
+        addXP(Tuning.mischiefXP, .mischief, now: now, events: &events)
+        if state.personality >= 0.6 { discover(.menace, now: now, events: &events) }
+        if state.personality <= -0.6 { discover(.softie, now: now, events: &events) }
         return Outcome(reaction: indulge ? .mischief : .touch, refusal: nil, events: events)
     }
 
@@ -220,11 +255,13 @@ public struct Game: Sendable {
         state.granted.insert(key).inserted
     }
 
-    private mutating func addXP(_ amount: Int, events: inout [GameEvent]) {
+    private mutating func addXP(_ amount: Int, _ reason: PointReason, now: Date, events: inout [GameEvent]) {
         guard amount > 0 else { return }
         let before = state.level
         state.xp += amount
         events.append(.xp(amount))
+        let gained = state.points.apply(amount, reason, day: days.dayKey(now), at: now)
+        if gained != 0 { events.append(.points(gained, reason)) }
         let after = state.level
         guard after > before else { return }
         for level in (before + 1)...after {
@@ -233,7 +270,13 @@ public struct Game: Sendable {
         }
     }
 
-    private mutating func careXP(_ amount: Int, now: Date, events: inout [GameEvent]) {
+    /// Points only: XP and levels are never taken away.
+    private mutating func losePoints(_ amount: Int, _ reason: PointReason, now: Date, events: inout [GameEvent]) {
+        let lost = state.points.apply(-amount, reason, day: days.dayKey(now), at: now)
+        if lost != 0 { events.append(.points(lost, reason)) }
+    }
+
+    private mutating func careXP(_ amount: Int, _ reason: PointReason, now: Date, events: inout [GameEvent]) {
         let today = days.dayKey(now)
         if state.counters.careXPDay != today {
             state.counters.careXPDay = today
@@ -242,13 +285,13 @@ public struct Game: Sendable {
         let allowed = min(amount, Tuning.careXPPerDayCap - state.counters.careXP)
         guard allowed > 0 else { return }
         state.counters.careXP += allowed
-        addXP(allowed, events: &events)
+        addXP(allowed, reason, now: now, events: &events)
     }
 
-    private mutating func discover(_ d: Discovery, events: inout [GameEvent]) {
+    private mutating func discover(_ d: Discovery, now: Date, events: inout [GameEvent]) {
         guard state.discoveries.insert(d.rawValue).inserted else { return }
         events.append(.discovery(d))
-        addXP(Tuning.discoveryXP, events: &events)
+        addXP(Tuning.discoveryXP, .discovery, now: now, events: &events)
     }
 
     private mutating func progressChallenge(_ kind: ChallengeKind, by amount: Int, now: Date, events: inout [GameEvent]) {
@@ -268,7 +311,7 @@ public struct Game: Sendable {
         state.challenge.completed = true
         guard grantOnce("challenge:" + today) else { return }
         events.append(.challengeComplete(kind))
-        addXP(Tuning.challengeXP, events: &events)
+        addXP(Tuning.challengeXP, .challenge, now: now, events: &events)
         stampToday(gold: true, now: now, events: &events)
     }
 
@@ -293,7 +336,7 @@ public struct Game: Sendable {
         let count = card.days.count
         if count >= Tuning.stampsForBonus, grantOnce("week:\(week):bonus") {
             events.append(.stampBonus)
-            addXP(Tuning.stampMilestoneXP, events: &events)
+            addXP(Tuning.stampMilestoneXP, .stampBonus, now: now, events: &events)
         }
         if count >= Tuning.stampsForGift, grantOnce("week:\(week):gift") {
             let rotation = Catalog.weeklyGiftRotation
@@ -303,10 +346,10 @@ public struct Game: Sendable {
                 state.wardrobe.earned.insert(gift)
                 events.append(.weeklyGift(gift))
             } else {
-                addXP(Tuning.giftFallbackXP, events: &events)
+                addXP(Tuning.giftFallbackXP, .weeklyGift, now: now, events: &events)
             }
         }
-        if count >= 7 { discover(.fullCard, events: &events) }
+        if count >= 7 { discover(.fullCard, now: now, events: &events) }
     }
 
     // MARK: Reset
@@ -314,7 +357,9 @@ public struct Game: Sendable {
     public mutating func reset(now: Date) {
         let prefs = state.prefs
         // A new gremlin starts unnamed; only sound and haptics carry over.
+        let knowsHowToPlay = state.howToPlayShown
         state = PetState(now: now)
+        state.howToPlayShown = knowsHowToPlay
         state.prefs.sound = prefs.sound
         state.prefs.haptics = prefs.haptics
         _ = tick(now: now)

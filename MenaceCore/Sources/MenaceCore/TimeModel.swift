@@ -71,6 +71,16 @@ public enum TimeModel {
         return false
     }
 
+    /// Hours out of the next `hours` that a need starting at `start` and falling at `rate` per hour
+    /// spends below `threshold`. Passing time stops at `floor`, so a floor at or above the
+    /// threshold means time alone never gets there.
+    public static func hoursBelow(_ threshold: Double, start: Double, rate: Double, floor: Double, hours: Double) -> Double {
+        guard hours > 0 else { return 0 }
+        if start < threshold { return hours }
+        guard rate > 0, floor < threshold else { return 0 }
+        return max(0, hours - (start - threshold) / rate)
+    }
+
     /// When a nap in progress is expected to end on its own, for the optional wake notification.
     public static func expectedWake(_ s: PetState) -> Date? {
         guard let start = s.napStartedAt else { return nil }

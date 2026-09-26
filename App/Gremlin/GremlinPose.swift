@@ -61,6 +61,8 @@ struct GremlinPose: Equatable {
             p.eyeOpen = 0.3; p.browTilt = -10; p.mouthOpen = 0.7; p.mouthSmile = 0; p.earDroop = 26; p.squash = 0.95
         case .win, .levelUp:
             p.eyeHappy = 1; p.armsUp = 1; p.mouthOpen = 0.7; p.mouthSmile = 1; p.squash = 1.06; p.hop = 14; p.blush = 0.9; p.tailWag = 2.4
+        case .annoyed: // squinting, ears back, leaning away from the finger
+            p.eyeOpen = 0.55; p.browTilt = 18; p.mouthSmile = -0.6; p.mouthOpen = 0.12; p.earDroop = 10; p.squash = 0.94; p.lean = 8; p.fang = 1; p.tailWag = 0.4
         case .lose:
             p.eyeOpen = 0.8; p.browTilt = -12; p.mouthSmile = -0.5; p.mouthOpen = 0.05; p.earDroop = 16; p.squash = 0.96
         }
