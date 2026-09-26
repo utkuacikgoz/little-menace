@@ -82,12 +82,12 @@ struct PointsBadge: View {
             .dynamicTypeSize(...DynamicTypeSize.xLarge)
         }
         .buttonStyle(SquishButtonStyle())
-        // One element for VoiceOver (and no loose words on the home screen).
-        .accessibilityElement(children: .ignore)
-        .accessibilityAddTraits(.isButton)
-        .accessibilityLabel("Points")
-        .accessibilityValue("\(s.points.total). Today plus \(gained), minus \(lost).")
-        .accessibilityHint("Shows how points work")
+        // One plain button for VoiceOver, so the scoreboard's words don't show up on their own.
+        .accessibilityRepresentation {
+            Button("Points", action: open)
+                .accessibilityValue("\(s.points.total). Today plus \(gained), minus \(lost).")
+                .accessibilityHint("Shows how points work")
+        }
         .accessibilityIdentifier("points")
     }
 }

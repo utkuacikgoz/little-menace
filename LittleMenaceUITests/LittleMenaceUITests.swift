@@ -36,7 +36,7 @@ final class LittleMenaceUITests: XCTestCase {
         }
         // Almost no words at rest: the need numbers under the buttons, plus at most a transient speech bubble.
         let words = app.staticTexts.matching(NSPredicate(format: "NOT (label MATCHES %@)", ".*[0-9]+%?"))
-        XCTAssertLessThanOrEqual(words.count, 1)
+        XCTAssertLessThanOrEqual(words.count, 1, words.allElementsBoundByIndex.map(\.label).joined(separator: " | "))
     }
 
     func testPetDragAndFeedUntilFull() {
