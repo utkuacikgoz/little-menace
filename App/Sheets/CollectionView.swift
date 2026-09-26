@@ -24,6 +24,16 @@ struct CollectionView: View {
                 Text("A nightcap, moon charm, starry sky, glow sock and three little performances.")
                     .font(.subheadline)
                     .multilineTextAlignment(.center)
+                // What the collection contains.
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("What's inside").font(.system(.headline, design: .rounded).weight(.heavy))
+                    ForEach(collection.itemIDs, id: \.self) { id in
+                        if let item = Catalog.item(id) {
+                            Label(item.name, systemImage: "checkmark.circle.fill")
+                        }
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
                 VStack(spacing: 10) {
                     ForEach(collection.reactionIDs, id: \.self) { id in
                         if let special = SpecialReaction.find(id) {

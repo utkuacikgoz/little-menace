@@ -30,7 +30,7 @@ public enum Catalog {
     public static let defaultTheme = "tangerine"
     public static let defaultSock = "stripe"
 
-    public static let midnightProductID = "app.littlemenace.collection.midnight"
+    public static let midnightProductID = "com.belevate.littlemenace.midnight"
 
     public static let items: [Item] = [
         // Themes: one bold background each.
