@@ -194,8 +194,9 @@ final class LittleMenaceUITests: XCTestCase {
         let go = app.buttons["Let's go"]
         XCTAssertTrue(go.waitForExistence(timeout: 3))
         go.tap()
+        XCTAssertTrue(waitGone(go), "the tour closes")
         XCTAssertTrue(pet.waitForExistence(timeout: 5))
-        XCTAssertTrue(waitHittable(pet), "the guide closes onto the home screen")
+        XCTAssertTrue(waitHittable(pet, timeout: 10), "the guide closes onto the home screen: \(app.debugDescription.replacingOccurrences(of: "\n", with: " ⏎ "))")
 
         app.terminate()
         launch(reset: false)
