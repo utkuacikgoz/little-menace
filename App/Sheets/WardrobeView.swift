@@ -37,9 +37,12 @@ struct WardrobeView: View {
                         slot = s
                         preview = nil
                     } label: {
-                        Image(systemName: symbol(for: s))
-                            .font(.title3.weight(.bold))
-                            .frame(maxWidth: .infinity, minHeight: 48)
+                        VStack(spacing: 2) {
+                            Image(systemName: symbol(for: s))
+                                .font(.title3.weight(.bold))
+                            Text(slotName(s)).font(.system(.caption2, design: .rounded).weight(.heavy))
+                        }
+                            .frame(maxWidth: .infinity, minHeight: 56)
                             .background(Ink.body.opacity(slot == s ? 1 : 0.08), in: Capsule())
                             .foregroundStyle(slot == s ? Ink.eye : Ink.body)
                     }
@@ -70,6 +73,17 @@ struct WardrobeView: View {
         .presentationBackground(Ink.eye)
         .animation(.spring(response: 0.35, dampingFraction: 0.8), value: preview)
         .onDisappear { model.cancelSpecial() }
+        #if DEBUG
+        .onAppear {
+            // Screenshot tours: `-LMSlot neck` opens a tab, `-LMPreview nightcap` previews a paid item.
+            let d = UserDefaults.standard
+            if let raw = d.string(forKey: "LMSlot"), let s = Slot(rawValue: raw) { slot = s }
+            if let id = d.string(forKey: "LMPreview"), let item = Catalog.item(id) {
+                slot = item.slot
+                preview = item
+            }
+        }
+        #endif
     }
 
     private var visibleItems: [Item] {
@@ -119,7 +133,7 @@ struct WardrobeView: View {
                     .background(Ink.body.opacity(0.06), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
                     .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous)
                         .stroke(Ink.body, lineWidth: equipped || previewing ? 3 : 0))
-                    .opacity(owned || item.map { isPaid($0) } == true ? 1 : 0.45)
+                    .opacity(owned || item.map { isPaid($0) } == true ? 1 : 0.7)
                 if let item, !owned { lockBadge(item) }
             }
         }
@@ -134,10 +148,11 @@ struct WardrobeView: View {
                 Circle().fill(ThemePalette.forID(item.id).day).frame(width: 40, height: 40)
             case .sock:
                 SockView(style: item.id).scaleEffect(0.35).frame(width: 40, height: 50)
+            // Wearables draw in the 200×220 gremlin space; move the item to the centre, then shrink it to fit.
             case .hat:
-                Wearables(hat: item.id, neck: nil).scaleEffect(0.7).offset(y: 22).frame(width: 60, height: 60).clipped()
+                Wearables(hat: item.id, neck: nil).offset(y: 110 - 46).scaleEffect(0.55).frame(width: 60, height: 60).clipped()
             case .neck:
-                Wearables(hat: nil, neck: item.id).scaleEffect(0.5).offset(y: -52).frame(width: 60, height: 60).clipped()
+                Wearables(hat: nil, neck: item.id).offset(y: 110 - 158).scaleEffect(0.45).frame(width: 60, height: 60).clipped()
             }
         } else {
             Image(systemName: "circle.slash").font(.title2.weight(.bold))

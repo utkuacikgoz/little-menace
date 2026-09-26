@@ -1,0 +1,124 @@
+name: TestFlight
+
+# Manual only: archives a Release build, signs it with the App Store Connect API key
+# (Xcode-managed signing), and uploads it to TestFlight.
+on:
+  workflow_dispatch:
+    inputs:
+      bundle_id:
+        description: Bundle ID registered in your Apple Developer account
+        required: true
+        default: com.belevate.littlemenace
+      notes:
+        description: What to test (shown in the run summary)
+        required: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: testflight
+  cancel-in-progress: false
+
+jobs:
+  upload:
+    runs-on: macos-15
+    timeout-minutes: 45
+    env:
+      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+      ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+      ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+      ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
+      BUNDLE_ID: ${{ inputs.bundle_id }}
+      NOTES: ${{ inputs.notes }}
+      # Monotonic build number for this workflow's uploads.
+      BUILD_NUMBER: ${{ github.run_number }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check secrets and inputs
+        run: |
+          missing=""
+          for v in APPLE_TEAM_ID ASC_KEY_ID ASC_ISSUER_ID ASC_KEY_P8; do
+            [ -n "${!v}" ] || missing="$missing $v"
+          done
+          if [ -n "$missing" ]; then echo "::error::Missing repository secrets:$missing"; exit 1; fi
+          if ! echo "$BUNDLE_ID" | grep -Eq '^[A-Za-z0-9-]+(\.[A-Za-z0-9-]+)+$'; then
+            echo "::error::bundle_id '$BUNDLE_ID' is not a valid bundle identifier"; exit 1
+          fi
+
+      - name: Write API key
+        run: |
+          mkdir -p "$RUNNER_TEMP/asc"
+          printf '%s\n' "$ASC_KEY_P8" > "$RUNNER_TEMP/asc/AuthKey_$ASC_KEY_ID.p8"
+          chmod 600 "$RUNNER_TEMP/asc/AuthKey_$ASC_KEY_ID.p8"
+          echo "ASC_KEY_PATH=$RUNNER_TEMP/asc/AuthKey_$ASC_KEY_ID.p8" >> "$GITHUB_ENV"
+
+      - name: Archive
+        run: |
+          set -o pipefail
+          xcodebuild archive -project LittleMenace.xcodeproj -scheme LittleMenace \
+            -configuration Release -destination 'generic/platform=iOS' \
+            -archivePath "$RUNNER_TEMP/LittleMenace.xcarchive" \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$ASC_KEY_PATH" \
+            -authenticationKeyID "$ASC_KEY_ID" \
+            -authenticationKeyIssuerID "$ASC_ISSUER_ID" \
+            DEVELOPMENT_TEAM="$APPLE_TEAM_ID" \
+            PRODUCT_BUNDLE_IDENTIFIER="$BUNDLE_ID" \
+            CODE_SIGN_STYLE=Automatic \
+            CURRENT_PROJECT_VERSION="$BUILD_NUMBER" 2>&1 \
+            | tee "$RUNNER_TEMP/archive.log" | grep -E "error:|ARCHIVE (SUCCEEDED|FAILED)|\*\* "
+
+      - name: Upload to TestFlight
+        run: |
+          set -o pipefail
+          cat > "$RUNNER_TEMP/ExportOptions.plist" <<EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key><string>app-store-connect</string>
+            <key>destination</key><string>upload</string>
+            <key>teamID</key><string>$APPLE_TEAM_ID</string>
+            <key>signingStyle</key><string>automatic</string>
+            <key>manageAppVersionAndBuildNumber</key><false/>
+            <key>uploadSymbols</key><true/>
+          </dict>
+          </plist>
+          EOF
+          xcodebuild -exportArchive \
+            -archivePath "$RUNNER_TEMP/LittleMenace.xcarchive" \
+            -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" \
+            -exportPath "$RUNNER_TEMP/export" \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$ASC_KEY_PATH" \
+            -authenticationKeyID "$ASC_KEY_ID" \
+            -authenticationKeyIssuerID "$ASC_ISSUER_ID" 2>&1 \
+            | tee "$RUNNER_TEMP/export.log" | grep -E "error:|Upload|EXPORT (SUCCEEDED|FAILED)|\*\* "
+
+      - name: Summary
+        if: success()
+        run: |
+          VERSION=$(/usr/libexec/PlistBuddy -c 'Print :ApplicationProperties:CFBundleShortVersionString' "$RUNNER_TEMP/LittleMenace.xcarchive/Info.plist")
+          {
+            echo "### Uploaded to TestFlight"
+            echo "- Bundle ID: \`$BUNDLE_ID\`"
+            echo "- Version: $VERSION ($BUILD_NUMBER)"
+            echo "- Commit: \`${GITHUB_SHA::7}\`"
+            if [ -n "$NOTES" ]; then echo "- Notes: $NOTES"; fi
+            echo
+            echo "Apple processes the build for a few minutes before it appears in TestFlight."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Show logs on failure
+        if: failure()
+        run: |
+          for f in "$RUNNER_TEMP/archive.log" "$RUNNER_TEMP/export.log"; do
+            [ -f "$f" ] && { echo "== $f"; grep -E "error|Error|warning: .*(sign|provision)" "$f" | tail -60; }
+          done
+          true
+
+      - name: Remove API key
+        if: always()
+        run: rm -rf "$RUNNER_TEMP/asc"

@@ -110,33 +110,68 @@ struct NightcapShape: Shape {
     }
 }
 
-/// The tug-of-war sock. `stretch` elongates it as the rope moves.
+/// One-piece sock outline: ribbed cuff, straight leg, rounded heel, foot and toe.
+/// The foot points right; the leg grows with the rect's height.
+struct SockShape: Shape {
+    func path(in r: CGRect) -> Path {
+        let legL = r.minX + 4, legR = r.minX + r.width * 0.62
+        let footTop = r.maxY - r.height * 0.3
+        var p = Path()
+        p.move(to: CGPoint(x: legL, y: r.minY + 4))
+        p.addQuadCurve(to: CGPoint(x: legR, y: r.minY + 4), control: CGPoint(x: (legL + legR) / 2, y: r.minY))
+        p.addLine(to: CGPoint(x: legR, y: footTop - 10))
+        p.addQuadCurve(to: CGPoint(x: legR + 14, y: footTop), control: CGPoint(x: legR, y: footTop))
+        p.addLine(to: CGPoint(x: r.maxX - 16, y: footTop))
+        p.addQuadCurve(to: CGPoint(x: r.maxX, y: footTop + (r.maxY - footTop) / 2), control: CGPoint(x: r.maxX, y: footTop))
+        p.addQuadCurve(to: CGPoint(x: r.maxX - 16, y: r.maxY), control: CGPoint(x: r.maxX, y: r.maxY))
+        p.addLine(to: CGPoint(x: legL + 22, y: r.maxY))
+        p.addQuadCurve(to: CGPoint(x: legL, y: r.maxY - 24), control: CGPoint(x: legL - 2, y: r.maxY))
+        p.closeSubpath()
+        return p
+    }
+}
+
+/// The tug-of-war sock. `stretch` elongates the leg as the rope moves.
 struct SockView: View {
     var style: String
     var stretch: CGFloat = 0
 
+    private static let width: CGFloat = 76
+    private static let height: CGFloat = 126
+
     var body: some View {
         let base = style == "glow" ? Color(hex: 0x9CFF6E) : style == "argyle" ? Color(hex: 0x7A5CFF) : Ink.cream
         let accent = style == "glow" ? Color(hex: 0x2BD66A) : style == "argyle" ? Color(hex: 0xFFC83D) : Color(hex: 0xE63946)
-        VStack(spacing: 0) {
-            RoundedRectangle(cornerRadius: 8)
-                .fill(base)
-                .overlay(
-                    VStack(spacing: 8) {
-                        ForEach(0..<4, id: \.self) { i in
-                            if style == "argyle" {
-                                Rectangle().fill(accent).frame(width: 12, height: 12).rotationEffect(.degrees(45)).offset(x: i.isMultiple(of: 2) ? -6 : 6)
-                            } else {
-                                Rectangle().fill(accent).frame(height: 6)
-                            }
-                        }
+        let h = Self.height + stretch
+        let legW = Self.width * 0.62
+        ZStack(alignment: .topLeading) {
+            base
+            // Ribbed cuff.
+            HStack(spacing: 4) {
+                ForEach(0..<6, id: \.self) { _ in Capsule().fill(.black.opacity(0.08)).frame(width: 2) }
+            }
+            .frame(width: legW, height: 16)
+            .background(base.opacity(0.9))
+            // Leg pattern.
+            VStack(spacing: style == "argyle" ? 6 : 9) {
+                ForEach(0..<4, id: \.self) { i in
+                    if style == "argyle" {
+                        Rectangle().fill(accent).frame(width: 12, height: 12).rotationEffect(.degrees(45))
+                            .offset(x: i.isMultiple(of: 2) ? -7 : 7)
+                    } else {
+                        Rectangle().fill(accent).frame(height: 6)
                     }
-                    .padding(.vertical, 10)
-                )
-                .clipShape(RoundedRectangle(cornerRadius: 8))
-                .frame(width: 40, height: 90 + stretch)
-            Capsule().fill(base).frame(width: 64, height: 36).offset(x: 12, y: -12)
+                }
+            }
+            .frame(width: legW)
+            .padding(.top, 24)
+            // Heel and toe patches.
+            Circle().fill(accent).frame(width: 34, height: 34).offset(x: -8, y: h - 26)
+            Circle().fill(accent).frame(width: 34, height: 34).offset(x: Self.width - 22, y: h - 38)
         }
+        .frame(width: Self.width, height: h, alignment: .topLeading)
+        .clipShape(SockShape())
+        .overlay(SockShape().stroke(.black.opacity(0.12), lineWidth: 1.5))
         .shadow(color: style == "glow" ? accent.opacity(0.9) : .clear, radius: 12)
         .accessibilityHidden(true)
     }

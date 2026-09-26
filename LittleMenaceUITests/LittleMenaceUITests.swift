@@ -34,8 +34,9 @@ final class LittleMenaceUITests: XCTestCase {
         for label in ["Feed", "Play", "Nap", "More"] {
             XCTAssertTrue(app.buttons[label].exists, "missing \(label)")
         }
-        // No words at rest: the only static text allowed is a transient speech bubble.
-        XCTAssertLessThanOrEqual(app.staticTexts.count, 1)
+        // Almost no words at rest: the need numbers under the buttons, plus at most a transient speech bubble.
+        let words = app.staticTexts.matching(NSPredicate(format: "NOT (label MATCHES %@)", ".*[0-9]+%?"))
+        XCTAssertLessThanOrEqual(words.count, 1)
     }
 
     func testPetDragAndFeedUntilFull() {
@@ -108,8 +109,16 @@ final class LittleMenaceUITests: XCTestCase {
 
     // MARK: Toys
 
+    /// An element can exist under a screen that is still sliding away; wait until it can be tapped.
+    private func waitHittable(_ element: XCUIElement, timeout: TimeInterval = 5) -> Bool {
+        let exp = expectation(for: NSPredicate(format: "hittable == true"), evaluatedWith: element)
+        return XCTWaiter.wait(for: [exp], timeout: timeout) == .completed
+    }
+
     private func open(_ toy: String) {
-        app.buttons["Play"].tap()
+        let play = app.buttons["Play"]
+        XCTAssertTrue(waitHittable(play), "Play never became tappable")
+        play.tap()
         let button = app.buttons[toy]
         XCTAssertTrue(button.waitForExistence(timeout: 3))
         button.tap()

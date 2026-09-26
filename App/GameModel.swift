@@ -474,10 +474,25 @@ final class GameModel {
         if let hat = UserDefaults.standard.string(forKey: "LMHat") { game.state.wardrobe.hat = hat }
         switch screen {
         case "asleep": _ = game.sleep(now: Date())
-        case "mischief": game.state.mischief.nextAt = Date().addingTimeInterval(-1)
+        case "grumpy":
+            _ = game.sleep(now: Date())
+            _ = game.wake(now: Date())
+            react(.grumpyWake, for: 30)
+        case "mischief", "mischiefSheet": game.state.mischief.nextAt = Date().addingTimeInterval(-1)
         case "touch": react(.touch, for: 30)
+        case "feed":
+            _ = feed()
+            react(.feed, for: 30)
+        case "refuse":
+            game.state.needs.fullness = 95
+            _ = feed()
+            react(.refuseFood, for: 30)
         case "dialogue": showLine("my alibi is adorable.", duration: 30)
-        case "collection": return .settings
+        case "namePrompt": showNamePrompt = true
+        case "reminderOffer": showReminderOffer = true
+        case "reminders":
+            game.state.prefs.remindersEnabled = true
+            return .settings
         default: break
         }
         if let kind = ActivityKind(rawValue: screen) { startActivity(kind) }

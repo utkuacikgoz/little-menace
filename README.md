@@ -21,7 +21,8 @@ docs/AppStore.md          Draft metadata + privacy answers
 1. Open `LittleMenace.xcodeproj` in Xcode 16 or later.
 2. Pick the **LittleMenace** scheme and an iPhone simulator, then Run.
 3. Purchases use the local StoreKit config, so no real money is involved. If the store shows "Store unavailable", set **Scheme › Run › Options › StoreKit Configuration** to `Config/LittleMenace.storekit`. The scheme references it, but Xcode's relative-path handling for that field varies.
-4. For a device: set your team under Signing and change the bundle ID (`app.littlemenace.LittleMenace` is a placeholder).
+4. For a device: set your team under Signing. The bundle ID is `com.belevate.littlemenace`.
+5. TestFlight: run the **TestFlight** workflow from the Actions tab. It needs the `APPLE_TEAM_ID`, `ASC_KEY_ID`, `ASC_ISSUER_ID` and `ASC_KEY_P8` repository secrets (an App Store Connect API key with the Admin role).
 
 Core tests run anywhere Swift runs:
 
@@ -55,7 +56,7 @@ Core tests run anywhere Swift runs:
 | `MenaceCore` tests (Xcode 26.6, macOS) | **59/59 pass**: time rules, clock changes, time zones, rewards granted once, migrations, corrupt-save recovery, interrupted/duplicate rounds, tug gesture cancellation and frame-rate independence, entitlements/revocation, offer gating, reminder planning |
 | iOS app compile | **Builds** with Xcode on GitHub's macOS 15 runner (`.github/workflows/ios.yml`), on every push |
 | Simulator launch | Launches without crashing on iPhone SE (3rd gen) and iPhone 16 Pro Max. The error-level log lines are only standard simulator noise from Apple frameworks (audio plugin factory, eligibility plist, CoreFS cache), with none from app code. |
-| Screenshots | `docs/screenshots/` covers home, touch, mischief, all three toys, dark mode, wardrobe, stamp card, share card, settings, asleep, SE, and SE at the largest accessibility text size. Regenerate them by running the workflow manually. |
+| Screenshots | `docs/screenshots/` holds 32 numbered shots: every screen and interaction state (naming, feeding, refusals, play picker, all three toys, win/lose cards, mischief, sleep and grumpy wake, reminder offer, every wardrobe tab, a paid preview, Midnight Snack, stamps, share, settings, dark mode, SE and largest text). Regenerate them by running the iOS build workflow manually (`scripts/screenshot-tour.sh`). |
 | Interactive play, VoiceOver, Reduce Motion, denied notifications, relaunch, offline | **Not yet inspected by a person.** The screenshots are static launches, and these paths are implemented as described in DESIGN.md. |
 | Haptics | Needs a physical device |
 | Purchases | Only the StoreKit local config exists. No sandbox or App Store Connect products have been created. |
