@@ -36,122 +36,55 @@ struct PointsDeltaChip: View {
     }
 }
 
-/// The score on the home screen. Tapping it opens the points page.
+/// The score on the home screen: a big number with today's gains and losses under it.
+/// Tapping it opens the points page.
 struct PointsBadge: View {
     @Environment(GameModel.self) private var model
     var open: () -> Void
 
     var body: some View {
         let s = model.state
+        let today = model.game.days.dayKey(model.now)
+        let gained = s.points.day == today ? s.points.gainedToday : 0
+        let lost = s.points.day == today ? s.points.lostToday : 0
         Button(action: open) {
-            switch DesignAlt.current {
-            case "B": ringStyle(s)
-            case "C": scoreboardStyle(s)
-            default: pillStyle(s)
+            VStack(spacing: 4) {
+                HStack(spacing: 8) {
+                    Image(systemName: "star.fill").foregroundStyle(Ink.irisLight)
+                    Text(s.points.total, format: .number)
+                        .monospacedDigit()
+                        .contentTransition(.numericText(value: Double(s.points.total)))
+                }
+                .font(.system(size: 40, weight: .heavy, design: .rounded))
+                .foregroundStyle(.white)
+                .shadow(color: .black.opacity(0.25), radius: 3, y: 1)
+                // The change pops on the free left side, so nothing shifts and the menu stays clear.
+                .overlay(alignment: .leading) {
+                    if let d = model.pointsDelta {
+                        PointsDeltaChip(amount: d.amount)
+                            .fixedSize()
+                            .alignmentGuide(.leading) { $0[.trailing] + 8 }
+                            .id(d.id)
+                            .transition(.scale(scale: 0.5).combined(with: .opacity))
+                    }
+                }
+                HStack(spacing: 6) {
+                    Text("today")
+                    Text(signedPoints(gained)).foregroundStyle(PointColor.gainOnDark)
+                    if lost > 0 { Text(signedPoints(-lost)).foregroundStyle(PointColor.lossOnDark) }
+                }
+                .font(.system(.caption, design: .rounded).weight(.heavy))
+                .monospacedDigit()
+                .foregroundStyle(Ink.eye)
+                .padding(.horizontal, 10).padding(.vertical, 3)
+                .background(Ink.body.opacity(0.85), in: Capsule())
             }
+            .dynamicTypeSize(...DynamicTypeSize.xLarge)
         }
         .buttonStyle(SquishButtonStyle())
         .accessibilityLabel("Points")
-        .accessibilityValue("\(s.points.total)")
+        .accessibilityValue("\(s.points.total). Today plus \(gained), minus \(lost).")
         .accessibilityHint("Shows how points work")
         .accessibilityIdentifier("points")
-    }
-
-    // A: a dark pill with a star, next to where the delta pops.
-    private func pillStyle(_ s: PetState) -> some View {
-        HStack(spacing: 8) {
-            pill(s)
-            delta
-        }
-    }
-
-    private func pill(_ s: PetState) -> some View {
-        HStack(spacing: 6) {
-            Image(systemName: "star.fill").foregroundStyle(Ink.irisLight)
-            Text(s.points.total, format: .number)
-                .monospacedDigit()
-                .contentTransition(.numericText(value: Double(s.points.total)))
-        }
-        .font(.system(.title3, design: .rounded).weight(.heavy))
-        .dynamicTypeSize(...DynamicTypeSize.xxLarge)
-        .foregroundStyle(Ink.eye)
-        .padding(.horizontal, 14)
-        .frame(height: 48)
-        .background(Ink.body.opacity(0.85), in: Capsule())
-    }
-
-    // B: a level ring with the score beside it.
-    private func ringStyle(_ s: PetState) -> some View {
-        HStack(spacing: 10) {
-            ZStack {
-                Circle().fill(Ink.body.opacity(0.85))
-                Circle().stroke(.white.opacity(0.2), lineWidth: 4).padding(3)
-                Circle().trim(from: 0, to: max(0.03, levelProgress(s)))
-                    .stroke(Ink.irisLight, style: StrokeStyle(lineWidth: 4, lineCap: .round))
-                    .rotationEffect(.degrees(-90))
-                    .padding(3)
-                Text("\(s.level)")
-                    .font(.system(.headline, design: .rounded).weight(.heavy))
-                    .foregroundStyle(Ink.eye)
-            }
-            .frame(width: 48, height: 48)
-            VStack(alignment: .leading, spacing: 0) {
-                Text(s.points.total, format: .number)
-                    .font(.system(.title2, design: .rounded).weight(.heavy))
-                    .monospacedDigit()
-                    .contentTransition(.numericText(value: Double(s.points.total)))
-                Text("points")
-                    .font(.system(.caption, design: .rounded).weight(.heavy))
-                    .opacity(0.85)
-            }
-            .dynamicTypeSize(...DynamicTypeSize.xxLarge)
-            .foregroundStyle(.white)
-            .shadow(color: .black.opacity(0.25), radius: 2, y: 1)
-            delta
-        }
-    }
-
-    // C: a big scoreboard number with today's gains and losses under it.
-    private func scoreboardStyle(_ s: PetState) -> some View {
-        let today = model.game.days.dayKey(model.now)
-        let book = s.points
-        let gained = book.day == today ? book.gainedToday : 0
-        let lost = book.day == today ? book.lostToday : 0
-        return VStack(spacing: 4) {
-            HStack(spacing: 8) {
-                Image(systemName: "star.fill").foregroundStyle(Ink.irisLight)
-                Text(s.points.total, format: .number)
-                    .monospacedDigit()
-                    .contentTransition(.numericText(value: Double(s.points.total)))
-            }
-            .font(.system(size: 40, weight: .heavy, design: .rounded))
-            .foregroundStyle(.white)
-            .shadow(color: .black.opacity(0.25), radius: 3, y: 1)
-            HStack(spacing: 6) {
-                Text("today")
-                Text(signedPoints(gained)).foregroundStyle(PointColor.gainOnDark)
-                if lost > 0 { Text(signedPoints(-lost)).foregroundStyle(PointColor.lossOnDark) }
-            }
-            .font(.system(.caption, design: .rounded).weight(.heavy))
-            .monospacedDigit()
-            .foregroundStyle(Ink.eye)
-            .padding(.horizontal, 10).padding(.vertical, 3)
-            .background(Ink.body.opacity(0.85), in: Capsule())
-            delta.frame(height: 30)
-        }
-        .dynamicTypeSize(...DynamicTypeSize.xLarge)
-    }
-
-    @ViewBuilder private var delta: some View {
-        if let d = model.pointsDelta {
-            PointsDeltaChip(amount: d.amount)
-                .id(d.id)
-                .transition(.scale(scale: 0.5).combined(with: .opacity))
-        }
-    }
-
-    private func levelProgress(_ s: PetState) -> Double {
-        let lo = Tuning.xpForLevel(s.level), hi = Tuning.xpForLevel(s.level + 1)
-        return Double(s.xp - lo) / Double(max(1, hi - lo))
     }
 }

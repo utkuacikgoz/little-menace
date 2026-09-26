@@ -15,39 +15,8 @@ struct PointsView: View {
     private var gains: [PointReason] { PointReason.allCases.filter { !$0.isPenalty } }
     private var losses: [PointReason] { PointReason.allCases.filter(\.isPenalty) }
 
+    /// Score on top, then History or Rules.
     var body: some View {
-        Group {
-            switch DesignAlt.current {
-            case "B": tabbed
-            case "C": cards
-            default: list
-            }
-        }
-        .navigationTitle("Points")
-        .navigationBarTitleDisplayMode(.inline)
-    }
-
-    // MARK: A — one list: score, today, recent, then the rules.
-
-    private var list: some View {
-        Form {
-            Section { header }
-            Section("Today") { todayRow }
-            Section("Recent") { historyRows(limit: 20) }
-            Section("How to earn") { ruleRows(gains) }
-            Section {
-                ruleRows(losses)
-            } header: {
-                Text("How to lose")
-            } footer: {
-                footerNote
-            }
-        }
-    }
-
-    // MARK: B — score on top, then History or Rules.
-
-    private var tabbed: some View {
         Form {
             Section { header }
             Section {
@@ -73,83 +42,14 @@ struct PointsView: View {
                 }
             }
         }
+        .navigationTitle("Points")
+        .navigationBarTitleDisplayMode(.inline)
         #if DEBUG
         .onAppear { if UserDefaults.standard.integer(forKey: "LMPage") == 1 { tab = 1 } }
         #endif
     }
 
-    // MARK: C — cream cards, like the stamp card.
-
-    private var cards: some View {
-        ScrollView {
-            VStack(spacing: 16) {
-                VStack(spacing: 6) {
-                    HStack(spacing: 10) {
-                        Image(systemName: "star.fill").foregroundStyle(Ink.irisLight)
-                        Text(book.total, format: .number).monospacedDigit()
-                    }
-                    .font(.system(size: 48, weight: .heavy, design: .rounded))
-                    Text("Level \(model.state.level)")
-                        .font(.system(.headline, design: .rounded).weight(.heavy))
-                        .opacity(0.8)
-                }
-                .foregroundStyle(Ink.eye)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 24)
-                .background(Ink.body, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
-                .accessibilityElement(children: .combine)
-
-                HStack(spacing: 12) {
-                    todayCard(title: "Earned today", value: gained, color: PointColor.gain)
-                    todayCard(title: "Lost today", value: -lost, color: PointColor.loss)
-                }
-
-                card(title: "Earn") {
-                    ForEach(gains, id: \.self) { ruleLine($0) }
-                }
-                card(title: "Lose") {
-                    ForEach(losses, id: \.self) { ruleLine($0) }
-                    footerNote.padding(.top, 4)
-                }
-                card(title: "Recent") {
-                    if recent.isEmpty {
-                        Text("Nothing yet. Go say hi.").opacity(0.7)
-                    }
-                    ForEach(recent.prefix(8)) { historyLine($0) }
-                }
-            }
-            .padding(16)
-        }
-        .foregroundStyle(Ink.body)
-        .background(Ink.eye.ignoresSafeArea())
-        .environment(\.colorScheme, .light) // cream cards in both modes
-    }
-
-    private func todayCard(title: String, value: Int, color: Color) -> some View {
-        VStack(spacing: 4) {
-            Text(value == 0 ? "0" : signedPoints(value))
-                .font(.system(.title, design: .rounded).weight(.heavy))
-                .monospacedDigit()
-                .foregroundStyle(value == 0 ? Ink.body.opacity(0.5) : color)
-            Text(title).font(.system(.subheadline, design: .rounded).weight(.bold))
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 16)
-        .background(Ink.body.opacity(0.06), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
-        .accessibilityElement(children: .combine)
-    }
-
-    private func card<Content: View>(title: String, @ViewBuilder content: () -> Content) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text(title).font(.system(.title3, design: .rounded).weight(.heavy))
-            content()
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(16)
-        .background(Ink.body.opacity(0.06), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
-    }
-
-    // MARK: Shared pieces
+    // MARK: Pieces
 
     private var header: some View {
         VStack(spacing: 10) {

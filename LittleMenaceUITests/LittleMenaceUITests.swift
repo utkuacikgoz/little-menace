@@ -185,7 +185,7 @@ final class LittleMenaceUITests: XCTestCase {
         app.launch()
         let next = app.buttons["Next"]
         XCTAssertTrue(next.waitForExistence(timeout: 10), "a new player sees the guide")
-        for _ in 0..<3 { next.tap() }
+        for _ in 0..<4 { next.tap() }
         let go = app.buttons["Let's go"]
         XCTAssertTrue(go.waitForExistence(timeout: 3))
         go.tap()
