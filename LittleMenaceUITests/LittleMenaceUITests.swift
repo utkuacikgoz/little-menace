@@ -110,6 +110,11 @@ final class LittleMenaceUITests: XCTestCase {
     // MARK: Toys
 
     /// An element can exist under a screen that is still sliding away; wait until it can be tapped.
+    private func waitGone(_ element: XCUIElement, timeout: TimeInterval = 5) -> Bool {
+        let exp = expectation(for: NSPredicate(format: "exists == false"), evaluatedWith: element)
+        return XCTWaiter.wait(for: [exp], timeout: timeout) == .completed
+    }
+
     private func waitHittable(_ element: XCUIElement, timeout: TimeInterval = 5) -> Bool {
         let exp = expectation(for: NSPredicate(format: "hittable == true"), evaluatedWith: element)
         return XCTWaiter.wait(for: [exp], timeout: timeout) == .completed
@@ -244,14 +249,21 @@ final class LittleMenaceUITests: XCTestCase {
     func testSettingsResetNeedsConfirmation() {
         launch(["-LMScreen", "home"])
         menu("Settings")
+        // Start Over sits at the bottom of the list: scroll gently until it can be tapped.
         let startOver = app.buttons["Start Over"].firstMatch
-        if !startOver.waitForExistence(timeout: 2) || !startOver.isHittable { app.swipeUp() }
+        _ = startOver.waitForExistence(timeout: 2)
+        for _ in 0..<4 where !(startOver.exists && startOver.isHittable) { app.swipeUp(velocity: .slow) }
+        XCTAssertTrue(waitHittable(startOver), "Start Over reachable")
         startOver.tap()
         let cancel = app.buttons["Cancel"]
         XCTAssertTrue(cancel.waitForExistence(timeout: 3))
         cancel.tap()
-        app.buttons["Done"].tap()
-        XCTAssertTrue(waitForValue(containing: "Level 4"), "cancel keeps progress")
+        XCTAssertTrue(waitGone(cancel), "the dialog closes")
+        let done = app.buttons["Done"]
+        XCTAssertTrue(waitHittable(done))
+        done.tap()
+        XCTAssertTrue(waitHittable(pet), "Settings closes")
+        XCTAssertTrue(waitForValue(containing: "Level 4"), "cancel keeps progress; the gremlin reads: \(petValue)")
     }
 
     func testDeniedNotificationsAreHandled() {
