@@ -223,10 +223,15 @@ final class LittleMenaceUITests: XCTestCase {
     // MARK: Sheets
 
     private func menu(_ item: String) {
-        app.buttons["More"].tap()
-        let b = app.buttons[item]
+        let more = app.buttons["More"]
+        XCTAssertTrue(waitHittable(more), "More is ready before opening its menu")
+        more.tap()
+        let menu = app.collectionViews.containing(.button, identifier: item).firstMatch
+        let b = menu.buttons[item]
         XCTAssertTrue(b.waitForExistence(timeout: 3))
+        XCTAssertTrue(waitHittable(b), "\(item) is ready before selecting it")
         b.tap()
+        XCTAssertTrue(waitGone(menu), "The menu closes after selecting \(item): \(app.debugDescription)")
     }
 
     func testWardrobeEquipAndPreview() {
