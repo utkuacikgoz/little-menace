@@ -110,6 +110,13 @@ final class LittleMenaceUITests: XCTestCase {
     // MARK: Toys
 
     /// An element can exist under a screen that is still sliding away; wait until it can be tapped.
+    /// Lists only build rows that are on screen: scroll gently until the element can be tapped.
+    private func reveal(_ element: XCUIElement) -> Bool {
+        _ = element.waitForExistence(timeout: 2)
+        for _ in 0..<5 where !(element.exists && element.isHittable) { app.swipeUp(velocity: .slow) }
+        return waitHittable(element)
+    }
+
     private func waitGone(_ element: XCUIElement, timeout: TimeInterval = 5) -> Bool {
         let exp = expectation(for: NSPredicate(format: "exists == false"), evaluatedWith: element)
         return XCTWaiter.wait(for: [exp], timeout: timeout) == .completed
@@ -241,7 +248,7 @@ final class LittleMenaceUITests: XCTestCase {
         launch() // fresh: level 1, one visit
         menu("Settings")
         let row = app.buttons["Midnight Snack"]
-        XCTAssertTrue(row.waitForExistence(timeout: 3))
+        XCTAssertTrue(reveal(row), "Midnight Snack reachable in Settings")
         row.tap()
         let offered = buyButton.waitForExistence(timeout: 5)
         XCTAssertTrue(offered || ownedMarker.exists, "collection page shows the buy button, or 'Owned' if already bought")
@@ -250,16 +257,15 @@ final class LittleMenaceUITests: XCTestCase {
     func testSettingsResetNeedsConfirmation() {
         launch(["-LMScreen", "home"])
         menu("Settings")
-        // Start Over sits at the bottom of the list: scroll gently until it can be tapped.
         let startOver = app.buttons["Start Over"].firstMatch
-        _ = startOver.waitForExistence(timeout: 2)
-        for _ in 0..<4 where !(startOver.exists && startOver.isHittable) { app.swipeUp(velocity: .slow) }
-        XCTAssertTrue(waitHittable(startOver), "Start Over reachable")
+        XCTAssertTrue(reveal(startOver), "Start Over reachable")
         startOver.tap()
+        let title = app.staticTexts["Start over with a new gremlin?"]
+        XCTAssertTrue(title.waitForExistence(timeout: 3), "the confirmation appears")
+        // iOS 26 shows the dialog as a bubble without Cancel; tapping outside dismisses it.
         let cancel = app.buttons["Cancel"]
-        XCTAssertTrue(cancel.waitForExistence(timeout: 3))
-        cancel.tap()
-        XCTAssertTrue(waitGone(cancel), "the dialog closes")
+        if cancel.exists { cancel.tap() } else { app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.3)).tap() }
+        XCTAssertTrue(waitGone(title), "the dialog closes")
         let done = app.buttons["Done"]
         XCTAssertTrue(waitHittable(done))
         done.tap()
