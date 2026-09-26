@@ -6,6 +6,11 @@ on:
     branches: [main]
   pull_request:
   workflow_dispatch:
+    inputs:
+      store:
+        description: Full-size App Store screenshots (6.9") instead of the review tour
+        type: boolean
+        default: false
 
 # A newer push to the same branch cancels the older run.
 concurrency:
@@ -66,7 +71,7 @@ jobs:
     timeout-minutes: 20
     strategy:
       matrix:
-        part: [a, b]
+        part: ${{ fromJSON(inputs.store && '["store"]' || '["a","b"]') }}
     steps:
       - uses: actions/checkout@v4
       - name: Build
@@ -97,12 +102,14 @@ jobs:
           pattern: shots-*
           merge-multiple: true
           path: shots
-      - name: Commit to docs/screenshots
+      - name: Commit screenshots
+        env:
+          DEST: ${{ inputs.store && 'docs/app-store-screenshots' || 'docs/screenshots' }}
         run: |
-          rm -rf docs/screenshots && mv shots docs/screenshots
+          rm -rf "$DEST" && mv shots "$DEST"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A docs/screenshots
+          git add -A "$DEST"
           git commit -m "Update simulator screenshots [skip ci]" || exit 0
           git pull --rebase origin "${{ github.ref_name }}"
           git push origin "HEAD:${{ github.ref_name }}"
