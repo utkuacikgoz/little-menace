@@ -61,9 +61,11 @@ struct PointsBadge: View {
                 // The change pops on the free left side, so nothing shifts and the menu stays clear.
                 .overlay(alignment: .leading) {
                     if let d = model.pointsDelta {
+                        // A zero-width frame anchored at the star's left edge; the chip grows leftwards from it.
                         PointsDeltaChip(amount: d.amount)
                             .fixedSize()
-                            .alignmentGuide(.leading) { $0[.trailing] + 8 }
+                            .frame(width: 0, alignment: .trailing)
+                            .offset(x: -8)
                             .id(d.id)
                             .transition(.scale(scale: 0.5).combined(with: .opacity))
                     }
