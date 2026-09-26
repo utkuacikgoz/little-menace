@@ -1,8 +1,9 @@
 #!/bin/bash
 # Screenshot tour for review: every screen and interaction state, numbered in review order.
-# Usage: scripts/screenshot-tour.sh <a|b|store> <path/to/LittleMenace.app> <out-dir>
+# Usage: scripts/screenshot-tour.sh <a|b|store|new> <path/to/LittleMenace.app> <out-dir>
 # Part a and part b run on separate CI machines in parallel.
 # Part store takes full-size 6.9" App Store screenshots with a clean status bar.
+# Part new shoots every option (A/B/C) of screens still under review.
 set -euo pipefail
 PART=$1 APP=$2 OUT=$3
 BID=com.belevate.littlemenace
@@ -32,6 +33,19 @@ if [ "$PART" = store ]; then
   shot "$PM" 06-mischief -LMScreen mischief
   shot "$PM" 07-wardrobe -LMScreen wardrobe
   shot "$PM" 08-stamps -LMScreen stamps
+elif [ "$PART" = new ]; then
+  shot "$PM" p01-home-score-A -LMScreen home -LMAlt A -LMDelta 18
+  shot "$PM" p02-home-score-B -LMScreen home -LMAlt B -LMDelta 18
+  shot "$PM" p03-home-score-C -LMScreen home -LMAlt C -LMDelta 18
+  shot "$PM" p04-poked-too-much -LMScreen annoyed -LMLoss 1
+  shot "$PM" p05-points-A -LMScreen points -LMAlt A
+  shot "$PM" p06-points-B-history -LMScreen points -LMAlt B
+  shot "$PM" p07-points-B-rules -LMScreen points -LMAlt B -LMPage 1
+  shot "$PM" p08-points-C -LMScreen points -LMAlt C
+  shot "$PM" p09-settings -LMScreen settings
+  for i in 0 1 2 3; do shot "$PM" "p1$i-guide-A-page$((i + 1))" -LMScreen howToPlay -LMAlt A -LMPage $i; done
+  shot "$PM" p14-guide-B -LMScreen howToPlay -LMAlt B
+  for i in 0 1 2 3 4; do shot "$PM" "p2$i-guide-C-step$((i + 1))" -LMScreen howToPlay -LMAlt C -LMPage $i; done
 elif [ "$PART" = a ]; then
   shot "$PM" 01-home -LMScreen home
   shot "$PM" 02-name-prompt -LMScreen namePrompt

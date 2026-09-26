@@ -161,6 +161,9 @@ public struct PetState: Codable, Equatable, Sendable {
     public var wardrobe: Wardrobe
     public var counters: Counters
     public var prefs: Preferences
+    public var points: PointsBook
+    /// Whether the first-run "how to play" has been shown.
+    public var howToPlayShown = false
 
     /// In-memory only.
     public var session: ActivitySession?
@@ -182,6 +185,7 @@ public struct PetState: Codable, Equatable, Sendable {
         wardrobe = Wardrobe()
         counters = Counters()
         prefs = Preferences()
+        points = PointsBook()
         session = nil
     }
 
@@ -204,7 +208,7 @@ public struct PetState: Codable, Equatable, Sendable {
 
     enum CodingKeys: String, CodingKey {
         case name, namePromptShown, recentLines, createdAt, lastSimulated, needs, napStartedAt, pendingWake, xp, discoveries,
-             personality, mischief, stamps, challenge, granted, wardrobe, counters, prefs
+             personality, mischief, stamps, challenge, granted, wardrobe, counters, prefs, points, howToPlayShown
     }
 
     public init(from decoder: Decoder) throws {
@@ -230,5 +234,14 @@ public struct PetState: Codable, Equatable, Sendable {
         wardrobe = try c.decodeIfPresent(Wardrobe.self, forKey: .wardrobe) ?? Wardrobe()
         counters = try c.decodeIfPresent(Counters.self, forKey: .counters) ?? Counters()
         prefs = try c.decodeIfPresent(Preferences.self, forKey: .prefs) ?? Preferences()
+        if let book = try c.decodeIfPresent(PointsBook.self, forKey: .points) {
+            points = book
+            points.total = max(0, points.total)
+        } else {
+            // Saves from before points: start the score at the XP already earned.
+            points.total = xp
+        }
+        // Players who already have progress skip the first-run guide.
+        howToPlayShown = try c.decodeIfPresent(Bool.self, forKey: .howToPlayShown) ?? (xp > 0 || counters.feeds > 0 || counters.pets > 0)
     }
 }

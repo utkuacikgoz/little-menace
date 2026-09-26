@@ -28,6 +28,30 @@ struct SettingsView: View {
                 }
 
                 Section {
+                    NavigationLink {
+                        PointsView()
+                    } label: {
+                        HStack {
+                            Label("Points", systemImage: "star.fill")
+                            Spacer()
+                            Text(model.state.points.total, format: .number)
+                                .monospacedDigit()
+                                .foregroundStyle(Color.primary.opacity(0.7))
+                        }
+                    }
+                    Button {
+                        dismiss()
+                        // Let the sheet finish closing before the guide appears.
+                        Task {
+                            try? await Task.sleep(for: .seconds(0.45))
+                            model.showHowToPlay = true
+                        }
+                    } label: {
+                        Label("How to Play", systemImage: "book.fill")
+                    }
+                }
+
+                Section {
                     Toggle(isOn: Binding(get: { prefs.sound }, set: { model.setSound($0) })) {
                         Label("Sound", systemImage: "speaker.wave.2.fill")
                     }
@@ -82,7 +106,7 @@ struct SettingsView: View {
                         Label("Start Over", systemImage: "arrow.counterclockwise")
                     }
                 } footer: {
-                    Text("Start Over resets \(model.state.displayName)'s level, stamps and discoveries. Purchases stay yours.")
+                    Text("Start Over resets \(model.state.displayName)'s level, points, stamps and discoveries. Purchases stay yours.")
                         .foregroundStyle(Color.primary.opacity(0.8))
                 }
             }

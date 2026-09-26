@@ -9,6 +9,12 @@ struct Toast: Identifiable, Equatable {
     let spoken: String
 }
 
+/// Points just gained or lost, shown next to the score for a moment.
+struct PointsDelta: Identifiable, Equatable {
+    let id = UUID()
+    let amount: Int
+}
+
 struct Bubble: Identifiable, Equatable {
     let id = UUID()
     let text: String
@@ -32,6 +38,9 @@ final class GameModel {
     private(set) var session: ActivitySession?
     var showReminderOffer = false
     var showNamePrompt = false
+    /// First-run guide (or reopened from Settings).
+    var showHowToPlay = false
+    private(set) var pointsDelta: PointsDelta?
     var homeObscured = false
     private(set) var notificationsDenied = false
 
@@ -47,6 +56,7 @@ final class GameModel {
     @ObservationIgnored private var toastTask: Task<Void, Never>?
     @ObservationIgnored private var ticker: Task<Void, Never>?
     @ObservationIgnored private var specialTask: Task<Void, Never>?
+    @ObservationIgnored private var deltaTask: Task<Void, Never>?
 
     var state: PetState { game.state }
 
@@ -57,6 +67,13 @@ final class GameModel {
         #endif
         let (loaded, _) = store.load(now: Date())
         game = Game(state: loaded)
+        #if DEBUG
+        // UI tests start fresh but skip the guide unless they ask for it with `-LMGuide YES`.
+        if UserDefaults.standard.bool(forKey: "LMReset") && !UserDefaults.standard.bool(forKey: "LMGuide") {
+            game.state.howToPlayShown = true
+        }
+        #endif
+        showHowToPlay = !game.state.howToPlayShown
         applyPrefs()
         handle(game.tick(now: now))
         if game.state.pendingWake {
@@ -118,7 +135,7 @@ final class GameModel {
                     self.sounds.play(.pop)
                     self.say(.wake)
                 }
-                if !self.homeObscured && self.activity == nil && !self.showNamePrompt && !self.showReminderOffer && self.bubble == nil && self.specialPose == nil {
+                if !self.homeObscured && !self.showHowToPlay && self.activity == nil && !self.showNamePrompt && !self.showReminderOffer && self.bubble == nil && self.specialPose == nil {
                     self.say(.idle, chance: 0.55)
                 }
             }
@@ -219,6 +236,10 @@ final class GameModel {
         if state.isAsleep {
             say(.asleep, chance: 0.3)
             haptics.play(.squish, intensity: 0.4)
+        } else if out.reaction == .annoyed {
+            react(.annoyed, for: 1.6)
+            haptics.play(.nope)
+            say(.annoyed, chance: 0.8)
         } else {
             react(.touch)
             haptics.play(.squish)
@@ -286,7 +307,7 @@ final class GameModel {
         }
     }
 
-    /// Returns the XP earned so the activity can show it.
+    /// Returns the points the round earned (net of any penalty) so the activity can show them.
     @discardableResult
     func finishActivity(_ result: ActivityResult) -> Int {
         guard let s = session, s.kind == result.kind else { return 0 }
@@ -298,7 +319,7 @@ final class GameModel {
         handle(out.events)
         save()
         return out.events.reduce(0) { total, e in
-            if case .xp(let n) = e { return total + n }
+            if case .points(let n, _) = e { return total + n }
             return total
         }
     }
@@ -339,6 +360,11 @@ final class GameModel {
             switch event {
             case .xp:
                 break
+            case .points(let amount, let reason):
+                showDelta(amount)
+                if amount < 0 {
+                    UIAccessibility.post(notification: .announcement, argument: "Minus \(-amount) points. \(reason.label).")
+                }
             case .levelUp(let level):
                 enqueue(Toast(symbol: "arrow.up.circle.fill", text: "\(level)", spoken: "Level \(level)"))
                 react(.levelUp, for: 2)
@@ -360,6 +386,28 @@ final class GameModel {
                 break
             }
         }
+    }
+
+    /// Merges quick changes of the same sign ("+1 +1 +1" reads as "+3").
+    private func showDelta(_ amount: Int, hold: Double = 1.6) {
+        if let current = pointsDelta, (current.amount > 0) == (amount > 0) {
+            pointsDelta = PointsDelta(amount: current.amount + amount)
+        } else {
+            pointsDelta = PointsDelta(amount: amount)
+        }
+        deltaTask?.cancel()
+        deltaTask = Task { [weak self] in
+            try? await Task.sleep(for: .seconds(hold))
+            guard !Task.isCancelled else { return }
+            self?.pointsDelta = nil
+        }
+    }
+
+    func finishHowToPlay() {
+        showHowToPlay = false
+        game.state.howToPlayShown = true
+        save()
+        if bubble == nil { say(.idle) }
     }
 
     private func enqueue(_ t: Toast) {
@@ -470,6 +518,11 @@ final class GameModel {
         game.state.xp = max(game.state.xp, Tuning.xpForLevel(4))
         game.state.counters.visitDays = max(game.state.counters.visitDays, 3)
         game.state.needs = Needs(fullness: 50, energy: 60, joy: 60)
+        game.state.points = Self.samplePoints(days: game.days)
+        showHowToPlay = screen == "howToPlay"
+        // `-LMDelta 18` shows a gain by the score, `-LMLoss 3` a loss (a leading minus would read as a flag).
+        let gain = UserDefaults.standard.integer(forKey: "LMDelta"), loss = UserDefaults.standard.integer(forKey: "LMLoss")
+        if gain != 0 || loss != 0 { showDelta(gain > 0 ? gain : -loss, hold: 60) }
         if let theme = UserDefaults.standard.string(forKey: "LMTheme") { game.state.wardrobe.theme = theme }
         if let hat = UserDefaults.standard.string(forKey: "LMHat") { game.state.wardrobe.hat = hat }
         switch screen {
@@ -480,6 +533,9 @@ final class GameModel {
             react(.grumpyWake, for: 30)
         case "mischief", "mischiefSheet": game.state.mischief.nextAt = Date().addingTimeInterval(-1)
         case "touch": react(.touch, for: 30)
+        case "annoyed":
+            react(.annoyed, for: 30)
+            showLine("too many pokes.", duration: 30)
         case "feed":
             _ = feed()
             react(.feed, for: 30)
@@ -497,6 +553,26 @@ final class GameModel {
         }
         if let kind = ActivityKind(rawValue: screen) { startActivity(kind) }
         return HomeSheet(rawValue: screen)
+    }
+
+    /// A believable afternoon of points for screenshots.
+    private static func samplePoints(days: DayClock) -> PointsBook {
+        var book = PointsBook()
+        book.total = 1180
+        let start = Date().addingTimeInterval(-4 * 3600)
+        let day = days.dayKey(start)
+        let script: [(PointReason, Int, Int)] = [
+            (.hungry, -3, 1), (.fed, 2, 2), (.petted, 1, 5), (.played, 18, 1), (.challenge, 30, 1),
+            (.wokeEarly, -5, 1), (.played, 14, 1), (.poked, -1, 2), (.mischief, 5, 1), (.fed, 2, 1),
+        ]
+        var t = start
+        for (reason, amount, times) in script {
+            for _ in 0..<times {
+                t = t.addingTimeInterval(9 * 60)
+                book.apply(amount, reason, day: day, at: t)
+            }
+        }
+        return book
     }
     #endif
 

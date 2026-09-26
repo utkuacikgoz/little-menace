@@ -116,8 +116,8 @@ private struct ResultCard: View {
             GremlinView(pose: .pose(for: result.won ? .win : .lose), hat: hat, neck: neck, size: 150)
             // Dark pill so the reward reads on every background (white on orange was ~2.6:1).
             HStack(spacing: 8) {
-                Image(systemName: "sparkles")
-                Text("+\(xp)")
+                Image(systemName: "star.fill").foregroundStyle(Ink.irisLight)
+                Text(signedPoints(xp))
             }
             .font(.system(.title2, design: .rounded).weight(.heavy))
             .foregroundStyle(Ink.eye)
@@ -125,7 +125,7 @@ private struct ResultCard: View {
             .padding(.vertical, 8)
             .background(Ink.body, in: Capsule())
             .accessibilityElement(children: .ignore)
-            .accessibilityLabel("\(result.won ? "Won" : "Lost"). Plus \(xp) experience")
+            .accessibilityLabel("\(result.won ? "Won" : "Lost"). \(xp >= 0 ? "Plus" : "Minus") \(abs(xp)) points")
 
             HStack(spacing: 24) {
                 Button(action: replay) {
