@@ -197,9 +197,14 @@ final class LittleMenaceUITests: XCTestCase {
         app.launch()
         let next = app.buttons["Next"]
         XCTAssertTrue(next.waitForExistence(timeout: 10), "a new player sees the guide")
-        for _ in 0..<4 { next.tap() }
+        // Each step slides the card to the next control; tap only once it has settled.
         let go = app.buttons["Let's go"]
-        XCTAssertTrue(go.waitForExistence(timeout: 3))
+        for _ in 0..<8 where !go.exists {
+            XCTAssertTrue(waitHittable(next), "Next is ready")
+            next.tap()
+            _ = go.waitForExistence(timeout: 1)
+        }
+        XCTAssertTrue(go.waitForExistence(timeout: 3), "the tour reaches its last step")
         go.tap()
         XCTAssertTrue(waitGone(go), "the tour closes")
         XCTAssertTrue(pet.waitForExistence(timeout: 5))
