@@ -79,6 +79,8 @@ public enum Discovery: String, CaseIterable, Sendable {
 
 public enum GameEvent: Equatable, Sendable {
     case xp(Int)
+    /// Points changed (negative for a loss).
+    case points(Int, PointReason)
     case levelUp(Int)
     case unlocked(String)
     case discovery(Discovery)

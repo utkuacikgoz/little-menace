@@ -31,7 +31,7 @@ final class LittleMenaceUITests: XCTestCase {
 
     func testHomeShowsOnlyTheToy() {
         launch()
-        for label in ["Feed", "Play", "Nap", "More"] {
+        for label in ["Feed", "Play", "Nap", "More", "Points"] {
             XCTAssertTrue(app.buttons[label].exists, "missing \(label)")
         }
         // Almost no words at rest: the need numbers under the buttons, plus at most a transient speech bubble.
@@ -178,6 +178,35 @@ final class LittleMenaceUITests: XCTestCase {
         XCTAssertTrue(app.buttons["Cushion left"].waitForExistence(timeout: 5))
     }
 
+    // MARK: Guide and points
+
+    func testGuideShowsOnceOnFirstLaunch() {
+        app.launchArguments = ["-LMReset", "YES", "-LMGuide", "YES"]
+        app.launch()
+        let next = app.buttons["Next"]
+        XCTAssertTrue(next.waitForExistence(timeout: 10), "a new player sees the guide")
+        for _ in 0..<3 { next.tap() }
+        let go = app.buttons["Let's go"]
+        XCTAssertTrue(go.waitForExistence(timeout: 3))
+        go.tap()
+        XCTAssertTrue(pet.waitForExistence(timeout: 5))
+        XCTAssertTrue(waitHittable(pet), "the guide closes onto the home screen")
+
+        app.terminate()
+        launch(reset: false)
+        XCTAssertFalse(app.buttons["Next"].waitForExistence(timeout: 2), "the guide is shown only once")
+    }
+
+    func testScoreOpensThePointsPage() {
+        launch(["-LMScreen", "home"])
+        let score = app.buttons["Points"]
+        XCTAssertTrue(waitHittable(score))
+        score.tap()
+        XCTAssertTrue(app.navigationBars["Points"].waitForExistence(timeout: 3))
+        app.buttons["Done"].tap()
+        XCTAssertTrue(waitHittable(app.buttons["Feed"]))
+    }
+
     // MARK: Sheets
 
     private func menu(_ item: String) {
@@ -215,7 +244,9 @@ final class LittleMenaceUITests: XCTestCase {
     func testSettingsResetNeedsConfirmation() {
         launch(["-LMScreen", "home"])
         menu("Settings")
-        app.buttons["Start Over"].firstMatch.tap()
+        let startOver = app.buttons["Start Over"].firstMatch
+        if !startOver.waitForExistence(timeout: 2) || !startOver.isHittable { app.swipeUp() }
+        startOver.tap()
         let cancel = app.buttons["Cancel"]
         XCTAssertTrue(cancel.waitForExistence(timeout: 3))
         cancel.tap()

@@ -53,6 +53,11 @@ public enum Lines {
             "dream snack wasn't real. rude.", "all systems fluffy.", "I slept on my scheme.",
             "new nap. same menace.", "a little stretch first.", "the ceiling is still there.", "ready for mild trouble.",
         ],
+        .annoyed: [
+            "okay. OKAY.", "personal space, please.", "too many pokes.", "I'm not a button.",
+            "boop limit reached.", "hands off. briefly.", "I need a minute.", "that's enough fondling.",
+            "the fur is getting worn.", "gentle. or not at all.", "I bite. a bit.", "one more and I file a report.",
+        ],
         .grumpyWake: [
             "rude.", "I was dreaming!", "five more minutes.", "grr. hi.", "I almost caught the biscuit.",
             "my eyes aren't dressed yet.", "who scheduled this?", "I'm awake in instalments.",

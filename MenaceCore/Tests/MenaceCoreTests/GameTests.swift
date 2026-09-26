@@ -43,7 +43,7 @@ final class GameTests: XCTestCase {
         if case .failure(let r) = g.startActivity(.sockTug, now: monday) { XCTAssertEqual(r, .asleep) } else { XCTFail() }
     }
 
-    func testEarlyWakeIsGrumpyButHarmless() {
+    func testEarlyWakeIsGrumpyAndCostsPoints() {
         var g = makeGame()
         g.state.needs.energy = 30
         _ = g.sleep(now: monday)
@@ -105,7 +105,8 @@ final class GameTests: XCTestCase {
 
     func testCareXPIsCappedPerDay() {
         var g = makeGame()
-        for _ in 0..<100 { _ = g.pet(now: monday) }
+        // Spaced out so it never counts as poking.
+        for i in 0..<100 { _ = g.pet(now: monday.addingTimeInterval(Double(i) * 3)) }
         // Pet XP is capped; the only other XP possible is the pet challenge if it is today's.
         let challengeBonus = g.todaysChallenge == .petEight ? Tuning.challengeXP : 0
         XCTAssertEqual(g.state.xp, Tuning.careXPPerDayCap + challengeBonus)
