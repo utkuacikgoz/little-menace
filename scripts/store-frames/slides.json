@@ -13,7 +13,8 @@
     "B": {
       "head": "Tiny. Needy.<br><mark>Yours.</mark>",
       "sub": "A pocket pet with a fang and a score."
-    }
+    },
+    "pick": "A"
   },
   {
     "id": "02",
@@ -29,7 +30,8 @@
     "B": {
       "head": "Belly rubs<br><mark>welcome.</mark>",
       "sub": "Pokes, not so much."
-    }
+    },
+    "pick": "A"
   },
   {
     "id": "03",
@@ -45,7 +47,8 @@
     "B": {
       "head": "Ignore it?<br><mark>Lose points.</mark>",
       "sub": "Hungry too long, woken too early. It notices."
-    }
+    },
+    "pick": "A"
   },
   {
     "id": "04",
@@ -61,7 +64,8 @@
     "B": {
       "head": "Play hard.<br><mark>Score big.</mark>",
       "sub": "Three tiny games. One very competitive gremlin."
-    }
+    },
+    "pick": "B"
   },
   {
     "id": "05",
@@ -77,7 +81,8 @@
     "B": {
       "head": "Who,<br><mark>me?</mark>",
       "sub": "Mischief happens. You decide what's next."
-    }
+    },
+    "pick": "B"
   },
   {
     "id": "06",
@@ -93,7 +98,8 @@
     "B": {
       "head": "Fashion<br><mark>crimes.</mark>",
       "sub": "Tiny hats. Big attitude."
-    }
+    },
+    "pick": "B"
   },
   {
     "id": "07",
@@ -109,7 +115,8 @@
     "B": {
       "head": "Care wins.<br><mark>Neglect costs.</mark>",
       "sub": "Watch your score climb. Or don't."
-    }
+    },
+    "pick": "B"
   },
   {
     "id": "08",
@@ -125,6 +132,7 @@
     "B": {
       "head": "Whose menace<br><mark>is worse?</mark>",
       "sub": "Share the card. Compare the chaos."
-    }
+    },
+    "pick": "B"
   }
 ]

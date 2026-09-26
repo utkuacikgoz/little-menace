@@ -1,5 +1,6 @@
 // App Store marketing frames: headline + highlighter + phone, in the psst style.
-// Usage: node scripts/store-frames/compose.js <A|B> [out-dir]
+// Usage: node scripts/store-frames/compose.js <A|B|final> [out-dir]
+// 'final' renders each slide's chosen copy ("pick" in slides.json) as NN.jpg for upload.
 // Reads raw 1320x2868 captures from docs/app-store-screenshots and writes PNGs
 // at the same size. Needs Playwright with a Chromium (PLAYWRIGHT_CHROMIUM overrides the path).
 const { chromium } = require('playwright');
@@ -19,7 +20,7 @@ const b64 = f => fs.readFileSync(f).toString('base64');
 const font = (w, f) => `@font-face{font-family:"Inter Tight";font-weight:${w};src:url(data:font/woff2;base64,${b64(path.join(here, 'fonts', f))}) format("woff2");}`;
 
 function html(s) {
-  const copy = s[variant];
+  const copy = s[variant === 'FINAL' ? s.pick : variant];
   return `<!doctype html><html><head><meta charset="utf-8"><style>
 ${font(900, 'InterTight-Black.woff2')}${font(800, 'InterTight-ExtraBold.woff2')}${font(700, 'InterTight-Bold.woff2')}
 *{box-sizing:border-box;margin:0}
@@ -60,8 +61,9 @@ mark::after{content:"";position:absolute;left:1%;right:2%;bottom:-.07em;height:.
     await page.$eval('#s', (e, t) => { e.style.top = t + 'px'; }, subTop);
     const sBottom = await page.$eval('#s', e => e.getBoundingClientRect().bottom);
     await page.$eval('#p', (e, t) => { e.style.top = t + 'px'; }, Math.round(sBottom + 96));
-    const file = path.join(out, `${s.id}-${variant}.png`);
-    await page.screenshot({ path: file });
+    const final = variant === 'FINAL';
+    const file = path.join(out, final ? `${s.id}.jpg` : `${s.id}-${variant}.png`);
+    await page.screenshot(final ? { path: file, type: 'jpeg', quality: 92 } : { path: file });
     console.log('wrote', path.relative(root, file));
   }
   await browser.close();
