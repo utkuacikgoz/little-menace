@@ -26,7 +26,7 @@ ${font(900, 'InterTight-Black.woff2')}${font(800, 'InterTight-ExtraBold.woff2')}
 html,body{width:1320px;height:2868px;overflow:hidden}
 body{background:${s.bg};color:${s.ink};font-family:"Inter Tight",sans-serif;-webkit-font-smoothing:antialiased;position:relative}
 .word{position:absolute;left:96px;top:118px;font-weight:900;font-size:96px;letter-spacing:-.035em;line-height:1;color:${s.brand}}
-h1{position:absolute;left:88px;right:72px;top:268px;font-weight:900;font-size:190px;line-height:.93;letter-spacing:-.035em;word-spacing:.04em}
+h1{position:absolute;left:88px;right:72px;top:268px;white-space:nowrap;font-weight:900;font-size:190px;line-height:.93;letter-spacing:-.035em;word-spacing:.04em}
 mark{background:none;color:inherit;position:relative;white-space:nowrap}
 mark::after{content:"";position:absolute;left:1%;right:2%;bottom:-.07em;height:.1em;border-radius:99px;background:${s.mark};transform:rotate(-1.2deg)}
 .sub{position:absolute;left:96px;right:80px;top:${'SUBTOP'}px;font-weight:800;font-size:66px;line-height:1.1;letter-spacing:-.01em;opacity:.95}
