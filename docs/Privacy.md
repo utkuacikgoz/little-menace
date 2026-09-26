@@ -1,5 +1,7 @@
 # Little Menace privacy
 
+> The live page is at [littlemenace.fun/privacy](https://littlemenace.fun/privacy). The site source is in `site/`.
+
 Updated 25 September 2026.
 
 Little Menace stores your gremlin's name, needs, progress, outfits, preferences and recent dialogue on your device. The app has no account system, advertising, tracking SDK or analytics service. We do not receive your gameplay data.
