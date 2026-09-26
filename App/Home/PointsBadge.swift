@@ -82,6 +82,9 @@ struct PointsBadge: View {
             .dynamicTypeSize(...DynamicTypeSize.xLarge)
         }
         .buttonStyle(SquishButtonStyle())
+        // One element for VoiceOver (and no loose words on the home screen).
+        .accessibilityElement(children: .ignore)
+        .accessibilityAddTraits(.isButton)
         .accessibilityLabel("Points")
         .accessibilityValue("\(s.points.total). Today plus \(gained), minus \(lost).")
         .accessibilityHint("Shows how points work")
