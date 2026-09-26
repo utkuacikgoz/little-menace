@@ -50,7 +50,7 @@ struct HomeView: View {
                     SpeechBubble(text: bubble.text)
                         .accessibilityIdentifier("pet-dialogue")
                         .frame(maxWidth: geo.size.width - 64)
-                        .position(x: center.x, y: model.pendingMischief == nil ? center.y - petSize * 0.72 : min(center.y + petSize * 0.68, geo.size.height - 180))
+                        .position(x: center.x, y: model.pendingMischief == nil ? max(center.y - petSize * 0.72, Self.belowScore + 10) : min(center.y + petSize * 0.68, geo.size.height - 180))
                         .transition(.opacity)
                         .id(bubble.id)
                 }
@@ -66,7 +66,7 @@ struct HomeView: View {
 
                 if let event = model.pendingMischief {
                     mischiefProp(event)
-                        .position(x: center.x, y: center.y - petSize * 0.85)
+                        .position(x: center.x, y: max(center.y - petSize * 0.85, Self.belowScore))
                 }
 
                 if let snackAt {
@@ -100,7 +100,7 @@ struct HomeView: View {
             .animation(.spring(response: 0.4, dampingFraction: 0.7), value: model.showReminderOffer)
             .animation(.spring(response: 0.4, dampingFraction: 0.7), value: model.showNamePrompt)
             .overlayPreferenceValue(CoachAnchorKey.self) { anchors in
-                if model.showHowToPlay && DesignAlt.current == "C" {
+                if model.showHowToPlay {
                     CoachMarks(anchors: anchors)
                 }
             }
@@ -146,8 +146,6 @@ struct HomeView: View {
         .fullScreenCover(item: $model.activity) { kind in
             ActivityContainer(kind: kind)
         }
-        .fullScreenCover(isPresented: guideBinding("A")) { HowToPlayPages() }
-        .sheet(isPresented: guideBinding("B")) { HowToPlaySheet() }
         #if DEBUG
         .task {
             if let s = model.applyDebugLaunch() { sheet = s }
@@ -158,12 +156,6 @@ struct HomeView: View {
             }
         }
         #endif
-    }
-
-    /// The guide style under review decides how it is presented; C draws over the home screen instead.
-    private func guideBinding(_ alt: String) -> Binding<Bool> {
-        Binding(get: { model.showHowToPlay && DesignAlt.current == alt },
-                set: { if !$0 && model.showHowToPlay { model.finishHowToPlay() } })
     }
 
     // MARK: Gremlin
@@ -227,6 +219,9 @@ struct HomeView: View {
         return parts.joined(separator: ", ")
     }
 
+    /// Centre line for things placed under the scoreboard at the top.
+    static let belowScore: CGFloat = 116
+
     static func rubberBand(_ t: CGSize, limit: CGFloat) -> CGSize {
         func band(_ v: CGFloat) -> CGFloat {
             let sign: CGFloat = v < 0 ? -1 : 1
@@ -239,13 +234,8 @@ struct HomeView: View {
 
     private var topBar: some View {
         ZStack(alignment: .top) {
-            if DesignAlt.current == "C" {
-                PointsBadge { sheet = .points }.coachTarget(.points)
-            }
-            HStack(alignment: .top) {
-                if DesignAlt.current != "C" {
-                    PointsBadge { sheet = .points }.coachTarget(.points)
-                }
+            PointsBadge { sheet = .points }.coachTarget(.points)
+            HStack {
                 Spacer()
                 menu
             }

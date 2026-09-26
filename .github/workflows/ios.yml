@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
     inputs:
       tour:
-        description: "review: every screen, small. store: full-size 6.9\" App Store shots. new: options for screens under review."
+        description: "review: every screen, small. store: full-size 6.9\" App Store shots. new: the newest screens, for review."
         type: choice
         options: [review, store, new]
         default: review
