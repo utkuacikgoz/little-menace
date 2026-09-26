@@ -33,6 +33,9 @@ if [ "$PART" = store ]; then
   shot "$PM" 06-mischief -LMScreen mischief
   shot "$PM" 07-wardrobe -LMScreen wardrobe
   shot "$PM" 08-stamps -LMScreen stamps
+  shot "$PM" 09-poked -LMScreen annoyed -LMLoss 1
+  shot "$PM" 10-points -LMScreen points
+  shot "$PM" 11-share -LMScreen share
 elif [ "$PART" = new ]; then
   shot "$PM" p01-home-score -LMScreen home -LMDelta 18
   shot "$PM" p02-home-score-loss -LMScreen annoyed -LMLoss 1

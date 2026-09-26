@@ -1,5 +1,7 @@
 # Little Menace support
 
+> The live page is at [littlemenace.fun/support](https://littlemenace.fun/support). The site source is in `site/`.
+
 [Report a problem or send feedback](https://github.com/utkuacikgoz/little-menace/issues/new).
 
 Include your iPhone model, iOS version, what you tried and what happened. GitHub issues are public, so leave out payment details, receipts and personal information.
