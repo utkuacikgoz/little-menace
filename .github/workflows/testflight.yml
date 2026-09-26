@@ -34,7 +34,7 @@ jobs:
       # Monotonic build number for this workflow's uploads.
       BUILD_NUMBER: ${{ github.run_number }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Use Xcode 26
         # App Store Connect only accepts builds made with the iOS 26 SDK or later.

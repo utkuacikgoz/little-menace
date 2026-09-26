@@ -26,10 +26,10 @@ jobs:
     name: Core tests
     if: github.event_name != 'workflow_dispatch'
     runs-on: ubuntu-latest
-    container: swift:6.1
+    container: swift:6.2 # the Swift in Xcode 26.3, which builds the shipping app
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - run: swift test --package-path MenaceCore
 
   app-tests:
@@ -42,7 +42,16 @@ jobs:
       matrix:
         shard: [0, 1, 2]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
+      - name: Use Xcode 26
+        # Test and screenshot with the same toolchain that builds the App Store version.
+        run: |
+          XC=$(ls -d /Applications/Xcode_26*.app 2>/dev/null | sort -V | tail -1)
+          if [ -z "$XC" ]; then
+            echo "::error::No Xcode 26 on this runner. Installed:"; ls -d /Applications/Xcode*.app; exit 1
+          fi
+          sudo xcode-select -s "$XC"
+          xcodebuild -version
       - name: Test
         run: |
           set -o pipefail
@@ -76,7 +85,16 @@ jobs:
       matrix:
         part: ${{ fromJSON(inputs.tour == 'store' && '["store"]' || inputs.tour == 'new' && '["new"]' || '["a","b"]') }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
+      - name: Use Xcode 26
+        # Test and screenshot with the same toolchain that builds the App Store version.
+        run: |
+          XC=$(ls -d /Applications/Xcode_26*.app 2>/dev/null | sort -V | tail -1)
+          if [ -z "$XC" ]; then
+            echo "::error::No Xcode 26 on this runner. Installed:"; ls -d /Applications/Xcode*.app; exit 1
+          fi
+          sudo xcode-select -s "$XC"
+          xcodebuild -version
       - name: Build
         run: |
           set -o pipefail
@@ -85,7 +103,7 @@ jobs:
             -derivedDataPath build CODE_SIGNING_ALLOWED=NO 2>&1 | grep -E "error:|\*\* BUILD"
       - name: Tour
         run: scripts/screenshot-tour.sh ${{ matrix.part }} build/Build/Products/Debug-iphonesimulator/LittleMenace.app shots
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: shots-${{ matrix.part }}
           path: shots/
@@ -97,10 +115,10 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: ${{ github.ref_name }}
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           pattern: shots-*
           merge-multiple: true
