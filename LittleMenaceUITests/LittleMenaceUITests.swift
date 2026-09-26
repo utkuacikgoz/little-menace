@@ -310,7 +310,10 @@ final class LittleMenaceUITests: XCTestCase {
     func testLargestTextSizeSheets() {
         launch(["-LMScreen", "home", "-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL"])
         menu("Stamps")
-        XCTAssertTrue(app.scrollViews.firstMatch.waitForExistence(timeout: 3))
+        // The stamp card's own content, not just some scroll view: container types differ across iOS versions.
+        let week = app.descendants(matching: .any).matching(NSPredicate(format: "label CONTAINS 'stamps this week'")).firstMatch
+        XCTAssertTrue(week.waitForExistence(timeout: 5),
+                      "stamp card opens at the largest text size: \(app.debugDescription.replacingOccurrences(of: "\n", with: " ⏎ "))")
     }
 
     /// Xcode's built-in audit on each screen. Issues are logged as AUDIT lines for triage;
