@@ -1,7 +1,9 @@
 #!/bin/bash
 # Screenshot tour for review: every screen and interaction state, numbered in review order.
-# Usage: scripts/screenshot-tour.sh <a|b> <path/to/LittleMenace.app> <out-dir>
+# Usage: scripts/screenshot-tour.sh <a|b|store|new> <path/to/LittleMenace.app> <out-dir>
 # Part a and part b run on separate CI machines in parallel.
+# Part store takes full-size 6.9" App Store screenshots with a clean status bar.
+# Part new shoots the newest screens for review.
 set -euo pipefail
 PART=$1 APP=$2 OUT=$3
 BID=com.belevate.littlemenace
@@ -20,7 +22,26 @@ PM=$(udid "iPhone 16 Pro Max")
 # Runner images differ: fall back to the newest Pro Max available.
 [ -n "$PM" ] || PM=$(xcrun simctl list devices available | grep -E "iPhone [0-9]+ Pro Max \(" | tail -1 | sed -E 's/.*\(([0-9A-F-]{36})\).*/\1/')
 boot "$PM"
-if [ "$PART" = a ]; then
+if [ "$PART" = store ]; then
+  xcrun simctl status_bar "$PM" override --time 9:41 --dataNetwork wifi --wifiBars 3 \
+    --cellularMode active --cellularBars 4 --batteryState charged --batteryLevel 100
+  shot "$PM" 01-petting -LMScreen touch
+  shot "$PM" 02-home -LMScreen home
+  shot "$PM" 03-feeding -LMScreen feed
+  shot "$PM" 04-snack-toss -LMScreen snackToss
+  shot "$PM" 05-round-won -LMScreen snackToss -LMResult win
+  shot "$PM" 06-mischief -LMScreen mischief
+  shot "$PM" 07-wardrobe -LMScreen wardrobe
+  shot "$PM" 08-stamps -LMScreen stamps
+elif [ "$PART" = new ]; then
+  shot "$PM" p01-home-score -LMScreen home -LMDelta 18
+  shot "$PM" p02-home-score-loss -LMScreen annoyed -LMLoss 1
+  shot "$PM" p03-home-mischief -LMScreen mischief
+  shot "$PM" p04-points-history -LMScreen points
+  shot "$PM" p05-points-rules -LMScreen points -LMPage 1
+  shot "$PM" p06-settings -LMScreen settings
+  for i in 0 1 2 3 4; do shot "$PM" "p1$i-guide-step$((i + 1))" -LMScreen howToPlay -LMPage $i; done
+elif [ "$PART" = a ]; then
   shot "$PM" 01-home -LMScreen home
   shot "$PM" 02-name-prompt -LMScreen namePrompt
   shot "$PM" 03-touch -LMScreen touch
@@ -63,8 +84,12 @@ else
   fi
 fi
 
-# Small JPEGs for the repo.
+# JPEGs for the repo: full size for the store, small for review.
 for f in "$OUT"/*.png; do
-  sips -s format jpeg -s formatOptions 70 --resampleWidth 430 "$f" --out "${f%.png}.jpg" >/dev/null && rm "$f"
+  if [ "$PART" = store ]; then
+    sips -s format jpeg -s formatOptions 90 "$f" --out "${f%.png}.jpg" >/dev/null && rm "$f"
+  else
+    sips -s format jpeg -s formatOptions 70 --resampleWidth 430 "$f" --out "${f%.png}.jpg" >/dev/null && rm "$f"
+  fi
 done
 ls "$OUT"

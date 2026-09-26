@@ -6,6 +6,12 @@ on:
     branches: [main]
   pull_request:
   workflow_dispatch:
+    inputs:
+      tour:
+        description: "review: every screen, small. store: full-size 6.9\" App Store shots. new: the newest screens, for review."
+        type: choice
+        options: [review, store, new]
+        default: review
 
 # A newer push to the same branch cancels the older run.
 concurrency:
@@ -20,10 +26,10 @@ jobs:
     name: Core tests
     if: github.event_name != 'workflow_dispatch'
     runs-on: ubuntu-latest
-    container: swift:6.1
+    container: swift:6.2 # the Swift in Xcode 26.3, which builds the shipping app
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - run: swift test --package-path MenaceCore
 
   app-tests:
@@ -36,7 +42,16 @@ jobs:
       matrix:
         shard: [0, 1, 2]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
+      - name: Use Xcode 26
+        # Test and screenshot with the same toolchain that builds the App Store version.
+        run: |
+          XC=$(ls -d /Applications/Xcode_26*.app 2>/dev/null | sort -V | tail -1)
+          if [ -z "$XC" ]; then
+            echo "::error::No Xcode 26 on this runner. Installed:"; ls -d /Applications/Xcode*.app; exit 1
+          fi
+          sudo xcode-select -s "$XC"
+          xcodebuild -version
       - name: Test
         run: |
           set -o pipefail
@@ -54,6 +69,8 @@ jobs:
           phones = [d for rt, ds in json.load(sys.stdin)["devices"].items() if "iOS" in rt for d in ds if d["name"].startswith("iPhone")]
           pick = [d for d in phones if d["name"] == "iPhone 16 Pro Max"] or [d for d in phones if "Pro Max" in d["name"]] or phones
           print(pick[-1]["udid"])')
+          # Boot first: a cold simulator can miss the first test's launch ("does not have a process ID").
+          xcrun simctl bootstatus "$SIM" -b >/dev/null
           xcodebuild test -project LittleMenace.xcodeproj -scheme LittleMenace \
             -destination "id=$SIM" \
             -derivedDataPath build CODE_SIGNING_ALLOWED=NO "${ARGS[@]}" 2>&1 \
@@ -66,9 +83,18 @@ jobs:
     timeout-minutes: 20
     strategy:
       matrix:
-        part: [a, b]
+        part: ${{ fromJSON(inputs.tour == 'store' && '["store"]' || inputs.tour == 'new' && '["new"]' || '["a","b"]') }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
+      - name: Use Xcode 26
+        # Test and screenshot with the same toolchain that builds the App Store version.
+        run: |
+          XC=$(ls -d /Applications/Xcode_26*.app 2>/dev/null | sort -V | tail -1)
+          if [ -z "$XC" ]; then
+            echo "::error::No Xcode 26 on this runner. Installed:"; ls -d /Applications/Xcode*.app; exit 1
+          fi
+          sudo xcode-select -s "$XC"
+          xcodebuild -version
       - name: Build
         run: |
           set -o pipefail
@@ -77,7 +103,7 @@ jobs:
             -derivedDataPath build CODE_SIGNING_ALLOWED=NO 2>&1 | grep -E "error:|\*\* BUILD"
       - name: Tour
         run: scripts/screenshot-tour.sh ${{ matrix.part }} build/Build/Products/Debug-iphonesimulator/LittleMenace.app shots
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: shots-${{ matrix.part }}
           path: shots/
@@ -89,20 +115,22 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: ${{ github.ref_name }}
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           pattern: shots-*
           merge-multiple: true
           path: shots
-      - name: Commit to docs/screenshots
+      - name: Commit screenshots
+        env:
+          DEST: ${{ inputs.tour == 'store' && 'docs/app-store-screenshots' || inputs.tour == 'new' && 'docs/review-screenshots' || 'docs/screenshots' }}
         run: |
-          rm -rf docs/screenshots && mv shots docs/screenshots
+          rm -rf "$DEST" && mv shots "$DEST"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A docs/screenshots
+          git add -A "$DEST"
           git commit -m "Update simulator screenshots [skip ci]" || exit 0
           git pull --rebase origin "${{ github.ref_name }}"
           git push origin "HEAD:${{ github.ref_name }}"
