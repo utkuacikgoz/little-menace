@@ -25,7 +25,7 @@ struct CushionHuntView: View {
             let y = geo.size.height * 0.56
             ZStack {
                 if phase == .peek || lifted.contains(hidden) {
-                    GremlinView(pose: gremlinPose, hat: model.state.wardrobe.hat, neck: model.state.wardrobe.neck, size: 110)
+                    GremlinView(pose: gremlinPose, hat: model.state.wardrobe.hat, neck: model.state.wardrobe.neck, fur: model.state.wardrobe.fur, size: 110)
                         .position(x: x(for: hidden, width: geo.size.width), y: y - 50)
                         .transition(.move(edge: .bottom).combined(with: .opacity))
                         .accessibilityHidden(true)

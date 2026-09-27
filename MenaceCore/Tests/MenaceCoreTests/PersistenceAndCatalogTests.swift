@@ -123,6 +123,42 @@ final class CatalogTests: XCTestCase {
         XCTAssertEqual(s.wardrobe.sock, Catalog.defaultSock)
     }
 
+    func testMidnightSnackHasSixteenItemsInEverySlot() {
+        let pack = Catalog.collections.first { $0.id == pid }!
+        XCTAssertEqual(pack.itemIDs.count, 16)
+        XCTAssertEqual(Set(pack.itemIDs).count, 16)
+        for id in pack.itemIDs {
+            XCTAssertEqual(Catalog.item(id)?.source, .collection(pid), id)
+        }
+        let slots = Set(pack.itemIDs.compactMap { Catalog.item($0)?.slot })
+        XCTAssertEqual(slots, Set(Slot.allCases))
+        XCTAssertEqual(pack.looks.count, 3)
+        for look in pack.looks {
+            let items = look.itemIDs.compactMap(Catalog.item)
+            XCTAssertEqual(items.count, look.itemIDs.count, look.name)
+            XCTAssertEqual(Set(items.map(\.slot)).count, items.count, "one item per slot in \(look.name)")
+            XCTAssertTrue(look.itemIDs.allSatisfy(pack.itemIDs.contains), look.name)
+        }
+    }
+
+    func testFurEquipsAndRevertsOnRevocation() {
+        var s = PetState(now: t0)
+        XCTAssertNil(s.wardrobe.equipped(.fur))
+        s.wardrobe.equip("plum", in: .fur)
+        XCTAssertEqual(s.wardrobe.fur, "plum")
+        XCTAssertFalse(Catalog.sanitize(&s, entitlements: [pid]))
+        XCTAssertTrue(Catalog.sanitize(&s, entitlements: []))
+        XCTAssertNil(s.wardrobe.fur)
+    }
+
+    func testWardrobeFromBeforeFurDecodes() throws {
+        let old = #"{"earned":[],"hat":"leaf","theme":"grape","sock":"stripe"}"#
+        let w = try JSONDecoder().decode(Wardrobe.self, from: Data(old.utf8))
+        XCTAssertNil(w.fur)
+        XCTAssertEqual(w.hat, "leaf")
+        XCTAssertEqual(w.theme, "grape")
+    }
+
     func testLevelItemsOwnedByLevel() {
         var s = PetState(now: t0)
         let leaf = Catalog.item("leaf")!

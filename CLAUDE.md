@@ -9,4 +9,5 @@
 
 ## Review with the owner
 - Screens are reviewed one at a time with options A (current) / B / C. Collect all picks, then apply them in **one** push at the end.
+- **Every option is a real screenshot of that screen: 3 screens per choice**, never one screenshot plus text describing B and C. Build B and C behind `Variant.on("S3B")` (DEBUG-only `-LMVariant`), shoot them all with the `new` tour, then keep the picked branch and delete the others.
 - Nothing is merged until the owner approves every screen.

@@ -434,7 +434,13 @@ final class GameModel {
 
     // MARK: Wardrobe
 
-    var entitlements: Set<String> { purchases.entitlements }
+    var entitlements: Set<String> {
+        #if DEBUG
+        // Screenshot tours: `-LMOwned YES` shows paid items as bought, without buying anything.
+        if UserDefaults.standard.bool(forKey: "LMOwned") { return Set(Catalog.collections.map(\.id)) }
+        #endif
+        return purchases.entitlements
+    }
 
     func owns(_ item: Item) -> Bool { Catalog.isOwned(item, state: state, entitlements: entitlements) }
 
@@ -445,8 +451,8 @@ final class GameModel {
         save()
     }
 
-    private func entitlementsChanged(_ owned: Set<String>) {
-        if Catalog.sanitize(&game.state, entitlements: owned) { save() }
+    private func entitlementsChanged(_: Set<String>) {
+        if Catalog.sanitize(&game.state, entitlements: entitlements) { save() }
     }
 
     // MARK: Settings
@@ -525,6 +531,8 @@ final class GameModel {
         if gain != 0 || loss != 0 { showDelta(gain > 0 ? gain : -loss, hold: 60) }
         if let theme = UserDefaults.standard.string(forKey: "LMTheme") { game.state.wardrobe.theme = theme }
         if let hat = UserDefaults.standard.string(forKey: "LMHat") { game.state.wardrobe.hat = hat }
+        if let neck = UserDefaults.standard.string(forKey: "LMNeck") { game.state.wardrobe.neck = neck }
+        if let fur = UserDefaults.standard.string(forKey: "LMFur") { game.state.wardrobe.fur = fur }
         switch screen {
         case "asleep": _ = game.sleep(now: Date())
         case "grumpy":

@@ -37,13 +37,21 @@ if [ "$PART" = store ]; then
   shot "$PM" 10-points -LMScreen points
   shot "$PM" 11-share -LMScreen share
 elif [ "$PART" = new ]; then
-  shot "$PM" p01-home-score -LMScreen home -LMDelta 18
-  shot "$PM" p02-home-score-loss -LMScreen annoyed -LMLoss 1
-  shot "$PM" p03-home-mischief -LMScreen mischief
-  shot "$PM" p04-points-history -LMScreen points
-  shot "$PM" p05-points-rules -LMScreen points -LMPage 1
-  shot "$PM" p06-settings -LMScreen settings
-  for i in 0 1 2 3 4; do shot "$PM" "p1$i-guide-step$((i + 1))" -LMScreen howToPlay -LMPage $i; done
+  # Final check of the owner's picks (S1C S3B S4B S5C S7C S9C; S2, S6, S8 unchanged).
+  # For a new A/B/C review, shoot each screen with -LMVariant <screen><A|B|C> instead.
+  shot "$PM" f-S1-levels -LMScreen stamps
+  shot "$PM" f-S3-looks -LMScreen collection
+  shot "$PM" f-S3-looks-2 -LMScreen collection -LMLook 2
+  shot "$PM" f-S4-items -LMScreen collection -LMPage 1
+  shot "$PM" f-S5-tabs-hats -LMScreen wardrobe
+  shot "$PM" f-S5-tabs-backgrounds -LMScreen wardrobe -LMSlot theme
+  shot "$PM" f-S5-tabs-fur -LMScreen wardrobe -LMSlot fur
+  shot "$PM" f-S7-star-clip -LMScreen wardrobe -LMPreview starclip
+  shot "$PM" f-S7-star-clip-home -LMScreen home -LMOwned YES -LMTheme galaxy -LMHat starclip -LMNeck glowstick -LMFur plum
+  shot "$PM" f-S9-name-light -LMScreen namePrompt
+  xcrun simctl ui "$PM" appearance dark
+  shot "$PM" f-S9-name-dark -LMScreen namePrompt
+  xcrun simctl ui "$PM" appearance light
 elif [ "$PART" = a ]; then
   shot "$PM" 01-home -LMScreen home
   shot "$PM" 02-name-prompt -LMScreen namePrompt

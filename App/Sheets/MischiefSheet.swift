@@ -10,7 +10,7 @@ struct MischiefSheet: View {
     var body: some View {
         VStack(spacing: 18) {
             HStack(spacing: 14) {
-                GremlinView(pose: .pose(for: .mischief), hat: model.state.wardrobe.hat, neck: model.state.wardrobe.neck, size: 96)
+                GremlinView(pose: .pose(for: .mischief), hat: model.state.wardrobe.hat, neck: model.state.wardrobe.neck, fur: model.state.wardrobe.fur, size: 96)
                     .accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: 8) {
                     Image(systemName: event.prop).font(.title2.weight(.bold))
