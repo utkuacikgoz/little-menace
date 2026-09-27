@@ -63,6 +63,8 @@ struct WardrobeView: View {
                         cell(item)
                     }
                 }
+                // Option B: room above the first row so its badges aren't cut off by the scroll edge.
+                .padding(.top, Variant.on("S11B") ? 10 : 0)
             }
 
             if let preview, case .collection(let productID) = preview.source, !model.owns(preview) {
@@ -165,7 +167,8 @@ struct WardrobeView: View {
         .frame(width: 24, height: 24)
         .background(Ink.body, in: Circle())
         .foregroundStyle(Ink.eye)
-        .offset(x: 6, y: -6)
+        // Option C tucks the badge inside the tile's corner.
+        .offset(x: Variant.on("S11C") ? -2 : 6, y: Variant.on("S11C") ? 2 : -6)
     }
 
     private func cellLabel(_ item: Item?, owned: Bool, equipped: Bool) -> String {
