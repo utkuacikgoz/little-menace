@@ -12,7 +12,8 @@ const root = path.resolve(here, '../..');
 const shots = path.join(root, 'docs/app-store-screenshots');
 const variant = (process.argv[2] || 'A').toUpperCase();
 const out = path.resolve(process.argv[3] || path.join(shots, 'marketing'));
-const slides = JSON.parse(fs.readFileSync(path.join(here, 'slides.json'), 'utf8'));
+// SLIDES=path/to.json composes another set (e.g. review options for one slide).
+const slides = JSON.parse(fs.readFileSync(process.env.SLIDES || path.join(here, 'slides.json'), 'utf8'));
 fs.mkdirSync(out, { recursive: true });
 
 // Fonts and screenshots are inlined: a page set from a string can't load local files.

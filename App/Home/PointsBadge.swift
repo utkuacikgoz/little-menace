@@ -54,7 +54,6 @@ struct PointsBadge: View {
                     Text(s.points.total, format: .number)
                         .monospacedDigit()
                         .contentTransition(.numericText(value: Double(s.points.total)))
-                        .foregroundStyle(s.points.total < 0 && (Variant.on("S10B") || Variant.on("S10C")) ? PointColor.lossOnDark : .white)
                 }
                 .font(.system(size: 40, weight: .heavy, design: .rounded))
                 .foregroundStyle(.white)
@@ -72,10 +71,6 @@ struct PointsBadge: View {
                     }
                 }
                 HStack(spacing: 6) {
-                    if s.points.total < 0 && Variant.on("S10C") {
-                        Text("in the red").foregroundStyle(PointColor.lossOnDark)
-                        Text("·")
-                    }
                     Text("today")
                     Text(signedPoints(gained)).foregroundStyle(PointColor.gainOnDark)
                     if lost > 0 { Text(signedPoints(-lost)).foregroundStyle(PointColor.lossOnDark) }
