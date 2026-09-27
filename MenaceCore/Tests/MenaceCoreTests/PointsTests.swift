@@ -96,13 +96,19 @@ final class PointsTests: XCTestCase {
         XCTAssertEqual(TimeModel.hoursBelow(25, start: 10, rate: 8, floor: 20, hours: 2), 2)
     }
 
-    func testLossesStopAtZeroAndAtTheDailyCap() {
+    func testLossesGoBelowZeroButStopAtTheDailyCap() {
         var g = makeGame(points: 3)
         g.state.needs.fullness = Tuning.refuseFoodAt
         _ = g.feed(now: monday)
         _ = g.feed(now: monday)
-        XCTAssertEqual(g.state.points.total, 0)
-        XCTAssertEqual(g.state.points.lostToday, 3)
+        XCTAssertEqual(g.state.points.total, 3 - 2 * Tuning.forceFedPenalty, "a score can go negative")
+        XCTAssertEqual(g.state.points.lostToday, 2 * Tuning.forceFedPenalty)
+        XCTAssertEqual(g.state.level, 1, "levels never drop")
+
+        var z = makeGame(points: 0)
+        z.state.needs.fullness = Tuning.refuseFoodAt
+        for _ in 0..<100 { _ = z.feed(now: monday) }
+        XCTAssertEqual(z.state.points.total, -Tuning.maxPointsLostPerDay, "the daily cap still holds below zero")
 
         var h = makeGame(points: 1000)
         h.state.needs.fullness = Tuning.refuseFoodAt

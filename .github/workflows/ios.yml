@@ -127,7 +127,8 @@ jobs:
         env:
           DEST: ${{ inputs.tour == 'store' && 'docs/app-store-screenshots' || inputs.tour == 'new' && 'docs/review-screenshots' || 'docs/screenshots' }}
         run: |
-          rm -rf "$DEST" && mv shots "$DEST"
+          # Replace the captures only; folders beside them (composed store slides) stay.
+          mkdir -p "$DEST" && find "$DEST" -maxdepth 1 -type f -delete && cp shots/* "$DEST"/
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A "$DEST"

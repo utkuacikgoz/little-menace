@@ -91,7 +91,7 @@ public struct PointsEntry: Codable, Equatable, Sendable, Identifiable {
 }
 
 public struct PointsBook: Codable, Equatable, Sendable {
-    /// Never below zero.
+    /// Can go below zero: neglect costs points even before any are earned. Levels never drop.
     public var total = 0
     /// Newest last, capped at `Tuning.pointsHistoryLimit`.
     public var history: [PointsEntry] = []
@@ -117,8 +117,8 @@ public struct PointsBook: Codable, Equatable, Sendable {
         }
         var change = amount
         if change < 0 {
-            // Losses are capped per day and never take the total below zero.
-            change = -min(-change, Tuning.maxPointsLostPerDay - lostToday, total)
+            // Losses are capped per day. They can take the total below zero.
+            change = -min(-change, Tuning.maxPointsLostPerDay - lostToday)
             guard change < 0 else { return 0 }
             lostToday -= change
         } else {
