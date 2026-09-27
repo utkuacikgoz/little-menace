@@ -44,21 +44,13 @@ if [ "$PART" = store ]; then
   shot "$PM" 13-iap-collection-buy -LMScreen collection -LMPage 2 -LMPrice '$3.99'
   shot "$PM" 14-iap-wardrobe-preview -LMScreen wardrobe -LMPreview nightcap -LMPrice '$3.99'
 elif [ "$PART" = new ]; then
-  # Final check of the owner's picks (S1C S3B S4B S5C S7C S9C; S2, S6, S8 unchanged).
-  # For a new A/B/C review, shoot each screen with -LMVariant <screen><A|B|C> instead.
-  shot "$PM" f-S1-levels -LMScreen stamps
-  shot "$PM" f-S3-looks -LMScreen collection
-  shot "$PM" f-S3-looks-2 -LMScreen collection -LMLook 2
-  shot "$PM" f-S4-items -LMScreen collection -LMPage 1
-  shot "$PM" f-S5-tabs-hats -LMScreen wardrobe
-  shot "$PM" f-S5-tabs-backgrounds -LMScreen wardrobe -LMSlot theme
-  shot "$PM" f-S5-tabs-fur -LMScreen wardrobe -LMSlot fur
-  shot "$PM" f-S7-star-clip -LMScreen wardrobe -LMPreview starclip
-  shot "$PM" f-S7-star-clip-home -LMScreen home -LMOwned YES -LMTheme galaxy -LMHat starclip -LMNeck glowstick -LMFur plum
-  shot "$PM" f-S9-name-light -LMScreen namePrompt
-  xcrun simctl ui "$PM" appearance dark
-  shot "$PM" f-S9-name-dark -LMScreen namePrompt
-  xcrun simctl ui "$PM" appearance light
+  # Owner review: every screen three times, as option A (current), B and C (-LMVariant, DEBUG only).
+  abc() { # screen-id [launch args...]
+    local S=$1; shift
+    for V in A B C; do shot "$PM" "v-$S-$V" -LMVariant "$S$V" "$@"; done
+  }
+  abc S10 -LMScreen home -LMDebt 24 -LMLoss 3
+  abc S11 -LMScreen wardrobe
 elif [ "$PART" = a ]; then
   shot "$PM" 01-home -LMScreen home
   shot "$PM" 02-name-prompt -LMScreen namePrompt

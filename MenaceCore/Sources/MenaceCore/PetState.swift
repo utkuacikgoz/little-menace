@@ -243,7 +243,6 @@ public struct PetState: Codable, Equatable, Sendable {
         prefs = try c.decodeIfPresent(Preferences.self, forKey: .prefs) ?? Preferences()
         if let book = try c.decodeIfPresent(PointsBook.self, forKey: .points) {
             points = book
-            points.total = max(0, points.total)
         } else {
             // Saves from before points: start the score at the XP already earned.
             points.total = xp
