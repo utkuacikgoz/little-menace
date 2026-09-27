@@ -37,24 +37,20 @@ if [ "$PART" = store ]; then
   shot "$PM" 10-points -LMScreen points
   shot "$PM" 11-share -LMScreen share
 elif [ "$PART" = new ]; then
-  # Owner review: every screen three times, as option A (current), B and C (-LMVariant, DEBUG only).
-  abc() { # screen-id [launch args...]
-    local S=$1; shift
-    for V in A B C; do shot "$PM" "v-$S-$V" -LMVariant "$S$V" "$@"; done
-  }
-  abc S1 -LMScreen stamps
-  abc S2 -LMScreen share -LMOwned YES -LMTheme midnight -LMHat nightcap -LMNeck moon -LMFur deepsea
-  abc S3 -LMScreen collection
-  abc S4 -LMScreen collection -LMPage 1
-  abc S5 -LMScreen wardrobe -LMSlot theme
-  abc S6 -LMScreen wardrobe -LMSlot fur
-  abc S7 -LMScreen wardrobe -LMPreview starclip
+  # Final check of the owner's picks (S1C S3B S4B S5C S7C S9C; S2, S6, S8 unchanged).
+  # For a new A/B/C review, shoot each screen with -LMVariant <screen><A|B|C> instead.
+  shot "$PM" f-S1-levels -LMScreen stamps
+  shot "$PM" f-S3-looks -LMScreen collection
+  shot "$PM" f-S3-looks-2 -LMScreen collection -LMLook 2
+  shot "$PM" f-S4-items -LMScreen collection -LMPage 1
+  shot "$PM" f-S5-tabs-hats -LMScreen wardrobe
+  shot "$PM" f-S5-tabs-backgrounds -LMScreen wardrobe -LMSlot theme
+  shot "$PM" f-S5-tabs-fur -LMScreen wardrobe -LMSlot fur
+  shot "$PM" f-S7-star-clip -LMScreen wardrobe -LMPreview starclip
+  shot "$PM" f-S7-star-clip-home -LMScreen home -LMOwned YES -LMTheme galaxy -LMHat starclip -LMNeck glowstick -LMFur plum
+  shot "$PM" f-S9-name-light -LMScreen namePrompt
   xcrun simctl ui "$PM" appearance dark
-  GB="-LMScreen home -LMOwned YES -LMTheme galaxy -LMHat starclip -LMNeck glowstick"
-  shot "$PM" v-S8-A $GB -LMFur plum
-  shot "$PM" v-S8-B $GB -LMFur deepsea
-  shot "$PM" v-S8-C $GB -LMFur plum -LMVariant S8C
-  abc S9 -LMScreen namePrompt
+  shot "$PM" f-S9-name-dark -LMScreen namePrompt
   xcrun simctl ui "$PM" appearance light
 elif [ "$PART" = a ]; then
   shot "$PM" 01-home -LMScreen home

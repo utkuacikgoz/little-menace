@@ -61,11 +61,11 @@ struct Wearables: View {
                 Capsule().fill(Color(hex: 0x9A6A00)).frame(width: 22, height: 5).rotationEffect(.degrees(-20)).offset(x: -4, y: 12)
                 StarShape().fill(Color(hex: 0xFFD46B))
                     .overlay(StarShape().stroke(Color(hex: 0xE59A2E), lineWidth: 2))
-                    .frame(width: Variant.on("S7B") ? 48 : 34, height: Variant.on("S7B") ? 48 : 34)
+                    .frame(width: 34, height: 34)
                     .shadow(color: Color(hex: 0xFFD46B).opacity(0.8), radius: 6)
             }
-            // Option C wears it centred, like a tiny crown.
-            .offset(x: Variant.on("S7C") ? 0 : 30, y: Variant.on("S7C") ? -4 : 4)
+            // Worn centred, like a tiny crown.
+            .offset(y: -4)
         default:
             EmptyView()
         }
