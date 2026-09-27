@@ -26,9 +26,7 @@ struct ThemePalette {
         case "midnight": return ThemePalette(day: Color(hex: 0x1D2560), night: Color(hex: 0x0D1236), glow: Color(hex: 0x6F7BFF), starry: true)
         case "aurora": return ThemePalette(day: Color(hex: 0x0F5C63), night: Color(hex: 0x07343A), glow: Color(hex: 0x3DF5B0), starry: true)
         case "neon": return ThemePalette(day: Color(hex: 0x3A1260), night: Color(hex: 0x1E0833), glow: Color(hex: 0xFF4FD8), starry: false)
-        case "galaxy":
-            if Variant.on("S8C") { return ThemePalette(day: Color(hex: 0x2B3A9E), night: Color(hex: 0x17215E), glow: Color(hex: 0x8FB0FF), starry: true) }
-            return ThemePalette(day: Color(hex: 0x2E1C6B), night: Color(hex: 0x160C3A), glow: Color(hex: 0xB98CFF), starry: true)
+        case "galaxy": return ThemePalette(day: Color(hex: 0x2E1C6B), night: Color(hex: 0x160C3A), glow: Color(hex: 0xB98CFF), starry: true)
         default: return ThemePalette(day: Color(hex: 0xFF7A2F), night: Color(hex: 0xB9480F), glow: Color(hex: 0xFFC49B), starry: false)
         }
     }

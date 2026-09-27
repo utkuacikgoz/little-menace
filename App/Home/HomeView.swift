@@ -420,15 +420,12 @@ private struct NamePrompt: View {
     @FocusState private var focused: Bool
 
     var body: some View {
-        let dark = Variant.on("S9B")
         HStack(spacing: 12) {
-            if Variant.on("S9C") {
-                Image(systemName: "pencil").font(.headline.weight(.heavy)).foregroundStyle(Ink.body.opacity(0.6))
-            }
-            TextField("Name me?", text: $name,
-                      prompt: Variant.on("S9C") ? Text("Name me?").foregroundStyle(Ink.body.opacity(0.6)) : nil)
+            Image(systemName: "pencil").font(.headline.weight(.heavy)).foregroundStyle(Ink.body.opacity(0.6))
+                .accessibilityHidden(true)
+            TextField("Name me?", text: $name, prompt: Text("Name me?").foregroundStyle(Ink.body.opacity(0.6)))
                 .font(.system(.title3, design: .rounded).weight(.heavy))
-                .foregroundStyle(dark ? Ink.eye : Ink.body)
+                .foregroundStyle(Ink.body)
                 .textInputAutocapitalization(.words)
                 .autocorrectionDisabled()
                 .submitLabel(.done)
@@ -440,20 +437,20 @@ private struct NamePrompt: View {
                 .accessibilityLabel("Name")
             Button { model.rename(name) } label: {
                 Image(systemName: "checkmark").font(.headline.weight(.heavy))
-                    .frame(width: 40, height: 40).background(dark ? Ink.eye : Ink.body, in: Circle()).foregroundStyle(dark ? Ink.body : Ink.eye)
+                    .frame(width: 40, height: 40).background(Ink.body, in: Circle()).foregroundStyle(Ink.eye)
             }
             .disabled(name.trimmingCharacters(in: .whitespaces).isEmpty)
             .accessibilityLabel("Save name")
             Button { model.rename("") } label: {
                 Image(systemName: "xmark").font(.headline.weight(.heavy))
-                    .frame(width: 40, height: 40).background((dark ? Ink.eye : Ink.body).opacity(0.12), in: Circle()).foregroundStyle(dark ? Ink.eye : Ink.body)
+                    .frame(width: 40, height: 40).background(Ink.body.opacity(0.12), in: Circle()).foregroundStyle(Ink.body)
             }
             .accessibilityLabel("Not now")
         }
         .padding(12)
-        .background(dark ? Ink.body : Ink.eye, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .background(Ink.eye, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
         .padding(.bottom, 12)
-        .environment(\.colorScheme, dark ? .dark : .light) // cream card: keep the placeholder and caret dark in Dark Mode
+        .environment(\.colorScheme, .light) // cream card: keep the placeholder and caret dark in Dark Mode
         .transition(.move(edge: .bottom).combined(with: .opacity))
     }
 }

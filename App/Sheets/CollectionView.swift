@@ -39,35 +39,21 @@ struct CollectionView: View {
                 if !collection.looks.isEmpty {
                     VStack(alignment: .leading, spacing: 10) {
                         Text("Pick a look").font(.system(.headline, design: .rounded).weight(.heavy))
-                        if Variant.on("S3B") {
-                            ScrollView(.horizontal, showsIndicators: false) {
-                                HStack(spacing: 12) {
-                                    ForEach(collection.looks) { l in lookTile(l, selected: isSelected(l), wide: true) }
-                                }
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 12) {
+                                ForEach(collection.looks) { l in lookCard(l, selected: isSelected(l)) }
                             }
-                        } else if Variant.on("S3C") {
-                            HStack(alignment: .top, spacing: 10) {
-                                ForEach(collection.looks) { l in lookTile(l, selected: isSelected(l), wide: false) }
-                            }
-                        } else {
-                            ForEach(collection.looks) { l in lookRow(l, selected: isSelected(l)) }
                         }
                     }
                 }
                 VStack(alignment: .leading, spacing: 10) {
                     Text("All \(collection.itemIDs.count) items").font(.system(.headline, design: .rounded).weight(.heavy))
                         .id("items")
-                    if Variant.on("S4B") {
-                        // Option B: grouped the way the Wardrobe tabs are.
-                        ForEach([Slot.fur, .theme, .hat, .neck, .sock], id: \.self) { slot in
-                            Text(Self.groupName(slot)).font(.system(.subheadline, design: .rounded).weight(.heavy)).opacity(0.7)
-                            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 10), count: 4), spacing: 10) {
-                                ForEach(items.filter { $0.slot == slot }) { item in itemCell(item, on: shown.equipped(item.slot) == item.id) }
-                            }
-                        }
-                    } else {
+                    // Grouped the way the Wardrobe tabs are.
+                    ForEach([Slot.fur, .theme, .hat, .neck, .sock], id: \.self) { slot in
+                        Text(Self.groupName(slot)).font(.system(.subheadline, design: .rounded).weight(.heavy)).opacity(0.7)
                         LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 10), count: 4), spacing: 10) {
-                            ForEach(items) { item in itemCell(item, on: shown.equipped(item.slot) == item.id) }
+                            ForEach(items.filter { $0.slot == slot }) { item in itemCell(item, on: shown.equipped(item.slot) == item.id) }
                         }
                     }
                 }
@@ -136,41 +122,6 @@ struct CollectionView: View {
         tried.isEmpty && (look ?? collection.looks.first?.name) == l.name
     }
 
-    private func lookRow(_ l: Look, selected: Bool) -> some View {
-        var outfit = model.state.wardrobe
-        for id in l.itemIDs { if let item = Catalog.item(id) { outfit.equip(id, in: item.slot) } }
-        let names = l.itemIDs.compactMap { Catalog.item($0)?.name }
-        return Button {
-            look = l.name
-            tried = [:]
-            model.haptics.play(.tap)
-        } label: {
-            HStack(spacing: 12) {
-                ZStack {
-                    ThemeBackground(themeID: outfit.theme)
-                    GremlinView(pose: .idle, hat: outfit.hat, neck: outfit.neck, fur: outfit.fur, size: 60, animated: false)
-                }
-                .frame(width: 76, height: 76)
-                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-                VStack(alignment: .leading, spacing: 6) {
-                    Text(l.name).font(.system(.headline, design: .rounded).weight(.heavy))
-                    Text(names.joined(separator: " · "))
-                        .font(.system(.footnote, design: .rounded).weight(.semibold))
-                        .foregroundStyle(Ink.body.opacity(0.75))
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-                Spacer(minLength: 0)
-            }
-            .padding(8)
-            .background(Ink.body.opacity(0.06), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous).stroke(Ink.body, lineWidth: selected ? 3 : 0))
-        }
-        .buttonStyle(SquishButtonStyle())
-        .accessibilityLabel("\(l.name): \(names.joined(separator: ", "))")
-        .accessibilityHint("Shows this look on the gremlin")
-        .accessibilityAddTraits(selected ? .isSelected : [])
-    }
-
     private static func groupName(_ slot: Slot) -> String {
         switch slot {
         case .fur: return "Fur"
@@ -181,8 +132,8 @@ struct CollectionView: View {
         }
     }
 
-    /// Looks as cards: wide ones for a swipeable row (option B), narrow ones three across (option C).
-    private func lookTile(_ l: Look, selected: Bool, wide: Bool) -> some View {
+    /// A look as a card in the swipeable row.
+    private func lookCard(_ l: Look, selected: Bool) -> some View {
         var outfit = model.state.wardrobe
         for id in l.itemIDs { if let item = Catalog.item(id) { outfit.equip(id, in: item.slot) } }
         let names = l.itemIDs.compactMap { Catalog.item($0)?.name }
@@ -194,20 +145,17 @@ struct CollectionView: View {
             VStack(alignment: .leading, spacing: 6) {
                 ZStack {
                     ThemeBackground(themeID: outfit.theme)
-                    GremlinView(pose: .idle, hat: outfit.hat, neck: outfit.neck, fur: outfit.fur, size: wide ? 110 : 80, animated: false)
+                    GremlinView(pose: .idle, hat: outfit.hat, neck: outfit.neck, fur: outfit.fur, size: 110, animated: false)
                 }
-                .frame(width: wide ? 210 : nil, height: wide ? 140 : 100)
-                .frame(maxWidth: wide ? nil : CGFloat.infinity)
+                .frame(width: 210, height: 140)
                 .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-                Text(l.name).font(.system(wide ? .headline : .subheadline, design: .rounded).weight(.heavy))
+                Text(l.name).font(.system(.headline, design: .rounded).weight(.heavy))
                     .lineLimit(1).minimumScaleFactor(0.8)
-                if wide {
-                    Text(names.joined(separator: " · "))
-                        .font(.system(.caption, design: .rounded).weight(.semibold))
-                        .foregroundStyle(Ink.body.opacity(0.75))
-                        .lineLimit(2)
-                        .frame(width: 210, alignment: .leading)
-                }
+                Text(names.joined(separator: " · "))
+                    .font(.system(.caption, design: .rounded).weight(.semibold))
+                    .foregroundStyle(Ink.body.opacity(0.75))
+                    .lineLimit(2)
+                    .frame(width: 210, alignment: .leading)
             }
             .padding(8)
             .background(Ink.body.opacity(0.06), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
@@ -229,12 +177,10 @@ struct CollectionView: View {
                     .frame(width: 60, height: 60)
                     .background(Ink.body.opacity(0.06), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
                     .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).stroke(Ink.body, lineWidth: on ? 3 : 0))
-                if !Variant.on("S4C") {
-                    Text(item.name)
-                        .font(.system(.caption2, design: .rounded).weight(.bold))
-                        .lineLimit(2).multilineTextAlignment(.center)
-                        .minimumScaleFactor(0.8)
-                }
+                Text(item.name)
+                    .font(.system(.caption2, design: .rounded).weight(.bold))
+                    .lineLimit(2).multilineTextAlignment(.center)
+                    .minimumScaleFactor(0.8)
             }
         }
         .buttonStyle(SquishButtonStyle())

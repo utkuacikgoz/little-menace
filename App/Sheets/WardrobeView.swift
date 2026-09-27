@@ -37,26 +37,15 @@ struct WardrobeView: View {
                         slot = s
                         preview = nil
                     } label: {
-                        Group {
-                            if Variant.on("S5C") {
-                                // Option C: icons only; the chosen tab spells out its name.
-                                HStack(spacing: 6) {
-                                    Image(systemName: symbol(for: s)).font(.title3.weight(.bold))
-                                    if slot == s {
-                                        Text(slotName(s)).font(.system(.subheadline, design: .rounded).weight(.heavy))
-                                            .lineLimit(1).minimumScaleFactor(0.7)
-                                    }
-                                }
-                            } else {
-                                VStack(spacing: 2) {
-                                    Image(systemName: symbol(for: s))
-                                        .font(.title3.weight(.bold))
-                                    Text(slotName(s)).font(.system(.caption2, design: .rounded).weight(.heavy))
-                                        .lineLimit(1).minimumScaleFactor(0.7)
-                                }
+                        // Icons only; the chosen tab spells out its name.
+                        HStack(spacing: 6) {
+                            Image(systemName: symbol(for: s)).font(.title3.weight(.bold))
+                            if slot == s {
+                                Text(slotName(s)).font(.system(.subheadline, design: .rounded).weight(.heavy))
+                                    .lineLimit(1).minimumScaleFactor(0.7)
                             }
                         }
-                            .frame(maxWidth: Variant.on("S5C") && slot != s ? 52 : CGFloat.infinity, minHeight: 56)
+                            .frame(maxWidth: slot == s ? CGFloat.infinity : 52, minHeight: 56)
                             .background(Ink.body.opacity(slot == s ? 1 : 0.08), in: Capsule())
                             .foregroundStyle(slot == s ? Ink.eye : Ink.body)
                     }
@@ -211,7 +200,7 @@ struct WardrobeView: View {
         switch slot {
         case .hat: return "Hats"
         case .neck: return "Neckwear"
-        case .theme: return Variant.on("S5B") ? "Skies" : "Backgrounds"
+        case .theme: return "Backgrounds"
         case .sock: return "Tug socks"
         case .fur: return "Fur"
         }
@@ -253,21 +242,8 @@ struct ItemSwatch: View {
         }
     }
 
-    @ViewBuilder private func coat(_ id: String?) -> some View {
-        if Variant.on("S6B") {
-            // Option B: a plain colour dot.
-            let c = FurPalette.forID(id)
-            Circle().fill(RadialGradient(colors: [c.light, c.body, c.dark], center: UnitPoint(x: 0.35, y: 0.3), startRadius: 2, endRadius: 26))
-                .frame(width: 40, height: 40)
-        } else if Variant.on("S6C") {
-            // Option C: a bigger gremlin, cropped to the head.
-            GremlinView(pose: .idle, fur: id, size: 84, animated: false)
-                .offset(y: 6)
-                .frame(width: 60, height: 60, alignment: .top)
-                .clipped()
-        } else {
-            GremlinView(pose: .idle, fur: id, size: 46, animated: false)
-        }
+    private func coat(_ id: String?) -> some View {
+        GremlinView(pose: .idle, fur: id, size: 46, animated: false)
     }
 }
 
