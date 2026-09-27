@@ -24,7 +24,31 @@ struct ThemePalette {
         case "pool": return ThemePalette(day: Color(hex: 0x14B0E0), night: Color(hex: 0x0A5F80), glow: Color(hex: 0x9BE6FF), starry: false)
         case "bubblegum": return ThemePalette(day: Color(hex: 0xFF6FB5), night: Color(hex: 0xA33570), glow: Color(hex: 0xFFC2DF), starry: false)
         case "midnight": return ThemePalette(day: Color(hex: 0x1D2560), night: Color(hex: 0x0D1236), glow: Color(hex: 0x6F7BFF), starry: true)
+        case "aurora": return ThemePalette(day: Color(hex: 0x0F5C63), night: Color(hex: 0x07343A), glow: Color(hex: 0x3DF5B0), starry: true)
+        case "neon": return ThemePalette(day: Color(hex: 0x3A1260), night: Color(hex: 0x1E0833), glow: Color(hex: 0xFF4FD8), starry: false)
+        case "galaxy": return ThemePalette(day: Color(hex: 0x2E1C6B), night: Color(hex: 0x160C3A), glow: Color(hex: 0xB98CFF), starry: true)
         default: return ThemePalette(day: Color(hex: 0xFF7A2F), night: Color(hex: 0xB9480F), glow: Color(hex: 0xFFC49B), starry: false)
+        }
+    }
+}
+
+/// The gremlin's coat. nil (or an unknown id) is the classic ink; eyes, mouth and blush never change.
+struct FurPalette {
+    let body: Color
+    let light: Color
+    let dark: Color
+    let belly: Color
+    let bellyDark: Color
+
+    static let classic = FurPalette(body: Ink.body, light: Ink.bodyLight, dark: Ink.bodyDark, belly: Ink.belly, bellyDark: Ink.bellyDark)
+
+    static func forID(_ id: String?) -> FurPalette {
+        switch id {
+        case "plum": return FurPalette(body: Color(hex: 0x4E2470), light: Color(hex: 0x6B3A92), dark: Color(hex: 0x2E1244), belly: Color(hex: 0x6A3D8A), bellyDark: Color(hex: 0x43215C))
+        case "moss": return FurPalette(body: Color(hex: 0x2A4D34), light: Color(hex: 0x3F6B4A), dark: Color(hex: 0x172D1E), belly: Color(hex: 0x40664A), bellyDark: Color(hex: 0x28422F))
+        case "deepsea": return FurPalette(body: Color(hex: 0x1B416B), light: Color(hex: 0x2D5E91), dark: Color(hex: 0x0E2540), belly: Color(hex: 0x305C88), bellyDark: Color(hex: 0x1D3D5E))
+        case "cocoa": return FurPalette(body: Color(hex: 0x553225), light: Color(hex: 0x74493A), dark: Color(hex: 0x331C14), belly: Color(hex: 0x70483A), bellyDark: Color(hex: 0x4A2C21))
+        default: return .classic
         }
     }
 }

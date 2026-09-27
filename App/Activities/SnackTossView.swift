@@ -40,7 +40,7 @@ struct SnackTossView: View {
                 let cx = gremlinX(at: now, width: size.width)
                 let gremlinY = size.height * 0.26
                 ZStack {
-                    GremlinView(pose: gremlinPose, hat: model.state.wardrobe.hat, neck: model.state.wardrobe.neck, size: 150)
+                    GremlinView(pose: gremlinPose, hat: model.state.wardrobe.hat, neck: model.state.wardrobe.neck, fur: model.state.wardrobe.fur, size: 150)
                         .position(x: cx, y: gremlinY)
                         .accessibilityHidden(true)
 

@@ -187,6 +187,7 @@ struct HomeView: View {
         return GremlinView(pose: model.pose,
                          hat: model.state.wardrobe.hat,
                          neck: model.state.wardrobe.neck,
+                         fur: model.state.wardrobe.fur,
                          size: size,
                          stretch: stretch)
             .contentShape(Rectangle())

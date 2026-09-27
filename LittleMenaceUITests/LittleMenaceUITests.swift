@@ -98,13 +98,32 @@ final class LittleMenaceUITests: XCTestCase {
         app.buttons["Midnight Snack"].tap()
         let preview = app.buttons["Preview Fridge Raid"]
         XCTAssertTrue(preview.waitForExistence(timeout: 5))
-        if !preview.isHittable { app.swipeUp() }
+        XCTAssertTrue(reveal(preview), "reactions sit below the looks and items")
         preview.tap()
+        // The caption lives in the stage at the top of the page.
         let caption = app.staticTexts["collection-caption"]
-        if !caption.isHittable { app.swipeDown() }
+        for _ in 0..<5 where !(caption.exists && caption.isHittable) { app.swipeDown(velocity: .slow) }
         XCTAssertTrue(caption.waitForExistence(timeout: 3))
         XCTAssertEqual(caption.label, "midnight snack run.")
         XCTAssertFalse(app.buttons["wear-collection"].exists, "previewing never grants ownership")
+    }
+
+    func testCollectionLooksAndItemsDressTheStage() {
+        launch()
+        menu("Settings")
+        let row = app.buttons["Midnight Snack"]
+        XCTAssertTrue(reveal(row))
+        row.tap()
+        let look = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Aurora Raid'")).firstMatch
+        XCTAssertTrue(reveal(look), "looks are listed on the collection page")
+        look.tap()
+        XCTAssertTrue(look.isSelected, "a tapped look is the one on the stage")
+        let fur = app.buttons["Try on Cocoa Fur"]
+        XCTAssertTrue(reveal(fur), "every item has a try-on cell")
+        fur.tap()
+        XCTAssertTrue(fur.isSelected)
+        XCTAssertFalse(look.isSelected, "trying one item changes the look")
+        XCTAssertFalse(app.buttons["wear-collection"].exists, "trying on never grants ownership")
     }
 
     // MARK: Toys

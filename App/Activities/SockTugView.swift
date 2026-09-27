@@ -29,7 +29,7 @@ struct SockTugView: View {
                         .rotationEffect(.degrees(180))
                         .position(x: geo.size.width / 2 + 10, y: (gremlinY + gripY) / 2 + 20)
 
-                    GremlinView(pose: pose, hat: model.state.wardrobe.hat, neck: model.state.wardrobe.neck, size: 170)
+                    GremlinView(pose: pose, hat: model.state.wardrobe.hat, neck: model.state.wardrobe.neck, fur: model.state.wardrobe.fur, size: 170)
                         .position(x: geo.size.width / 2, y: gremlinY)
 
                     Image(systemName: "hand.draw.fill")
