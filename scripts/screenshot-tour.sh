@@ -37,29 +37,24 @@ if [ "$PART" = store ]; then
   shot "$PM" 10-points -LMScreen points
   shot "$PM" 11-share -LMScreen share
 elif [ "$PART" = new ]; then
-  # Feedback fixes.
-  shot "$PM" n01-stamps-points-to-next -LMScreen stamps
-  shot "$PM" n02-share-points -LMScreen share
-  # Midnight Snack: collection page, looks, all items.
-  shot "$PM" n03-collection-look1 -LMScreen collection
-  shot "$PM" n04-collection-look2 -LMScreen collection -LMLook 1
-  shot "$PM" n05-collection-look3 -LMScreen collection -LMLook 2
-  shot "$PM" n06-collection-items -LMScreen collection -LMPage 1
-  # Wardrobe tabs with the new items (locked, sparkle badge) and a paid preview.
-  shot "$PM" n07-wardrobe-fur -LMScreen wardrobe -LMSlot fur
-  shot "$PM" n08-wardrobe-hats -LMScreen wardrobe
-  shot "$PM" n09-wardrobe-neck -LMScreen wardrobe -LMSlot neck
-  shot "$PM" n10-wardrobe-backgrounds -LMScreen wardrobe -LMSlot theme
-  shot "$PM" n11-wardrobe-socks -LMScreen wardrobe -LMSlot sock
-  shot "$PM" n12-wardrobe-preview-fur -LMScreen wardrobe -LMPreview plum
-  # Owned and worn: home, share card, a game.
-  shot "$PM" n13-home-galaxy-brain -LMScreen home -LMOwned YES -LMTheme galaxy -LMHat starclip -LMNeck glowstick -LMFur plum
-  shot "$PM" n14-home-aurora-raid -LMScreen home -LMOwned YES -LMTheme aurora -LMHat sleepmask -LMNeck cookiebib -LMFur moss
-  shot "$PM" n15-home-neon-cocoa -LMScreen home -LMOwned YES -LMTheme neon -LMFur cocoa
-  shot "$PM" n16-share-night-owl -LMScreen share -LMOwned YES -LMTheme midnight -LMHat nightcap -LMNeck moon -LMFur deepsea
+  # Owner review: every screen three times, as option A (current), B and C (-LMVariant, DEBUG only).
+  abc() { # screen-id [launch args...]
+    local S=$1; shift
+    for V in A B C; do shot "$PM" "v-$S-$V" -LMVariant "$S$V" "$@"; done
+  }
+  abc S1 -LMScreen stamps
+  abc S2 -LMScreen share -LMOwned YES -LMTheme midnight -LMHat nightcap -LMNeck moon -LMFur deepsea
+  abc S3 -LMScreen collection
+  abc S4 -LMScreen collection -LMPage 1
+  abc S5 -LMScreen wardrobe -LMSlot theme
+  abc S6 -LMScreen wardrobe -LMSlot fur
+  abc S7 -LMScreen wardrobe -LMPreview starclip
   xcrun simctl ui "$PM" appearance dark
-  shot "$PM" n17-dark-name-prompt -LMScreen namePrompt
-  shot "$PM" n18-dark-home-galaxy -LMScreen home -LMOwned YES -LMTheme galaxy -LMFur plum
+  GB="-LMScreen home -LMOwned YES -LMTheme galaxy -LMHat starclip -LMNeck glowstick"
+  shot "$PM" v-S8-A $GB -LMFur plum
+  shot "$PM" v-S8-B $GB -LMFur deepsea
+  shot "$PM" v-S8-C $GB -LMFur plum -LMVariant S8C
+  abc S9 -LMScreen namePrompt
   xcrun simctl ui "$PM" appearance light
 elif [ "$PART" = a ]; then
   shot "$PM" 01-home -LMScreen home

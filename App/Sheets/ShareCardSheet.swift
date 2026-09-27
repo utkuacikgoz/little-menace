@@ -14,6 +14,15 @@ struct ShareCardView: View {
             RadialGradient(colors: [palette.glow.opacity(0.6), .clear], center: .init(x: 0.5, y: 0.45), startRadius: 10, endRadius: 260)
             VStack(spacing: 10) {
                 Spacer(minLength: 12)
+                if Variant.on("S2B") {
+                    // Option B: the score is the headline, above the gremlin.
+                    HStack(alignment: .firstTextBaseline, spacing: 8) {
+                        Image(systemName: "star.fill").foregroundStyle(Ink.irisLight)
+                        Text(state.points.total, format: .number).monospacedDigit()
+                    }
+                    .font(.system(size: 48, weight: .black, design: .rounded))
+                    Text("points").font(.system(size: 16, weight: .heavy, design: .rounded)).opacity(0.85).padding(.top, -12)
+                }
                 GremlinView(pose: pose, hat: state.wardrobe.hat, neck: state.wardrobe.neck, fur: state.wardrobe.fur, size: 170, animated: false)
                 Text(state.titleName)
                     .font(.system(size: 40, weight: .black, design: .rounded))
@@ -21,6 +30,7 @@ struct ShareCardView: View {
                     .font(.system(size: 18, weight: .heavy, design: .rounded))
                     .opacity(0.85)
                 // The score is the brag: same dark pill and gold star as the home scoreboard.
+                if !Variant.on("S2B") && !Variant.on("S2C") {
                 HStack(alignment: .firstTextBaseline, spacing: 8) {
                     Image(systemName: "star.fill").foregroundStyle(Ink.irisLight)
                     Text(state.points.total, format: .number).monospacedDigit()
@@ -30,6 +40,7 @@ struct ShareCardView: View {
                 .padding(.horizontal, 16)
                 .padding(.vertical, 6)
                 .background(Ink.body.opacity(0.85), in: Capsule())
+                }
                 HStack(spacing: 18) {
                     Label("\(state.level)", systemImage: "arrow.up.circle.fill")
                     Label("\(state.stamps.days.count)/7", systemImage: "seal.fill")
@@ -43,6 +54,21 @@ struct ShareCardView: View {
                     .padding(.bottom, 14)
             }
             .foregroundStyle(.white)
+        }
+        .overlay(alignment: .topTrailing) {
+            if Variant.on("S2C") {
+                // Option C: a gold sticker in the corner.
+                VStack(spacing: 0) {
+                    Text(state.points.total, format: .number).monospacedDigit()
+                        .font(.system(size: 24, weight: .black, design: .rounded))
+                    Text("points").font(.system(size: 12, weight: .heavy, design: .rounded))
+                }
+                .foregroundStyle(Ink.body)
+                .frame(width: 96, height: 96)
+                .background(StarShape().fill(Ink.irisLight).scaleEffect(1.35))
+                .rotationEffect(.degrees(10))
+                .padding(18)
+            }
         }
         .frame(width: 360, height: 450)
     }
