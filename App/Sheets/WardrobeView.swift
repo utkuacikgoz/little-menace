@@ -16,7 +16,7 @@ struct WardrobeView: View {
                 if slot == .sock {
                     SockView(style: wardrobe.sock).rotationEffect(.degrees(12))
                 } else {
-                    GremlinView(pose: model.specialPose ?? .pose(for: preview == nil ? .idle : .touch), hat: wardrobe.hat, neck: wardrobe.neck, size: 150)
+                    GremlinView(pose: model.specialPose ?? .pose(for: preview == nil ? .idle : .touch), hat: wardrobe.hat, neck: wardrobe.neck, fur: wardrobe.fur, size: 150)
                 }
             }
             .overlay(alignment: .topLeading) {
@@ -37,12 +37,15 @@ struct WardrobeView: View {
                         slot = s
                         preview = nil
                     } label: {
-                        VStack(spacing: 2) {
-                            Image(systemName: symbol(for: s))
-                                .font(.title3.weight(.bold))
-                            Text(slotName(s)).font(.system(.caption2, design: .rounded).weight(.heavy))
+                        // Icons only; the chosen tab spells out its name.
+                        HStack(spacing: 6) {
+                            Image(systemName: symbol(for: s)).font(.title3.weight(.bold))
+                            if slot == s {
+                                Text(slotName(s)).font(.system(.subheadline, design: .rounded).weight(.heavy))
+                                    .lineLimit(1).minimumScaleFactor(0.7)
+                            }
                         }
-                            .frame(maxWidth: .infinity, minHeight: 56)
+                            .frame(maxWidth: slot == s ? CGFloat.infinity : 52, minHeight: 56)
                             .background(Ink.body.opacity(slot == s ? 1 : 0.08), in: Capsule())
                             .foregroundStyle(slot == s ? Ink.eye : Ink.body)
                     }
@@ -53,7 +56,7 @@ struct WardrobeView: View {
 
             ScrollView {
                 LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 12), count: 4), spacing: 12) {
-                    if slot == .hat || slot == .neck {
+                    if slot == .hat || slot == .neck || slot == .fur {
                         cell(nil)
                     }
                     ForEach(visibleItems) { item in
@@ -103,7 +106,7 @@ struct WardrobeView: View {
 
     private var previewLabel: String {
         let w = shownWardrobe
-        let parts = [w.hat, w.neck, w.theme].compactMap { $0 }.compactMap { Catalog.item($0)?.name }
+        let parts = [w.fur, w.hat, w.neck, w.theme].compactMap { $0 }.compactMap { Catalog.item($0)?.name }
         return "\(model.state.titleName) wearing " + (parts.isEmpty ? "nothing" : parts.joined(separator: ", "))
     }
 
@@ -128,7 +131,7 @@ struct WardrobeView: View {
             }
         } label: {
             ZStack(alignment: .topTrailing) {
-                swatch(item)
+                ItemSwatch(item: item, slot: slot)
                     .frame(width: 64, height: 64)
                     .background(Ink.body.opacity(0.06), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
                     .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous)
@@ -139,24 +142,6 @@ struct WardrobeView: View {
         }
         .buttonStyle(SquishButtonStyle())
         .accessibilityLabel(cellLabel(item, owned: owned, equipped: equipped))
-    }
-
-    @ViewBuilder private func swatch(_ item: Item?) -> some View {
-        if let item {
-            switch item.slot {
-            case .theme:
-                Circle().fill(ThemePalette.forID(item.id).day).frame(width: 40, height: 40)
-            case .sock:
-                SockView(style: item.id).scaleEffect(0.35).frame(width: 40, height: 50)
-            // Wearables draw in the 200×220 gremlin space; move the item to the centre, then shrink it to fit.
-            case .hat:
-                Wearables(hat: item.id, neck: nil).offset(y: 110 - 46).scaleEffect(0.55).frame(width: 60, height: 60).clipped()
-            case .neck:
-                Wearables(hat: nil, neck: item.id).offset(y: 110 - 158).scaleEffect(0.45).frame(width: 60, height: 60).clipped()
-            }
-        } else {
-            Image(systemName: "circle.slash").font(.title2.weight(.bold))
-        }
     }
 
     private func isPaid(_ item: Item) -> Bool {
@@ -184,7 +169,10 @@ struct WardrobeView: View {
     }
 
     private func cellLabel(_ item: Item?, owned: Bool, equipped: Bool) -> String {
-        guard let item else { return equipped ? "Nothing, selected" : "Nothing" }
+        guard let item else {
+            let name = slot == .fur ? "Classic fur" : "Nothing"
+            return equipped ? "\(name), selected" : name
+        }
         var label = item.name
         if equipped { label += ", wearing" }
         if !owned {
@@ -204,6 +192,7 @@ struct WardrobeView: View {
         case .neck: return "bell.fill"
         case .theme: return "paintpalette.fill"
         case .sock: return "hand.draw.fill"
+        case .fur: return "pawprint.fill"
         }
     }
 
@@ -213,7 +202,48 @@ struct WardrobeView: View {
         case .neck: return "Neckwear"
         case .theme: return "Backgrounds"
         case .sock: return "Tug socks"
+        case .fur: return "Fur"
         }
+    }
+}
+
+/// One item drawn small enough for a 64-point cell. `item == nil` is the "take it off" cell
+/// (or the classic coat, on the fur tab).
+struct ItemSwatch: View {
+    let item: Item?
+    var slot: Slot
+
+    init(item: Item?, slot: Slot) {
+        self.item = item
+        self.slot = item?.slot ?? slot
+    }
+
+    var body: some View {
+        if let item {
+            switch item.slot {
+            case .theme:
+                Circle().fill(ThemePalette.forID(item.id).day)
+                    .overlay(Circle().fill(RadialGradient(colors: [ThemePalette.forID(item.id).glow.opacity(0.6), .clear], center: .center, startRadius: 2, endRadius: 22)))
+                    .frame(width: 40, height: 40)
+            case .sock:
+                SockView(style: item.id).scaleEffect(0.35).frame(width: 40, height: 50)
+            // Wearables draw in the 200×220 gremlin space; move the item to the centre, then shrink it to fit.
+            case .hat:
+                Wearables(hat: item.id, neck: nil).offset(y: 110 - 46).scaleEffect(0.55).frame(width: 60, height: 60).clipped()
+            case .neck:
+                Wearables(hat: nil, neck: item.id).offset(y: 110 - 158).scaleEffect(0.45).frame(width: 60, height: 60).clipped()
+            case .fur:
+                coat(item.id)
+            }
+        } else if slot == .fur {
+            coat(nil)
+        } else {
+            Image(systemName: "circle.slash").font(.title2.weight(.bold))
+        }
+    }
+
+    private func coat(_ id: String?) -> some View {
+        GremlinView(pose: .idle, fur: id, size: 46, animated: false)
     }
 }
 

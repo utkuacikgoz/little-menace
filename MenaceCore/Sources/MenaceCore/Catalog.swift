@@ -1,7 +1,7 @@
 import Foundation
 
 public enum Slot: String, Codable, CaseIterable, Sendable {
-    case hat, neck, theme, sock
+    case hat, neck, theme, sock, fur
 }
 
 public enum ItemSource: Equatable, Sendable {
@@ -24,6 +24,15 @@ public struct Pack: Identifiable, Equatable, Sendable {
     public let itemIDs: [String]
     /// Authored reactions that only play once the collection is owned.
     public let reactionIDs: [String]
+    /// Ready-made outfits shown on the collection page.
+    public var looks: [Look] = []
+}
+
+/// A named outfit: one item per slot it touches.
+public struct Look: Identifiable, Equatable, Sendable {
+    public var id: String { name }
+    public let name: String
+    public let itemIDs: [String]
 }
 
 public enum Catalog {
@@ -52,12 +61,31 @@ public enum Catalog {
         Item(id: "moon", slot: .neck, name: "Moon Charm", source: .collection(midnightProductID)),
         Item(id: "midnight", slot: .theme, name: "Midnight", source: .collection(midnightProductID)),
         Item(id: "glow", slot: .sock, name: "Glow Sock", source: .collection(midnightProductID)),
+        Item(id: "aurora", slot: .theme, name: "Aurora", source: .collection(midnightProductID)),
+        Item(id: "neon", slot: .theme, name: "Neon Night", source: .collection(midnightProductID)),
+        Item(id: "galaxy", slot: .theme, name: "Galaxy", source: .collection(midnightProductID)),
+        Item(id: "sleepmask", slot: .hat, name: "Sleep Mask", source: .collection(midnightProductID)),
+        Item(id: "starclip", slot: .hat, name: "Star Clip", source: .collection(midnightProductID)),
+        Item(id: "glowstick", slot: .neck, name: "Glow Stick", source: .collection(midnightProductID)),
+        Item(id: "cookiebib", slot: .neck, name: "Cookie Bib", source: .collection(midnightProductID)),
+        Item(id: "moonsock", slot: .sock, name: "Moon Sock", source: .collection(midnightProductID)),
+        Item(id: "plum", slot: .fur, name: "Plum Fur", source: .collection(midnightProductID)),
+        Item(id: "moss", slot: .fur, name: "Moss Fur", source: .collection(midnightProductID)),
+        Item(id: "deepsea", slot: .fur, name: "Deep Sea Fur", source: .collection(midnightProductID)),
+        Item(id: "cocoa", slot: .fur, name: "Cocoa Fur", source: .collection(midnightProductID)),
     ]
 
     public static let collections: [Pack] = [
         Pack(id: midnightProductID, name: "Midnight Snack",
-                   itemIDs: ["nightcap", "moon", "midnight", "glow"],
-                   reactionIDs: ["fridgeRaid", "moonHowl", "blanketCape"]),
+             itemIDs: ["nightcap", "moon", "midnight", "glow",
+                       "aurora", "neon", "galaxy", "sleepmask", "starclip", "glowstick", "cookiebib", "moonsock",
+                       "plum", "moss", "deepsea", "cocoa"],
+             reactionIDs: ["fridgeRaid", "moonHowl", "blanketCape"],
+             looks: [
+                Look(name: "Night Owl", itemIDs: ["nightcap", "moon", "midnight", "deepsea"]),
+                Look(name: "Aurora Raid", itemIDs: ["sleepmask", "cookiebib", "aurora", "moss"]),
+                Look(name: "Galaxy Brain", itemIDs: ["starclip", "glowstick", "galaxy", "plum"]),
+             ]),
     ]
 
     /// Weekly gifts rotate by ISO week so every player sees the same one in a given week.

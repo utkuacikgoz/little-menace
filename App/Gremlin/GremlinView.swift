@@ -7,6 +7,7 @@ struct GremlinView: View {
     var pose: GremlinPose
     var hat: String?
     var neck: String?
+    var fur: String? = nil
     var size: CGFloat = 220
     /// Extra stretch from a drag, in design points (bounded by the caller).
     var stretch: CGSize = .zero
@@ -14,6 +15,8 @@ struct GremlinView: View {
     var animated = true
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    private var coat: FurPalette { FurPalette.forID(fur) }
 
     var body: some View {
         Group {
@@ -48,10 +51,10 @@ struct GremlinView: View {
 
             ZStack {
                 TailShape()
-                    .stroke(Ink.body, style: StrokeStyle(lineWidth: 12, lineCap: .round))
+                    .stroke(coat.body, style: StrokeStyle(lineWidth: 12, lineCap: .round))
                     .frame(width: 60, height: 70)
                     .overlay(alignment: .topTrailing) {
-                        Circle().fill(Ink.body).frame(width: 20, height: 20).offset(x: 4, y: -6)
+                        Circle().fill(coat.body).frame(width: 20, height: 20).offset(x: 4, y: -6)
                     }
                     .rotationEffect(.degrees(wag), anchor: .bottomLeading)
                     .position(x: 190, y: 160)
@@ -64,13 +67,13 @@ struct GremlinView: View {
                 arm(left: false)
 
                 // Head tuft sits behind the body outline so only the spikes show.
-                TuftShape().fill(Ink.body)
+                TuftShape().fill(coat.body)
                     .frame(width: 44, height: 30)
                     .rotationEffect(.degrees(Double(pose.lean) * 0.6), anchor: .bottom)
                     .position(x: 104, y: 50)
 
                 FluffShape(bumps: 26, depth: 3.2)
-                    .fill(RadialGradient(colors: [Ink.bodyLight, Ink.body, Ink.bodyDark],
+                    .fill(RadialGradient(colors: [coat.light, coat.body, coat.dark],
                                          center: UnitPoint(x: 0.36, y: 0.28), startRadius: 8, endRadius: 120))
                     .overlay(
                         // Rim light on the upper-left edge.
@@ -82,13 +85,13 @@ struct GremlinView: View {
                     .position(x: 100, y: 128)
 
                 FluffShape(bumps: 14, depth: 2.2)
-                    .fill(LinearGradient(colors: [Ink.belly, Ink.bellyDark], startPoint: .top, endPoint: .bottom))
+                    .fill(LinearGradient(colors: [coat.belly, coat.bellyDark], startPoint: .top, endPoint: .bottom))
                     .frame(width: 92, height: 70)
                     .position(x: 100, y: 170)
 
                 HStack(spacing: 60) {
-                    Foot()
-                    Foot()
+                    Foot(coat: coat)
+                    Foot(coat: coat)
                 }
                 .position(x: 100, y: 203)
 
@@ -115,7 +118,7 @@ struct GremlinView: View {
     private func ear(left: Bool) -> some View {
         let side: CGFloat = left ? -1 : 1
         return EarShape()
-            .fill(Ink.body)
+            .fill(coat.body)
             .overlay(EarShape().inset(by: 12).fill(Ink.blush.opacity(0.45)).offset(y: 8))
             .frame(width: 58, height: 70)
             .rotationEffect(.degrees(Double(side) * (28 + Double(pose.earDroop))), anchor: .bottom)
@@ -125,7 +128,7 @@ struct GremlinView: View {
     private func arm(left: Bool) -> some View {
         let side: CGFloat = left ? -1 : 1
         let angle = Double(side) * (20 + 130 * Double(pose.armsUp))
-        return Capsule().fill(Ink.body)
+        return Capsule().fill(coat.body)
             .frame(width: 22, height: 46)
             .rotationEffect(.degrees(angle), anchor: .top)
             .position(x: 100 + side * 70, y: 150)
@@ -248,12 +251,14 @@ struct TuftShape: Shape {
 }
 
 private struct Foot: View {
+    let coat: FurPalette
+
     var body: some View {
         ZStack {
-            Ellipse().fill(LinearGradient(colors: [Ink.bodyLight, Ink.bodyDark], startPoint: .top, endPoint: .bottom))
+            Ellipse().fill(LinearGradient(colors: [coat.light, coat.dark], startPoint: .top, endPoint: .bottom))
             HStack(spacing: 6) {
                 ForEach(0..<3, id: \.self) { _ in
-                    Capsule().fill(Ink.bodyDark.opacity(0.9)).frame(width: 2, height: 7)
+                    Capsule().fill(coat.dark.opacity(0.9)).frame(width: 2, height: 7)
                 }
             }
             .offset(y: 3)

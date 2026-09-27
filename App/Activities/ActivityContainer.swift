@@ -21,7 +21,7 @@ struct ActivityContainer: View {
 
             if let result {
                 ResultCard(result: result, xp: earnedXP, hat: model.state.wardrobe.hat, neck: model.state.wardrobe.neck,
-                           replay: replay, done: { model.closeActivity(won: result.won) })
+                           fur: model.state.wardrobe.fur, replay: replay, done: { model.closeActivity(won: result.won) })
                     .transition(.scale(scale: 0.8).combined(with: .opacity))
             }
 
@@ -108,12 +108,13 @@ private struct ResultCard: View {
     let xp: Int
     let hat: String?
     let neck: String?
+    let fur: String?
     let replay: () -> Void
     let done: () -> Void
 
     var body: some View {
         VStack(spacing: 18) {
-            GremlinView(pose: .pose(for: result.won ? .win : .lose), hat: hat, neck: neck, size: 150)
+            GremlinView(pose: .pose(for: result.won ? .win : .lose), hat: hat, neck: neck, fur: fur, size: 150)
             // Dark pill so the reward reads on every background (white on orange was ~2.6:1).
             HStack(spacing: 8) {
                 Image(systemName: "star.fill").foregroundStyle(Ink.irisLight)

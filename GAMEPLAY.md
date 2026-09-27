@@ -97,9 +97,14 @@ The menu has a **Share** item. It renders a 1080×1350 card from the real state:
 
 - **Midnight Snack**, `com.belevate.littlemenace.midnight`, non-consumable. The proposed US launch price is $3.99, matching the local test configuration. Production pricing must still be configured in App Store Connect; the app reads localized prices from StoreKit.
 - Contents:
-  - Nightcap, Moon Charm, Midnight background (starry)
-  - **Glow Sock**, a themed toy variation for sock tug
+  - 16 items:
+    - **Fur** (its own Wardrobe tab): Plum, Moss, Deep Sea, Cocoa. The coat recolours the whole gremlin everywhere it appears, share card included.
+    - Backgrounds: Midnight, Aurora, Galaxy (starry), Neon Night
+    - Hats: Nightcap, Sleep Mask, Star Clip
+    - Neckwear: Moon Charm, Glow Stick, Cookie Bib
+    - Tug socks: **Glow Sock**, **Moon Sock**
   - three authored multi-beat reactions: Fridge Raid, Moon Howl, Blanket Cape
+  - three ready-made looks on the collection page: Night Owl, Aurora Raid, Galaxy Brain. Tapping a look or any single item dresses the preview stage.
 - In the **Wardrobe**, the collection appears only after attachment: level ≥ 3 **and** visits on ≥ 2 different days. It is also always reachable from **Settings › Midnight Snack**, a quiet page that lets anyone, including App Review, preview it and buy it. It never appears on the home screen.
 - Every item and every reaction can be **previewed on the gremlin** before buying. Buying is a separate, explicit tap on the localized price.
 - Normal care, all three toys, progression and weekly gifts are free.

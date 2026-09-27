@@ -80,8 +80,9 @@ struct HomeView: View {
                 VStack {
                     topBar
                     Spacer()
-                    if model.showNamePrompt { NamePrompt() }
-                    else if model.showReminderOffer { ReminderOffer() }
+                    // The play picker opens in the same spot, so the cards step aside while it's open.
+                    if model.showNamePrompt && !showPlay { NamePrompt() }
+                    else if model.showReminderOffer && !showPlay { ReminderOffer() }
                     controls(mouth: mouth)
                 }
                 .padding(.horizontal, 16)
@@ -186,6 +187,7 @@ struct HomeView: View {
         return GremlinView(pose: model.pose,
                          hat: model.state.wardrobe.hat,
                          neck: model.state.wardrobe.neck,
+                         fur: model.state.wardrobe.fur,
                          size: size,
                          stretch: stretch)
             .contentShape(Rectangle())
@@ -419,7 +421,9 @@ private struct NamePrompt: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            TextField("Name me?", text: $name)
+            Image(systemName: "pencil").font(.headline.weight(.heavy)).foregroundStyle(Ink.body.opacity(0.6))
+                .accessibilityHidden(true)
+            TextField("Name me?", text: $name, prompt: Text("Name me?").foregroundStyle(Ink.body.opacity(0.6)))
                 .font(.system(.title3, design: .rounded).weight(.heavy))
                 .foregroundStyle(Ink.body)
                 .textInputAutocapitalization(.words)
@@ -446,6 +450,7 @@ private struct NamePrompt: View {
         .padding(12)
         .background(Ink.eye, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
         .padding(.bottom, 12)
+        .environment(\.colorScheme, .light) // cream card: keep the placeholder and caret dark in Dark Mode
         .transition(.move(edge: .bottom).combined(with: .opacity))
     }
 }
@@ -477,6 +482,7 @@ private struct ReminderOffer: View {
         .padding(16)
         .background(Ink.eye, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
         .padding(.bottom, 12)
+        .environment(\.colorScheme, .light) // cream card: keep the placeholder and caret dark in Dark Mode
         .transition(.move(edge: .bottom).combined(with: .opacity))
     }
 
