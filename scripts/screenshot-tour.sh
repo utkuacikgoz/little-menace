@@ -36,6 +36,13 @@ if [ "$PART" = store ]; then
   shot "$PM" 09-poked -LMScreen annoyed -LMLoss 1
   shot "$PM" 10-points -LMScreen points
   shot "$PM" 11-share -LMScreen share
+  # Slide 06 refresh candidates: the wardrobe with the Fur tab and a Midnight Snack look.
+  shot "$PM" 07b-wardrobe-fur -LMScreen wardrobe -LMPreview plum -LMPrice '$3.99'
+  shot "$PM" 07c-wardrobe-look -LMScreen wardrobe -LMOwned YES -LMTheme galaxy -LMHat starclip -LMNeck glowstick -LMFur plum
+  # In-app purchase review screenshots (App Store Connect › Midnight Snack › Review Information).
+  shot "$PM" 12-iap-collection -LMScreen collection -LMPrice '$3.99'
+  shot "$PM" 13-iap-collection-buy -LMScreen collection -LMPage 2 -LMPrice '$3.99'
+  shot "$PM" 14-iap-wardrobe-preview -LMScreen wardrobe -LMPreview nightcap -LMPrice '$3.99'
 elif [ "$PART" = new ]; then
   # Final check of the owner's picks (S1C S3B S4B S5C S7C S9C; S2, S6, S8 unchanged).
   # For a new A/B/C review, shoot each screen with -LMVariant <screen><A|B|C> instead.
