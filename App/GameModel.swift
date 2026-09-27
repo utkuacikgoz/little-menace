@@ -533,6 +533,9 @@ final class GameModel {
         if let hat = UserDefaults.standard.string(forKey: "LMHat") { game.state.wardrobe.hat = hat }
         if let neck = UserDefaults.standard.string(forKey: "LMNeck") { game.state.wardrobe.neck = neck }
         if let fur = UserDefaults.standard.string(forKey: "LMFur") { game.state.wardrobe.fur = fur }
+        // `-LMDebt 24` shows a score of −24 (a leading minus would read as a flag).
+        let debt = UserDefaults.standard.integer(forKey: "LMDebt")
+        if debt > 0 { game.state.points.total = -debt }
         switch screen {
         case "asleep": _ = game.sleep(now: Date())
         case "grumpy":

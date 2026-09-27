@@ -252,9 +252,18 @@ struct BuyBar: View {
     var showsReactions = true
     @Environment(GameModel.self) private var model
 
+    /// The localized price from StoreKit. Screenshot tours pass `-LMPrice '$3.99'` (DEBUG only),
+    /// because the simulator has no store to load products from.
+    private var displayPrice: String? {
+        #if DEBUG
+        if let price = UserDefaults.standard.string(forKey: "LMPrice") { return price }
+        #endif
+        return model.purchases.products[productID]?.displayPrice
+    }
+
     var body: some View {
         let collection = Catalog.collections.first { $0.id == productID }
-        let product = model.purchases.products[productID]
+        let price = displayPrice
         VStack(spacing: 10) {
             HStack {
                 Text(collection?.name ?? "Collection")
@@ -289,7 +298,7 @@ struct BuyBar: View {
                     switch model.purchases.state {
                     case .purchasing: ProgressView().tint(Ink.eye)
                     case .pending: Text("Waiting for approval")
-                    default: Text(product.map { "Buy for \($0.displayPrice)" } ?? (model.purchases.isLoadingProducts ? "Loading price…" : "Store unavailable"))
+                    default: Text(price.map { "Buy for \($0)" } ?? (model.purchases.isLoadingProducts ? "Loading price…" : "Store unavailable"))
                     }
                 }
                 .font(.system(.headline, design: .rounded).weight(.heavy))
@@ -297,11 +306,11 @@ struct BuyBar: View {
                 .background(Ink.body, in: Capsule())
                 .foregroundStyle(Ink.eye)
             }
-            .disabled(product == nil || model.purchases.state == .purchasing || model.purchases.state == .pending)
+            .disabled(price == nil || model.purchases.state == .purchasing || model.purchases.state == .pending)
             .accessibilityIdentifier("buy")
-            .accessibilityLabel(product.map { "Buy \(collection?.name ?? "") for \($0.displayPrice)" } ?? "Store unavailable")
+            .accessibilityLabel(price.map { "Buy \(collection?.name ?? "") for \($0)" } ?? "Store unavailable")
 
-            if product == nil && !model.purchases.isLoadingProducts {
+            if price == nil && !model.purchases.isLoadingProducts {
                 Text("You can still preview everything.").font(.footnote)
                 Button("Try store again") { Task { await model.purchases.loadProducts() } }
                     .frame(minHeight: 44)

@@ -86,6 +86,7 @@ struct CollectionView: View {
                     .accessibilityIdentifier("wear-collection")
                 } else {
                     BuyBar(productID: collection.id, showsReactions: false)
+                        .id("buy")
                 }
                 Button("Restore purchases") { Task { await model.purchases.restore() } }
                     .disabled(model.purchases.state == .purchasing)
@@ -98,8 +99,12 @@ struct CollectionView: View {
         }
         #if DEBUG
         .onAppear {
-            // Screenshot tours: `-LMPage 1` opens scrolled to the item grid.
-            if UserDefaults.standard.integer(forKey: "LMPage") == 1 { scroller.scrollTo("items", anchor: .top) }
+            // Screenshot tours: `-LMPage 1` opens scrolled to the item grid, `-LMPage 2` to the buy button.
+            switch UserDefaults.standard.integer(forKey: "LMPage") {
+            case 1: scroller.scrollTo("items", anchor: .top)
+            case 2: scroller.scrollTo("buy", anchor: .bottom)
+            default: break
+            }
         }
         #endif
         }
