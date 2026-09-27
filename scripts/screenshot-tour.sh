@@ -37,13 +37,30 @@ if [ "$PART" = store ]; then
   shot "$PM" 10-points -LMScreen points
   shot "$PM" 11-share -LMScreen share
 elif [ "$PART" = new ]; then
-  shot "$PM" p01-home-score -LMScreen home -LMDelta 18
-  shot "$PM" p02-home-score-loss -LMScreen annoyed -LMLoss 1
-  shot "$PM" p03-home-mischief -LMScreen mischief
-  shot "$PM" p04-points-history -LMScreen points
-  shot "$PM" p05-points-rules -LMScreen points -LMPage 1
-  shot "$PM" p06-settings -LMScreen settings
-  for i in 0 1 2 3 4; do shot "$PM" "p1$i-guide-step$((i + 1))" -LMScreen howToPlay -LMPage $i; done
+  # Feedback fixes.
+  shot "$PM" n01-stamps-points-to-next -LMScreen stamps
+  shot "$PM" n02-share-points -LMScreen share
+  # Midnight Snack: collection page, looks, all items.
+  shot "$PM" n03-collection-look1 -LMScreen collection
+  shot "$PM" n04-collection-look2 -LMScreen collection -LMLook 1
+  shot "$PM" n05-collection-look3 -LMScreen collection -LMLook 2
+  shot "$PM" n06-collection-items -LMScreen collection -LMPage 1
+  # Wardrobe tabs with the new items (locked, sparkle badge) and a paid preview.
+  shot "$PM" n07-wardrobe-fur -LMScreen wardrobe -LMSlot fur
+  shot "$PM" n08-wardrobe-hats -LMScreen wardrobe
+  shot "$PM" n09-wardrobe-neck -LMScreen wardrobe -LMSlot neck
+  shot "$PM" n10-wardrobe-backgrounds -LMScreen wardrobe -LMSlot theme
+  shot "$PM" n11-wardrobe-socks -LMScreen wardrobe -LMSlot sock
+  shot "$PM" n12-wardrobe-preview-fur -LMScreen wardrobe -LMPreview plum
+  # Owned and worn: home, share card, a game.
+  shot "$PM" n13-home-galaxy-brain -LMScreen home -LMOwned YES -LMTheme galaxy -LMHat starclip -LMNeck glowstick -LMFur plum
+  shot "$PM" n14-home-aurora-raid -LMScreen home -LMOwned YES -LMTheme aurora -LMHat sleepmask -LMNeck cookiebib -LMFur moss
+  shot "$PM" n15-home-neon-cocoa -LMScreen home -LMOwned YES -LMTheme neon -LMFur cocoa
+  shot "$PM" n16-share-night-owl -LMScreen share -LMOwned YES -LMTheme midnight -LMHat nightcap -LMNeck moon -LMFur deepsea
+  xcrun simctl ui "$PM" appearance dark
+  shot "$PM" n17-dark-name-prompt -LMScreen namePrompt
+  shot "$PM" n18-dark-home-galaxy -LMScreen home -LMOwned YES -LMTheme galaxy -LMFur plum
+  xcrun simctl ui "$PM" appearance light
 elif [ "$PART" = a ]; then
   shot "$PM" 01-home -LMScreen home
   shot "$PM" 02-name-prompt -LMScreen namePrompt

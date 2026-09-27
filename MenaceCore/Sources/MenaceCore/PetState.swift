@@ -77,6 +77,8 @@ public struct Wardrobe: Codable, Equatable, Sendable {
     public var neck: String?
     public var theme: String = Catalog.defaultTheme
     public var sock: String = Catalog.defaultSock
+    /// Fur colour; nil is the classic ink.
+    public var fur: String?
 
     public init() {}
 
@@ -86,6 +88,7 @@ public struct Wardrobe: Codable, Equatable, Sendable {
         case .neck: return neck
         case .theme: return theme
         case .sock: return sock
+        case .fur: return fur
         }
     }
 
@@ -95,6 +98,7 @@ public struct Wardrobe: Codable, Equatable, Sendable {
         case .neck: neck = id
         case .theme: theme = id ?? Catalog.defaultTheme
         case .sock: sock = id ?? Catalog.defaultSock
+        case .fur: fur = id
         }
     }
 }

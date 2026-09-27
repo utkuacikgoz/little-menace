@@ -14,7 +14,7 @@ struct ShareCardView: View {
             RadialGradient(colors: [palette.glow.opacity(0.6), .clear], center: .init(x: 0.5, y: 0.45), startRadius: 10, endRadius: 260)
             VStack(spacing: 10) {
                 Spacer(minLength: 12)
-                GremlinView(pose: pose, hat: state.wardrobe.hat, neck: state.wardrobe.neck, size: 170, animated: false)
+                GremlinView(pose: pose, hat: state.wardrobe.hat, neck: state.wardrobe.neck, fur: state.wardrobe.fur, size: 170, animated: false)
                 Text(state.titleName)
                     .font(.system(size: 40, weight: .black, design: .rounded))
                 Text(Self.title(for: state.personality))
