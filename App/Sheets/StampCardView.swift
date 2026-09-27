@@ -67,15 +67,24 @@ struct StampCardView: View {
 
                 // Level.
                 VStack(spacing: 8) {
-                    HStack {
+                    HStack(alignment: .firstTextBaseline) {
                         Image(systemName: "arrow.up.circle.fill")
                         Text("\(s.level)").font(.system(.title2, design: .rounded).weight(.heavy))
                         Spacer()
-                        Text("\(s.pointsToNextLevel) to Level \(s.level + 1)")
-                            .font(.system(.subheadline, design: .rounded).weight(.bold))
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.7)
-                            .opacity(0.7)
+                        if Variant.on("S1C") {
+                            Text("\(s.pointsToNextLevel)").font(.system(.title2, design: .rounded).weight(.heavy))
+                            Text("points to Level \(s.level + 1)")
+                                .font(.system(.subheadline, design: .rounded).weight(.bold))
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.7)
+                                .opacity(0.7)
+                        } else {
+                            Text(Variant.on("S1B") ? "\(s.pointsToNextLevel) points to Level \(s.level + 1)" : "\(s.pointsToNextLevel) to Level \(s.level + 1)")
+                                .font(.system(.subheadline, design: .rounded).weight(.bold))
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.7)
+                                .opacity(0.7)
+                        }
                     }
                     ProgressView(value: levelProgress(s)).tint(Ink.body)
                 }
