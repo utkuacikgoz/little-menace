@@ -266,13 +266,13 @@ struct HomeView: View {
 
     private func controls(mouth: CGPoint) -> some View {
         let needs = model.state.needs
-        return ZStack(alignment: .bottom) {
+        return VStack(spacing: 16) {
+            // The game picker stacks above the buttons, so it never covers them.
             if showPlay {
                 PlayPicker { kind in
                     showPlay = false
                     model.startActivity(kind)
                 }
-                .offset(y: -84)
                 .transition(.scale(scale: 0.5, anchor: .bottom).combined(with: .opacity))
             }
             HStack(spacing: 28) {

@@ -105,7 +105,7 @@ The menu has a **Share** item. It renders a 1080×1350 card from the real state:
     - Tug socks: **Glow Sock**, **Moon Sock**
   - three authored multi-beat reactions: Fridge Raid, Moon Howl, Blanket Cape
   - three ready-made looks on the collection page: Night Owl, Aurora Raid, Galaxy Brain. Tapping a look or any single item dresses the preview stage.
-- In the **Wardrobe**, the collection appears only after attachment: level ≥ 3 **and** visits on ≥ 2 different days. It is also always reachable from **Settings › Midnight Snack**, a quiet page that lets anyone, including App Review, preview it and buy it. It never appears on the home screen.
+- In the **Wardrobe**, every Midnight Snack item is listed with a ✦ badge (tap to preview on the gremlin), under a Midnight Snack banner that opens the collection until it is owned. It is also always reachable from **Settings › Midnight Snack**, a quiet page that lets anyone, including App Review, preview it and buy it. It never appears on the home screen.
 - Every item and every reaction can be **previewed on the gremlin** before buying. Buying is a separate, explicit tap on the localized price.
 - Normal care, all three toys, progression and weekly gifts are free.
 - Handling:
