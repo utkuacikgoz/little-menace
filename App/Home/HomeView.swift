@@ -266,44 +266,15 @@ struct HomeView: View {
 
     private func controls(mouth: CGPoint) -> some View {
         let needs = model.state.needs
-        // S14 options: A floats the picker 84 pt up (overlaps the rings); B stacks it above with a gap;
-        // C swaps the button row for the picker; D stacks big named cards above.
-        let stacked = Variant.on("S14B") || Variant.on("S14D")
-        let swap = Variant.on("S14C") && showPlay
-        return ZStack(alignment: .bottom) {
-            if showPlay && !stacked && !swap {
+        return VStack(spacing: 16) {
+            // The game picker stacks above the buttons, so it never covers them.
+            if showPlay {
                 PlayPicker { kind in
                     showPlay = false
                     model.startActivity(kind)
                 }
-                .offset(y: -84)
                 .transition(.scale(scale: 0.5, anchor: .bottom).combined(with: .opacity))
             }
-            VStack(spacing: 16) {
-            if showPlay && stacked {
-                PlayPicker(big: Variant.on("S14D")) { kind in
-                    showPlay = false
-                    model.startActivity(kind)
-                }
-                .transition(.scale(scale: 0.5, anchor: .bottom).combined(with: .opacity))
-            }
-            if swap {
-                HStack(spacing: 14) {
-                    PlayPicker { kind in
-                        showPlay = false
-                        model.startActivity(kind)
-                    }
-                    Button {
-                        withAnimation(.spring(response: 0.35, dampingFraction: 0.7)) { showPlay = false }
-                    } label: {
-                        Image(systemName: "xmark").font(.system(size: 22, weight: .bold)).foregroundStyle(.white)
-                            .frame(width: 56, height: 56).background(.white.opacity(0.22), in: Circle())
-                    }
-                    .accessibilityLabel("Close games")
-                }
-                .frame(minHeight: 94)
-                .transition(.opacity)
-            } else {
             HStack(spacing: 28) {
                 feedButton(fullness: needs.fullness / 100, mouth: mouth)
                 RingButton(ring: needs.joy / 100, label: "Play", caption: needCaption(.joy, needs.joy), action: {
@@ -325,8 +296,6 @@ struct HomeView: View {
                         .foregroundStyle(.white)
                 }
                 .coachTarget(.nap)
-            }
-            }
             }
         }
     }
@@ -409,20 +378,12 @@ struct HomeView: View {
 }
 
 private struct PlayPicker: View {
-    /// Big named cards (review option S14D).
-    var big = false
     var pick: (ActivityKind) -> Void
 
     var body: some View {
-        if big {
-            HStack(spacing: 10) { options }
-                .padding(10)
-                .background(.white.opacity(0.22), in: RoundedRectangle(cornerRadius: 28, style: .continuous))
-        } else {
-            HStack(spacing: 18) { options }
-                .padding(10)
-                .background(.white.opacity(0.22), in: Capsule())
-        }
+        HStack(spacing: 18) { options }
+            .padding(10)
+            .background(.white.opacity(0.22), in: Capsule())
     }
 
     @ViewBuilder private var options: some View {
@@ -437,17 +398,6 @@ private struct PlayPicker: View {
 
     private func option<Icon: View>(_ kind: ActivityKind, _ label: String, short: String, @ViewBuilder icon: () -> Icon) -> some View {
         Button { pick(kind) } label: {
-            if big {
-                VStack(spacing: 6) {
-                    icon().frame(width: 64, height: 56)
-                    Text(label)
-                        .font(.system(.subheadline, design: .rounded).weight(.heavy))
-                        .foregroundStyle(Ink.body)
-                        .lineLimit(1).minimumScaleFactor(0.8)
-                }
-                .frame(width: 96, height: 104)
-                .background(Ink.eye.opacity(0.92), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
-            } else {
             VStack(spacing: 4) {
                 icon()
                     .frame(width: 56, height: 56)
@@ -455,7 +405,6 @@ private struct PlayPicker: View {
                 Text(short)
                     .font(.system(.caption, design: .rounded).weight(.heavy))
                     .foregroundStyle(Ink.body)
-            }
             }
         }
         .buttonStyle(SquishButtonStyle())

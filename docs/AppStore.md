@@ -52,5 +52,5 @@ The share card is generated on the device and passed to the system share sheet. 
 ## Review notes (for App Review)
 
 - Reset is in Settings › Start Over, and needs confirmation. Purchases are not affected.
-- To test the purchase from a fresh install: open **… › Settings › Midnight Snack**. This page is always available; it previews the items and reactions on the gremlin and has the Buy button. (For players, the Wardrobe shows the collection only after level 3 and visits on 2 days, and it is never promoted on the home screen.) Restore Purchases is on the same Settings screen.
+- To test the purchase from a fresh install: open **… › Settings › Midnight Snack**. This page is always available; it previews the items and reactions on the gremlin and has the Buy button. (Players also see the items, marked ✦, in the Wardrobe, with a Midnight Snack banner at its top. It is never promoted on the home screen.) Restore Purchases is on the same Settings screen.
 - Notifications are optional and are only requested after the user opts in inside the app.

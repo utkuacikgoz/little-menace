@@ -32,7 +32,7 @@ struct WardrobeView: View {
                 Text(line).font(.system(.subheadline, design: .rounded)).multilineTextAlignment(.center)
             }
 
-            if Variant.on("S12D") && !ownsCollection {
+            if !ownsCollection {
                 promoStrip
             }
 
@@ -43,15 +43,13 @@ struct WardrobeView: View {
                         preview = nil
                     } label: {
                         // Icons only; the chosen tab spells out its name.
-                        // S13 options: B pads the label inside the pill, C/D use shorter names.
                         HStack(spacing: 6) {
                             Image(systemName: symbol(for: s)).font(.title3.weight(.bold))
                             if slot == s {
                                 Text(slotName(s)).font(.system(.subheadline, design: .rounded).weight(.heavy))
-                                    .lineLimit(1).minimumScaleFactor(0.6)
+                                    .lineLimit(1).minimumScaleFactor(0.7)
                             }
                         }
-                            .padding(.horizontal, Variant.on("S13B") && slot == s ? 14 : 0)
                             .frame(maxWidth: slot == s ? CGFloat.infinity : 52, minHeight: 56)
                             .background(Ink.body.opacity(slot == s ? 1 : 0.08), in: Capsule())
                             .foregroundStyle(slot == s ? Ink.eye : Ink.body)
@@ -68,9 +66,6 @@ struct WardrobeView: View {
                     }
                     ForEach(visibleItems) { item in
                         cell(item)
-                    }
-                    if Variant.on("S12C") && !showsPaid && !ownsCollection {
-                        teaserTile
                     }
                 }
             }
@@ -104,40 +99,12 @@ struct WardrobeView: View {
         #endif
     }
 
-    /// S12 options: A shows paid items only after level 3 and a second day; B and D always show them;
-    /// C keeps them hidden and adds one tile that opens the collection page.
-    private var showsPaid: Bool {
-        OfferPolicy.canShowOffer(model.state) || Variant.on("S12B") || Variant.on("S12D")
-    }
-
-    private var visibleItems: [Item] {
-        Catalog.items(in: slot).filter { item in
-            if case .collection = item.source {
-                return model.owns(item) || showsPaid
-            }
-            return true
-        }
-    }
+    /// Midnight Snack items are always listed (with a ✦ badge) so players can try them on.
+    private var visibleItems: [Item] { Catalog.items(in: slot) }
 
     private var ownsCollection: Bool { model.entitlements.contains(Catalog.midnightProductID) }
 
-    /// S12C: a single tile at the end of the grid that opens Midnight Snack.
-    private var teaserTile: some View {
-        Button { openCollection = true } label: {
-            VStack(spacing: 2) {
-                Image(systemName: "sparkles").font(.title3.weight(.bold))
-                Text("+\(Catalog.items(in: slot).filter { if case .collection = $0.source { return true }; return false }.count)")
-                    .font(.system(.caption, design: .rounded).weight(.heavy))
-            }
-            .frame(width: 64, height: 64)
-            .background(ThemePalette.forID("midnight").day, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
-            .foregroundStyle(Ink.eye)
-        }
-        .buttonStyle(SquishButtonStyle())
-        .accessibilityLabel("More in the Midnight Snack collection")
-    }
-
-    /// S12D: a strip at the top of the wardrobe that opens Midnight Snack.
+    /// A strip at the top of the wardrobe that opens Midnight Snack, until it is owned.
     private var promoStrip: some View {
         Button { openCollection = true } label: {
             HStack(spacing: 10) {
@@ -258,9 +225,9 @@ struct WardrobeView: View {
     private func slotName(_ slot: Slot) -> String {
         switch slot {
         case .hat: return "Hats"
-        case .neck: return Variant.on("S13D") ? "Neck" : "Neckwear"
-        case .theme: return Variant.on("S13C") || Variant.on("S13D") ? "Skies" : "Backgrounds"
-        case .sock: return Variant.on("S13D") ? "Socks" : "Tug socks"
+        case .neck: return "Neck"
+        case .theme: return "Skies"
+        case .sock: return "Socks"
         case .fur: return "Fur"
         }
     }

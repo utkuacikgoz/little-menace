@@ -44,7 +44,7 @@ Core tests run anywhere Swift runs:
 - **Wardrobe:** hats, neckwear, backgrounds and tug socks. Items unlock by level or weekly gift. The paid set can be previewed.
 - **Reminders:** optional, offered once after a useful moment, one per day at most, stopping after 3 days away. There is also a nap-end note. Denied permission is handled.
 - **Share card:** rendered from the actual state and sent to the system share sheet.
-- **Midnight Snack collection:** StoreKit 2 with verified transactions, pending/cancel/failure states, restore, `Transaction.updates`, and revocation that un-equips paid items. It is shown only in the Wardrobe, and only after level 3 plus visits on 2 days.
+- **Midnight Snack collection:** StoreKit 2 with verified transactions, pending/cancel/failure states, restore, `Transaction.updates`, and revocation that un-equips paid items. Its items are listed in the Wardrobe with a ✦ badge, under a banner that opens the collection page.
 - **Settings:** sound, haptics, reminders plus time, restore, privacy/support links, and a confirmed reset.
 - **Persistence:** a versioned JSON envelope with lenient decoding, clamping, a migration chain, a backup of the last good save, and quarantine (never deletion) of unreadable or future-version files.
 - **Sound:** 8 small synthesized effects in the ambient session, so they respect the silent switch.
