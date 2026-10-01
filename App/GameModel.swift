@@ -521,8 +521,11 @@ final class GameModel {
     /// Returns a sheet for HomeView to present, if the screen is one.
     func applyDebugLaunch() -> HomeSheet? {
         guard let screen = UserDefaults.standard.string(forKey: "LMScreen") else { return nil }
-        game.state.xp = max(game.state.xp, Tuning.xpForLevel(4))
-        game.state.counters.visitDays = max(game.state.counters.visitDays, 3)
+        // `-LMFresh YES` keeps a day-one player (level 1, first visit) for offer screenshots.
+        if !UserDefaults.standard.bool(forKey: "LMFresh") {
+            game.state.xp = max(game.state.xp, Tuning.xpForLevel(4))
+            game.state.counters.visitDays = max(game.state.counters.visitDays, 3)
+        }
         game.state.needs = Needs(fullness: 50, energy: 60, joy: 60)
         game.state.points = Self.samplePoints(days: game.days)
         showHowToPlay = screen == "howToPlay"
