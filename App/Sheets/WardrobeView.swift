@@ -6,6 +6,7 @@ struct WardrobeView: View {
     @Environment(GameModel.self) private var model
     @State private var slot: Slot = .hat
     @State private var preview: Item?
+    @State private var openCollection = false
 
     var body: some View {
         let wardrobe = shownWardrobe
@@ -29,6 +30,10 @@ struct WardrobeView: View {
             .accessibilityLabel(previewLabel)
             if preview != nil, let line = model.specialLine {
                 Text(line).font(.system(.subheadline, design: .rounded)).multilineTextAlignment(.center)
+            }
+
+            if !ownsCollection {
+                promoStrip
             }
 
             HStack(spacing: 10) {
@@ -76,6 +81,11 @@ struct WardrobeView: View {
         .presentationBackground(Ink.eye)
         .animation(.spring(response: 0.35, dampingFraction: 0.8), value: preview)
         .onDisappear { model.cancelSpecial() }
+        .sheet(isPresented: $openCollection) {
+            if let pack = Catalog.collections.first {
+                NavigationStack { CollectionView(collection: pack) }
+            }
+        }
         #if DEBUG
         .onAppear {
             // Screenshot tours: `-LMSlot neck` opens a tab, `-LMPreview nightcap` previews a paid item.
@@ -89,13 +99,29 @@ struct WardrobeView: View {
         #endif
     }
 
-    private var visibleItems: [Item] {
-        Catalog.items(in: slot).filter { item in
-            if case .collection = item.source {
-                return model.owns(item) || OfferPolicy.canShowOffer(model.state)
+    /// Midnight Snack items are always listed (with a ✦ badge) so players can try them on.
+    private var visibleItems: [Item] { Catalog.items(in: slot) }
+
+    private var ownsCollection: Bool { model.entitlements.contains(Catalog.midnightProductID) }
+
+    /// A strip at the top of the wardrobe that opens Midnight Snack, until it is owned.
+    private var promoStrip: some View {
+        Button { openCollection = true } label: {
+            HStack(spacing: 10) {
+                Image(systemName: "sparkles").font(.headline.weight(.bold))
+                VStack(alignment: .leading, spacing: 0) {
+                    Text("Midnight Snack").font(.system(.subheadline, design: .rounded).weight(.heavy))
+                    Text("Fur colours, night skies, 3 looks").font(.caption).opacity(0.85)
+                }
+                Spacer()
+                Text("See all").font(.system(.subheadline, design: .rounded).weight(.heavy))
+                Image(systemName: "chevron.right").font(.caption.weight(.bold))
             }
-            return true
+            .padding(.horizontal, 14).frame(minHeight: 52)
+            .background(ThemePalette.forID("midnight").day, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+            .foregroundStyle(Ink.eye)
         }
+        .buttonStyle(SquishButtonStyle())
     }
 
     private var shownWardrobe: Wardrobe {
@@ -199,9 +225,9 @@ struct WardrobeView: View {
     private func slotName(_ slot: Slot) -> String {
         switch slot {
         case .hat: return "Hats"
-        case .neck: return "Neckwear"
-        case .theme: return "Backgrounds"
-        case .sock: return "Tug socks"
+        case .neck: return "Neck"
+        case .theme: return "Skies"
+        case .sock: return "Socks"
         case .fur: return "Fur"
         }
     }

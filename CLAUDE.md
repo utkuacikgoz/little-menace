@@ -8,6 +8,6 @@
 - Don't re-run CI "to check". Read the logs of the run that exists.
 
 ## Review with the owner
-- Screens are reviewed one at a time with options A (current) / B / C. Collect all picks, then apply them in **one** push at the end.
-- **Every option is a real screenshot of that screen: 3 screens per choice**, never one screenshot plus text describing B and C. Build B and C behind `Variant.on("S3B")` (DEBUG-only `-LMVariant`), shoot them all with the `new` tour, then keep the picked branch and delete the others.
+- Screens are reviewed one at a time with **four** options: A (current) / B / C / D, with at least one bold option aimed at virality. Collect all picks, then apply them in **one** push at the end.
+- **Every option is a real screenshot of that screen: 4 screens per choice**, never one screenshot plus text describing the others. Build B–D behind `Variant.on("S3B")` (DEBUG-only `-LMVariant`), shoot them all with the `new` tour (`abcd`), then keep the picked branch and delete the others.
 - Nothing is merged until the owner approves every screen.

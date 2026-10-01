@@ -266,7 +266,7 @@ final class LittleMenaceUITests: XCTestCase {
         leaf.tap()
         XCTAssertTrue(leaf.label.contains("wearing"))
         let nightcap = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Nightcap'")).firstMatch
-        XCTAssertTrue(nightcap.exists, "paid items are visible after attachment")
+        XCTAssertTrue(nightcap.exists, "paid items are listed in the Wardrobe")
         nightcap.tap()
         // Not owned: the preview shows the buy bar. Owned (e.g. a leftover sandbox purchase): it equips.
         let offered = buyButton.waitForExistence(timeout: 5)

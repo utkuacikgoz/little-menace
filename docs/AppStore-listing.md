@@ -103,7 +103,7 @@ _Apple’s limit is 55 characters._
 
 > Little Menace needs no account and no network; all game data stays on the device.
 >
-> To review the in-app purchase from a fresh install: tap ••• (top right) › Settings › Midnight Snack. That page is always available, previews every item and reaction on the gremlin, and has the Buy and Restore Purchases buttons. For players, the Wardrobe only shows Midnight Snack items after level 3 and visits on two different days; it is never promoted on the home screen.
+> To review the in-app purchase from a fresh install: tap ••• (top right) › Settings › Midnight Snack. That page is always available, previews every item and reaction on the gremlin, and has the Buy and Restore Purchases buttons. Players also see the items in the Wardrobe, marked with a sparkle, under a Midnight Snack banner; it is never promoted on the home screen.
 >
 > A short first-run guide points at the controls; it can be skipped and reopened in Settings › How to Play.
 >
