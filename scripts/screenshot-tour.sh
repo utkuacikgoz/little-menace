@@ -44,13 +44,14 @@ if [ "$PART" = store ]; then
   shot "$PM" 13-iap-collection-buy -LMScreen collection -LMPage 2 -LMPrice '$3.99'
   shot "$PM" 14-iap-wardrobe-preview -LMScreen wardrobe -LMPreview nightcap -LMPrice '$3.99'
 elif [ "$PART" = new ]; then
-  # Owner review: every screen three times, as option A (current), B and C (-LMVariant, DEBUG only).
-  abc() { # screen-id [launch args...]
+  # Owner review: every screen four times, as option A (current), B, C and D (-LMVariant, DEBUG only).
+  abcd() { # screen-id [launch args...]
     local S=$1; shift
-    for V in A B C; do shot "$PM" "v-$S-$V" -LMVariant "$S$V" "$@"; done
+    for V in A B C D; do shot "$PM" "v-$S-$V" -LMVariant "$S$V" "$@"; done
   }
-  abc S10 -LMScreen home -LMDebt 24 -LMLoss 3
-  abc S11 -LMScreen wardrobe
+  abcd S12 -LMScreen wardrobe -LMSlot theme -LMFresh YES -LMPrice '$3.99'
+  abcd S13 -LMScreen wardrobe -LMSlot theme
+  abcd S14 -LMScreen playPicker
 elif [ "$PART" = a ]; then
   shot "$PM" 01-home -LMScreen home
   shot "$PM" 02-name-prompt -LMScreen namePrompt
