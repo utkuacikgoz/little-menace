@@ -97,6 +97,14 @@ footer.site a { color: var(--muted); }
 .lede em { font-style: normal; background: linear-gradient(transparent 58%, rgba(255, 212, 107, .9) 58%); }
 .soon { display: inline-flex; align-items: center; gap: 10px; background: var(--ink); color: var(--cream-2); font-weight: 800; font-size: 16px; padding: 14px 22px; border-radius: 14px; }
 .soon::before { content: ""; width: 10px; height: 10px; border-radius: 50%; background: var(--orange); box-shadow: 0 0 0 4px rgba(255, 122, 47, .3); }
+/* App Store button: dark pill, two-line label like Apple's badge. */
+.store { display: inline-flex; flex-direction: column; justify-content: center; min-height: 56px; padding: 8px 26px; background: var(--ink); color: var(--cream-2); border-radius: 14px; text-decoration: none; line-height: 1.1; transition: transform .15s ease, box-shadow .15s ease; box-shadow: 0 10px 24px -12px rgba(36, 31, 51, .6); }
+.store:hover { transform: translateY(-2px); }
+.store:focus-visible { outline: 3px solid var(--orange); outline-offset: 3px; }
+.store-small { font-size: 12px; font-weight: 700; opacity: .85; }
+.store-big { font-size: 22px; font-weight: 900; letter-spacing: -.01em; }
+.nav-get { background: var(--ink); color: var(--cream-2) !important; padding: 6px 14px; border-radius: 999px; }
+@media (prefers-reduced-motion: reduce) { .store { transition: none; } .store:hover { transform: none; } }
 .fine { margin: 18px 0 0; font-size: 15px; font-weight: 600; color: var(--muted); }
 
 .phone { justify-self: center; width: min(320px, 74vw); padding: 11px; background: #111; border-radius: 52px; box-shadow: 0 30px 60px -20px rgba(36, 31, 51, .5), 0 0 0 2px #2a2a2a inset; }
