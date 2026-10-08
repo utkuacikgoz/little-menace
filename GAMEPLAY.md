@@ -103,6 +103,10 @@ Completing it grants 30 XP and a **gold stamp** once. It is shown only as an ico
   - plus one "(name) is awake" note at the expected nap end
 - There is no guilt, distress, or "your gremlin misses you". If permission is denied, Settings says so and links to iOS Settings.
 
+## Rating prompt
+
+Apple's rating prompt is requested right after a won round, only once the player has visited on 3 days and reached level 3, and at most once per app version (kept across a gremlin reset). Apple decides whether it actually appears and caps it at three times a year.
+
 ## Sharing
 
 The menu has a **Share** item. It renders a 1080×1350 card from the real state: current pose, outfit, theme, name, level, stamps, discoveries and personality title. The card goes to the system share sheet, and nothing is posted automatically.

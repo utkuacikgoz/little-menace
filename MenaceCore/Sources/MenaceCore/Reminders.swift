@@ -52,3 +52,18 @@ public enum ReminderPolicy {
         return out
     }
 }
+
+/// When to show Apple's rating prompt: right after a won round, once the player has come back on
+/// a few days and reached a few levels, and at most once per app version. Apple also caps it at
+/// three times a year and lets people turn it off.
+public enum ReviewPolicy {
+    public static let minVisitDays = 3
+    public static let minLevel = 3
+
+    public static func shouldAsk(_ s: PetState, wonRound: Bool, appVersion: String) -> Bool {
+        wonRound
+            && s.counters.visitDays >= minVisitDays
+            && s.level >= minLevel
+            && s.prefs.reviewAskedVersion != appVersion
+    }
+}

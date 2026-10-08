@@ -404,6 +404,7 @@ public struct Game: Sendable {
         state.howToPlayShown = knowsHowToPlay
         state.prefs.sound = prefs.sound
         state.prefs.haptics = prefs.haptics
+        state.prefs.reviewAskedVersion = prefs.reviewAskedVersion
         _ = tick(now: now)
     }
 }

@@ -374,6 +374,16 @@ final class GameModel {
         }
     }
 
+    /// Apple's rating prompt goes up right after a won round, once the player is a regular.
+    /// Returns true when the caller should request it; records the ask so it happens once per version.
+    func takeReviewMoment(won: Bool) -> Bool {
+        let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "0"
+        guard ReviewPolicy.shouldAsk(state, wonRound: won, appVersion: version) else { return false }
+        game.state.prefs.reviewAskedVersion = version
+        save()
+        return true
+    }
+
     /// Leaving a round early (close button, interruption, backgrounding).
     func cancelActivity() {
         game.cancelActivity()

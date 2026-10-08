@@ -212,3 +212,35 @@ final class MoodTests: XCTestCase {
         XCTAssertEqual(g.state.counters.rounds(.copycat), 1)
     }
 }
+
+final class ReviewPolicyTests: XCTestCase {
+    let now = ISO8601DateFormatter().date(from: "2026-09-21T10:00:00Z")!
+
+    func regular() -> PetState {
+        var s = PetState(now: now)
+        s.counters.visitDays = ReviewPolicy.minVisitDays
+        s.xp = Tuning.xpForLevel(ReviewPolicy.minLevel)
+        return s
+    }
+
+    func testAsksAfterAWinOnceTheyAreARegular() {
+        XCTAssertTrue(ReviewPolicy.shouldAsk(regular(), wonRound: true, appVersion: "1.0.0"))
+        XCTAssertFalse(ReviewPolicy.shouldAsk(regular(), wonRound: false, appVersion: "1.0.0"), "never after a loss")
+        var newcomer = regular()
+        newcomer.counters.visitDays = 1
+        XCTAssertFalse(ReviewPolicy.shouldAsk(newcomer, wonRound: true, appVersion: "1.0.0"))
+        var low = regular()
+        low.xp = 0
+        XCTAssertFalse(ReviewPolicy.shouldAsk(low, wonRound: true, appVersion: "1.0.0"))
+    }
+
+    func testOncePerVersionAndKeptAcrossReset() {
+        var s = regular()
+        s.prefs.reviewAskedVersion = "1.0.0"
+        XCTAssertFalse(ReviewPolicy.shouldAsk(s, wonRound: true, appVersion: "1.0.0"))
+        XCTAssertTrue(ReviewPolicy.shouldAsk(s, wonRound: true, appVersion: "1.1.0"))
+        var g = Game(state: s)
+        g.reset(now: now)
+        XCTAssertEqual(g.state.prefs.reviewAskedVersion, "1.0.0", "a new gremlin doesn't re-ask")
+    }
+}

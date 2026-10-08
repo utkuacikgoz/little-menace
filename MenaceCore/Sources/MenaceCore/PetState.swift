@@ -135,6 +135,8 @@ public struct Preferences: Codable, Equatable, Sendable {
     public var reminderOfferShown = false
     public var reminderHour = 18
     public var reminderMinute = 30
+    /// App version in which Apple's rating prompt was last requested.
+    public var reviewAskedVersion: String?
 
     public init() {}
 }
