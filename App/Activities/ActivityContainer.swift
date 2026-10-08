@@ -76,6 +76,7 @@ struct ActivityContainer: View {
         case .snackToss: return "Tap to toss the snack"
         case .sockTug: return "Pull when it gets tired"
         case .cushionHunt: return "Watch which cushion"
+        case .copycat: return Variant.on("S18B") ? "Watch, then swipe the moves" : "Watch, then copy the moves"
         }
     }
 
@@ -88,6 +89,7 @@ struct ActivityContainer: View {
         case .snackToss: SnackTossView(finish: finish)
         case .sockTug: SockTugView(sock: model.state.wardrobe.sock, finish: finish)
         case .cushionHunt: CushionHuntView(finish: finish)
+        case .copycat: CopycatView(finish: finish)
         }
     }
 

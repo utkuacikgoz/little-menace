@@ -59,8 +59,29 @@ public enum Tuning {
     public static let pokeWindow: TimeInterval = 20
     public static let pokesAllowed = 10
     public static let pokePenalty = 1
-    public static let maxPointsLostPerDay = 40
     public static let pointsHistoryLimit = 40
+
+    // MARK: Mood
+    /// Temper builds with every point lost and cools with gains, pets and time. 0…temperMax.
+    public static let temperMax = 50.0
+    public static let temperCoolPerHour = 12.0
+    public static let temperPetCool = 6.0
+    public static let annoyedAt = 10.0
+    public static let angryAt = 25.0
+    /// Furious: refuses to play until calmed down.
+    public static let furiousAt = 40.0
+
+    // MARK: Overfeeding
+    /// This many snacks pushed on a full belly within `pukeWindow` seconds and it throws up.
+    public static let forceFeedsToPuke = 3
+    public static let pukeWindow: TimeInterval = 120
+    public static let fullnessAfterPuke = 60.0
+    public static let pukeJoyLoss = 15.0
+    public static let cleanXP = 1
+
+    // MARK: Spite
+    /// After a grumpy wake it refuses to nap again for this long.
+    public static let spiteNoNap: TimeInterval = 5 * 60
 
     // MARK: Mischief
     public static let firstMischiefDelay: TimeInterval = 90

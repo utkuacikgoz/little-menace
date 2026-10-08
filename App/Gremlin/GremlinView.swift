@@ -81,6 +81,8 @@ struct GremlinView: View {
                             .stroke(LinearGradient(colors: [.white.opacity(0.22), .clear],
                                                    startPoint: .topLeading, endPoint: .center), lineWidth: 2.5)
                     )
+                    // Queasy: a green wash over the fur.
+                    .overlay(FluffShape(bumps: 26, depth: 3.2).fill(Color(hex: 0x8BD45A).opacity(Double(pose.sick) * 0.5)))
                     .frame(width: 166, height: 158)
                     .position(x: 100, y: 128)
 
@@ -88,6 +90,7 @@ struct GremlinView: View {
                     .fill(LinearGradient(colors: [coat.belly, coat.bellyDark], startPoint: .top, endPoint: .bottom))
                     .frame(width: 92, height: 70)
                     .position(x: 100, y: 170)
+                    .opacity(pose.backTurned ? 0 : 1)
 
                 HStack(spacing: 60) {
                     Foot(coat: coat)
@@ -97,6 +100,7 @@ struct GremlinView: View {
 
                 face(blink: blink)
                     .offset(x: pose.look.width * 4 + stretch.width * 0.04, y: pose.look.height * 3)
+                    .opacity(pose.backTurned ? 0 : 1)
 
                 Wearables(hat: hat, neck: neck)
             }
@@ -168,6 +172,19 @@ struct GremlinView: View {
                 }
                 .frame(width: 46, height: 26)
                 .position(x: 100, y: 138)
+
+            GrittedTeeth()
+                .frame(width: 30, height: 9)
+                .position(x: 100, y: 134)
+                .opacity(Double(pose.gritted))
+
+            if pose.propped {
+                HStack(spacing: 63) {
+                    Matchstick().rotationEffect(.degrees(-6))
+                    Matchstick().rotationEffect(.degrees(6))
+                }
+                .position(x: 100, y: 106)
+            }
         }
     }
 
@@ -314,6 +331,20 @@ struct MouthShape: Shape {
         p.addQuadCurve(to: left, control: bottom)
         p.closeSubpath()
         return p
+    }
+}
+
+/// Clenched teeth for a furious face.
+private struct GrittedTeeth: View {
+    var body: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: 3).fill(Ink.eye)
+            HStack(spacing: 6) {
+                ForEach(0..<4, id: \.self) { _ in Rectangle().fill(Ink.pupil.opacity(0.7)).frame(width: 1.5) }
+            }
+            Rectangle().fill(Ink.pupil.opacity(0.7)).frame(height: 1.5)
+            RoundedRectangle(cornerRadius: 3).stroke(Ink.pupil, lineWidth: 2.5)
+        }
     }
 }
 

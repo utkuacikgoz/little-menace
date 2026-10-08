@@ -33,6 +33,10 @@ struct HomeView: View {
             ZStack {
                 ThemeBackground(themeID: model.state.wardrobe.theme, dimmed: model.state.isAsleep)
 
+                if model.state.mood == .furious && !model.state.isAsleep {
+                    FuriousSky(storm: Variant.on("S15D")).transition(.opacity)
+                }
+
                 if model.state.isAsleep {
                     // Night while it naps: a darker sky with a moon.
                     Color.black.opacity(0.25).ignoresSafeArea().allowsHitTesting(false)
@@ -43,7 +47,11 @@ struct HomeView: View {
                         .accessibilityHidden(true)
                 }
 
+                behindGremlin(petSize: petSize, center: center)
+
                 gremlin(size: petSize, center: center)
+
+                inFrontOfGremlin(petSize: petSize, center: center)
 
                 if let bubble = model.bubble, !model.showNamePrompt, !model.showReminderOffer {
                     // Speech bubble above the head; below the gremlin while the mischief chip holds that spot.
@@ -217,6 +225,8 @@ struct HomeView: View {
         parts.append(s.needs.joy < 40 ? "Bored" : "Cheerful")
         if s.personality > 0.4 { parts.append("Feeling menacing") }
         if s.personality < -0.4 { parts.append("Feeling sweet") }
+        if s.mood > .calm { parts.append(s.mood.label) }
+        if s.mess { parts.append("Made a mess") }
         parts.append("Level \(s.level)")
         return parts.joined(separator: ", ")
     }
@@ -236,7 +246,13 @@ struct HomeView: View {
 
     private var topBar: some View {
         ZStack(alignment: .top) {
-            PointsBadge { sheet = .points }.coachTarget(.points)
+            VStack(spacing: 6) {
+                PointsBadge { sheet = .points }.coachTarget(.points)
+                if model.state.mood > .calm && !model.state.isAsleep && !Variant.on("S15D") {
+                    MoodMeter(mood: model.state.mood, temper: model.state.temper)
+                        .transition(.scale.combined(with: .opacity))
+                }
+            }
             HStack {
                 Spacer()
                 menu
@@ -245,6 +261,79 @@ struct HomeView: View {
         .padding(.top, 4)
         .animation(.spring(response: 0.35, dampingFraction: 0.7), value: model.pointsDelta)
         .animation(.spring(response: 0.35, dampingFraction: 0.7), value: model.state.points.total)
+        .animation(.spring(response: 0.35, dampingFraction: 0.7), value: model.state.mood)
+    }
+
+    // MARK: Moods and mess
+
+    /// Steam and the puddle sit behind the gremlin.
+    @ViewBuilder private func behindGremlin(petSize: CGFloat, center: CGPoint) -> some View {
+        if model.state.mess {
+            mess(petSize: petSize, center: center)
+        }
+        if model.state.mood >= .angry && !model.state.isAsleep {
+            let head = CGPoint(x: center.x, y: center.y - petSize * 0.3)
+            SteamPuffs(width: petSize).position(head)
+        }
+    }
+
+    /// Stickers and props for the big moments.
+    @ViewBuilder private func inFrontOfGremlin(petSize: CGFloat, center: CGPoint) -> some View {
+        let above = CGPoint(x: center.x + petSize * 0.3, y: center.y - petSize * 0.5)
+        let below = CGPoint(x: center.x, y: center.y + petSize * 0.66)
+        if model.state.mood == .furious && !model.state.isAsleep && Variant.on("S15D") {
+            let cloud = CGPoint(x: center.x + petSize * 0.42, y: center.y - petSize * 0.5)
+            Image(systemName: "cloud.bolt.rain.fill")
+                .symbolRenderingMode(.multicolor)
+                .font(.system(size: 64))
+                .position(cloud)
+                .accessibilityHidden(true)
+            ComicWord(text: "FURIOUS", color: Color(hex: 0xFF3B3B))
+                .position(below)
+        }
+        if model.transient == .spite && Variant.on("S17D") {
+            let mug = CGPoint(x: center.x + petSize * 0.52, y: center.y + petSize * 0.12)
+            Image(systemName: "mug.fill")
+                .font(.system(size: 40, weight: .bold))
+                .foregroundStyle(Ink.eye)
+                .position(mug)
+                .accessibilityHidden(true)
+            ComicWord(text: "AWAKE. OUT OF SPITE.", color: Ink.eye, angle: -5)
+                .scaleEffect(0.6)
+                .position(below)
+        }
+        if let word = model.specialWord {
+            ComicWord(text: word)
+                .position(above)
+                .transition(.scale.combined(with: .opacity))
+        }
+    }
+
+    /// The puddle after overfeeding, beside its feet. Tap to clean.
+    @ViewBuilder private func mess(petSize: CGFloat, center: CGPoint) -> some View {
+        let spot = CGPoint(x: center.x + petSize * 0.36, y: center.y + petSize * 0.5)
+        let bold = Variant.on("S16D")
+        Button { model.cleanMess() } label: { Puddle(big: bold) }
+            .buttonStyle(SquishButtonStyle())
+            .position(spot)
+            .accessibilityLabel("Puddle")
+            .accessibilityHint("Double tap to clean it up")
+        if Variant.on("S16B") || bold {
+            Flies().position(x: spot.x, y: spot.y)
+        }
+        if bold {
+            ComicWord(text: "BLEURGH!", color: Color(hex: 0x9BD84E), angle: 8)
+                .position(x: center.x - petSize * 0.2, y: center.y - petSize * 0.55)
+        }
+        if Variant.on("S16C") {
+            Button { model.cleanMess() } label: { CleanChip(text: "Clean up  +\(Tuning.cleanXP)", symbol: "bubbles.and.sparkles.fill") }
+                .buttonStyle(SquishButtonStyle())
+                .position(x: spot.x - 10, y: spot.y + 44)
+        } else {
+            CleanChip(text: Variant.on("S16B") ? "Mop it  +\(Tuning.cleanXP)" : "tap to clean")
+                .allowsHitTesting(false)
+                .position(x: spot.x, y: spot.y - 40)
+        }
     }
 
     private var menu: some View {
@@ -287,11 +376,11 @@ struct HomeView: View {
                 }
                 .coachTarget(.play)
                 RingButton(ring: needs.energy / 100, label: model.state.isAsleep ? "Wake" : "Nap",
-                           caption: needCaption(.energy, needs.energy), action: {
+                           caption: napCaption(needs.energy), action: {
                     showPlay = false
                     model.toggleSleep()
                 }) {
-                    Image(systemName: model.state.isAsleep ? "sun.max.fill" : "moon.fill")
+                    Image(systemName: model.state.isAsleep ? "sun.max.fill" : spiteLocked ? "lock.fill" : "moon.fill")
                         .font(.system(size: 28, weight: .bold))
                         .foregroundStyle(.white)
                 }
@@ -301,6 +390,18 @@ struct HomeView: View {
     }
 
     private enum Need { case fullness, joy, energy }
+
+    /// Option S17B: while it refuses naps out of spite, the nap button is locked with a countdown.
+    private var spiteLocked: Bool {
+        guard Variant.on("S17B"), !model.state.isAsleep, let until = model.state.noNapUntil else { return false }
+        return until > model.now
+    }
+
+    private func napCaption(_ energy: Double) -> String {
+        guard spiteLocked, let until = model.state.noNapUntil else { return needCaption(.energy, energy) }
+        let left = max(0, Int(until.timeIntervalSince(model.now)))
+        return "No nap \(left / 60):" + String(format: "%02d", left % 60)
+    }
 
     /// Needs read as what the gremlin lacks: Hungry / Bored / Sleepy, counting up.
     private func needCaption(_ need: Need, _ value: Double) -> String {
@@ -381,18 +482,74 @@ private struct PlayPicker: View {
     var pick: (ActivityKind) -> Void
 
     var body: some View {
-        HStack(spacing: 18) { options }
-            .padding(10)
-            .background(.white.opacity(0.22), in: Capsule())
+        if Variant.on("S19B") {
+            // B: two by two.
+            VStack(spacing: 12) {
+                HStack(spacing: 18) { snack; tug }
+                HStack(spacing: 18) { hunt; dance(badge: false) }
+            }
+            .padding(14)
+            .background(.white.opacity(0.22), in: RoundedRectangle(cornerRadius: 32, style: .continuous))
+        } else if Variant.on("S19D") {
+            // D: the new game as a big card on top.
+            VStack(spacing: 12) {
+                Button { pick(.copycat) } label: {
+                    HStack(spacing: 12) {
+                        Image(systemName: "figure.dance")
+                            .font(.system(size: 30, weight: .bold))
+                            .foregroundStyle(.white)
+                            .frame(width: 56, height: 56)
+                            .background(Color(hex: 0xFF4FD8), in: Circle())
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("NEW").font(.system(.caption, design: .rounded).weight(.black)).foregroundStyle(Color(hex: 0xFF4FD8))
+                            Text("Copycat Dance").font(.system(.title3, design: .rounded).weight(.heavy)).foregroundStyle(Ink.body)
+                        }
+                        Spacer(minLength: 0)
+                        Image(systemName: "play.fill").font(.title3.weight(.heavy)).foregroundStyle(Ink.body)
+                    }
+                    .padding(12)
+                    .background(Ink.eye, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+                }
+                .buttonStyle(SquishButtonStyle())
+                .accessibilityLabel("New: Copycat Dance")
+                HStack(spacing: 18) { snack; tug; hunt }
+                    .padding(10)
+                    .background(.white.opacity(0.22), in: Capsule())
+            }
+            .padding(.horizontal, 8)
+        } else {
+            // A: four in a row. C: the same, with a NEW badge on the dance.
+            HStack(spacing: 14) { snack; tug; hunt; dance(badge: Variant.on("S19C")) }
+                .padding(10)
+                .background(.white.opacity(0.22), in: Capsule())
+        }
     }
 
-    @ViewBuilder private var options: some View {
-        option(.snackToss, "Snack toss", short: "Snack") { CookieView(size: 30) }
+    private var snack: some View { option(.snackToss, "Snack toss", short: "Snack") { CookieView(size: 30) } }
+    private var tug: some View {
         option(.sockTug, "Sock tug", short: "Tug") {
             SockView(style: "stripe").scaleEffect(0.3).frame(width: 34, height: 40)
         }
+    }
+    private var hunt: some View {
         option(.cushionHunt, "Cushion hunt", short: "Hunt") {
             CushionView().scaleEffect(0.38).frame(width: 40, height: 30)
+        }
+    }
+    private func dance(badge: Bool) -> some View {
+        option(.copycat, "Copycat dance", short: "Dance") {
+            Image(systemName: "figure.dance").font(.system(size: 28, weight: .bold)).foregroundStyle(.white)
+        }
+        .overlay(alignment: .topTrailing) {
+            if badge {
+                Text("NEW")
+                    .font(.system(size: 11, weight: .black, design: .rounded))
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 6).padding(.vertical, 3)
+                    .background(Color(hex: 0xFF3B7F), in: Capsule())
+                    .offset(x: 8, y: -4)
+                    .accessibilityHidden(true)
+            }
         }
     }
 

@@ -44,11 +44,17 @@ if [ "$PART" = store ]; then
   shot "$PM" 13-iap-collection-buy -LMScreen collection -LMPage 2 -LMPrice '$3.99'
   shot "$PM" 14-iap-wardrobe-preview -LMScreen wardrobe -LMPreview nightcap -LMPrice '$3.99'
 elif [ "$PART" = new ]; then
-  # Final check of the owner's picks S12D S13D S14B. For a new A/B/C/D review, use abcd with -LMVariant.
-  shot "$PM" f-S12-wardrobe-day-one -LMScreen wardrobe -LMSlot theme -LMFresh YES
-  shot "$PM" f-S12-wardrobe-fur -LMScreen wardrobe -LMSlot fur -LMFresh YES
-  shot "$PM" f-S13-tabs-neck -LMScreen wardrobe -LMSlot neck
-  shot "$PM" f-S14-play-picker -LMScreen playPicker
+  # Owner review: every screen four times, as option A, B, C and D (-LMVariant, DEBUG only).
+  abcd() { # screen-id [launch args...]
+    local S=$1; shift
+    for V in A B C D; do shot "$PM" "v-$S-$V" -LMVariant "$S$V" "$@"; done
+  }
+  abcd S15 -LMScreen furious
+  abcd S16 -LMScreen puke
+  abcd S17 -LMScreen spite
+  abcd S18 -LMScreen copycat -LMFreeze YES
+  abcd S19 -LMScreen playPicker
+  abcd S20 -LMScreen idleAct -LMAct sneeze
 elif [ "$PART" = a ]; then
   shot "$PM" 01-home -LMScreen home
   shot "$PM" 02-name-prompt -LMScreen namePrompt

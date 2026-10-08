@@ -141,7 +141,7 @@ struct PointsView: View {
     }
 
     private var footerNote: some View {
-        Text("Points can go down, at most \(Tuning.maxPointsLostPerDay) a day. Your level never does.")
+        Text("Points can go down, even below zero, and losing them makes it cross. Your level never drops.")
             .font(.footnote)
             .foregroundStyle(Color.primary.opacity(0.75))
     }

@@ -14,22 +14,35 @@ Three hidden needs, each 0–100. There are no bars on the home screen. The grem
 | Energy | −5 | +240 | 20 |
 | Joy | −6 | 0 | 25 |
 
-- **Feed**: +25 fullness, +4 joy. Refused at ≥ 90 fullness: the gremlin turns its head and the snack bounces back. There are two ways to feed: tap the cookie (auto-toss), or drag the cookie to the gremlin's mouth. The gremlin's mouth opens as the cookie gets close.
+- **Feed**: +25 fullness, +4 joy. Refused at ≥ 90 fullness: the gremlin turns its head and the snack bounces back (−2 points). The third snack pushed on a full belly within 2 minutes makes it throw up: fullness drops to 60, joy −15, and a puddle stays on the floor until you tap it (+1 point). There are two ways to feed: tap the cookie (auto-toss), or drag the cookie to the gremlin's mouth. The gremlin's mouth opens as the cookie gets close.
 - **Pet** (tap the gremlin): +2 joy. Drag the gremlin to stretch it (the stretch is rubber-banded and bounded), and release for a springy reaction. **Long press**: a sly grin, or an owned collection reaction.
-- **Nap**: refused at ≥ 75 energy. A nap ends by itself at full energy or after 25 minutes. Waking the gremlin in the first 5 minutes gets a grumpy face and has no other cost.
+- **Nap**: refused at ≥ 75 energy. A nap ends by itself at full energy or after 25 minutes. Waking the gremlin in the first 5 minutes gets a grumpy face, costs 5 points, and it then refuses to nap again for 5 minutes, out of spite (no extra cost).
 - **Play**: costs 6 energy and 6 fullness, and gives up to 14 joy. Refused below 15 energy ("too sleepy").
 - Nothing else can happen while a round is running. Feed, nap and a second round all return `busy`.
 
 ## Time model (`TimeModel.advance`)
 
 - Needs are simulated from `lastSimulated` to now, and elapsed time is **capped at 8 h**. Coming back after a week feels the same as coming back after 8 hours.
-- Passing time never takes a need below its absence floor, and never lowers a need that is already below the floor. Play can. Time cannot. The gremlin never dies, runs away, or gets sick.
+- Passing time never takes a need below its absence floor, and never lowers a need that is already below the floor. Play can. Time cannot. The gremlin never dies or runs away.
 - **Clock set backwards**: no time passes, and the anchor moves back to the new "now". A nap start in the "future" is pulled back to now.
 - **Clock set forwards**: covered by the same 8 h cap.
 - **Time zones**: day and week keys use the device's *current* zone (ISO-8601 weeks, Monday first). Every day and week reward is recorded in a grant ledger (`challenge:2026-09-24`, `week:2026-W39:gift`). Travelling across midnight twice therefore never pays twice.
 - **Termination/backgrounding**: state is saved after every action and on backgrounding. A round in progress is **not** persisted. If the app is killed or backgrounded mid-round, the round is dropped: no cost, no reward. A nap *is* persisted and keeps running while the app is closed.
 
-## Toys (three short, replayable rounds)
+## Mood
+
+Temper runs from 0 to 50. Every point lost adds to it; every point earned, every pet (−6) and passing time (−12 an hour) cool it down.
+
+| Temper | Mood | What you see |
+|---|---|---|
+| < 10 | Calm | nothing |
+| 10+ | Annoyed | low brows, sulky lines, a meter under the score |
+| 25+ | Angry | gritted teeth, steam |
+| 40+ | Furious | red sky, refuses every game until petted calm |
+
+Points have no daily loss cap: the score can keep falling, and the mood is what pushes back.
+
+## Toys (four short, replayable rounds)
 
 Each one is fun without rewards. XP is shown only on the small result card.
 
@@ -39,6 +52,7 @@ Each one is fun without rewards. XP is shown only on the small result card.
    - Holding light tension during strong pulls is fine. Yanking hard during strong pulls makes the sock slip. Nonstop yanking **loses**, and a test checks this.
    - Rounds last up to 20 s. A cancelled gesture resets the pull to 0 (`@GestureState`).
 3. **Cushion hunt**: The gremlin peeks from one of three cushions, then the cushions swap 6 times (4 slower swaps with Reduce Motion). You get two guesses. Finding the gremlin on the first try is the best result.
+4. **Copycat Dance**: the gremlin dances a routine of moves (up, down, left, right); you copy it with the arrows or by swiping. Each routine copied adds a move, starting at 3. The first slip ends the round. Copying 5 or more is a win; 12 is a perfect round. Never the same move three times in a row.
 
 ## Progression
 
