@@ -266,21 +266,21 @@ struct HomeView: View {
 
     // MARK: Moods and mess
 
-    /// Steam and the puddle sit behind the gremlin.
+    /// Steam sits behind the gremlin.
     @ViewBuilder private func behindGremlin(petSize: CGFloat, center: CGPoint) -> some View {
-        if model.state.mess {
-            mess(petSize: petSize, center: center)
-        }
         if model.state.mood >= .angry && !model.state.isAsleep {
             let head = CGPoint(x: center.x, y: center.y - petSize * 0.3)
             SteamPuffs(width: petSize).position(head)
         }
     }
 
-    /// Stickers and props for the big moments.
+    /// The puddle, stickers and props for the big moments.
     @ViewBuilder private func inFrontOfGremlin(petSize: CGFloat, center: CGPoint) -> some View {
         let above = CGPoint(x: center.x + petSize * 0.3, y: center.y - petSize * 0.5)
         let below = CGPoint(x: center.x, y: center.y + petSize * 0.66)
+        if model.state.mess {
+            mess(petSize: petSize, center: center)
+        }
         if model.state.mood == .furious && !model.state.isAsleep && Variant.on("S15D") {
             let cloud = CGPoint(x: center.x + petSize * 0.42, y: center.y - petSize * 0.5)
             Image(systemName: "cloud.bolt.rain.fill")
@@ -309,9 +309,9 @@ struct HomeView: View {
         }
     }
 
-    /// The puddle after overfeeding, beside its feet. Tap to clean.
+    /// The puddle after overfeeding, in front of its left foot (it leans away to the right). Tap to clean.
     @ViewBuilder private func mess(petSize: CGFloat, center: CGPoint) -> some View {
-        let spot = CGPoint(x: center.x + petSize * 0.36, y: center.y + petSize * 0.5)
+        let spot = CGPoint(x: center.x - petSize * 0.3, y: center.y + petSize * 0.58)
         let bold = Variant.on("S16D")
         Button { model.cleanMess() } label: { Puddle(big: bold) }
             .buttonStyle(SquishButtonStyle())
@@ -328,11 +328,11 @@ struct HomeView: View {
         if Variant.on("S16C") {
             Button { model.cleanMess() } label: { CleanChip(text: "Clean up  +\(Tuning.cleanXP)", symbol: "bubbles.and.sparkles.fill") }
                 .buttonStyle(SquishButtonStyle())
-                .position(x: spot.x - 10, y: spot.y + 44)
+                .position(x: spot.x, y: spot.y + 46)
         } else {
             CleanChip(text: Variant.on("S16B") ? "Mop it  +\(Tuning.cleanXP)" : "tap to clean")
                 .allowsHitTesting(false)
-                .position(x: spot.x, y: spot.y - 40)
+                .position(x: spot.x, y: spot.y + 46)
         }
     }
 

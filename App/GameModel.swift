@@ -91,6 +91,10 @@ final class GameModel {
         await purchases.refreshEntitlements()
         await purchases.loadProducts()
         notificationsDenied = state.prefs.remindersEnabled ? !(await reminders.isAuthorized()) : false
+        #if DEBUG
+        // Idle-act screenshots show only what the act itself says.
+        if UserDefaults.standard.string(forKey: "LMScreen") == "idleAct" { return }
+        #endif
         if bubble == nil && !homeObscured { say(.idle) }
     }
 
