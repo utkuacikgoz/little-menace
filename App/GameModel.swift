@@ -31,8 +31,6 @@ final class GameModel {
     private(set) var specialPose: GremlinPose?
     private(set) var specialProp: String?
     private(set) var specialLine: String?
-    /// Comic lettering for the big moment of an idle act.
-    private(set) var specialWord: String?
     var look: CGSize = .zero
     private(set) var bubble: Bubble?
     private(set) var toast: Toast?
@@ -207,7 +205,6 @@ final class GameModel {
         specialLine = nil
         specialPose = nil
         specialProp = nil
-        specialWord = nil
     }
 
     /// Long press: an owned collection reaction, or just a sly grin.
@@ -246,25 +243,17 @@ final class GameModel {
     /// Plays one idle act (a sneeze, a yawn…). `holdPeak` stops on the big moment (screenshots).
     func performIdle(_ act: IdleAct, holdPeak: Bool = false) {
         specialTask?.cancel()
-        let showProp = Variant.on("S20B") || Variant.on("S20D")
-        let showWord = Variant.on("S20D")
-        if Variant.on("S20C") {
-            showLine(act.line, duration: holdPeak ? 30 : act.beats.reduce(0) { $0 + $1.seconds } + 1.5)
-        }
+        showLine(act.line, duration: holdPeak ? 30 : act.beats.reduce(0) { $0 + $1.seconds } + 1.5)
         specialTask = Task { [weak self] in
             for (i, beat) in act.beats.enumerated() {
                 guard let self, !Task.isCancelled else { return }
                 self.specialPose = beat.pose
-                self.specialProp = showProp && i == act.peak ? act.prop : nil
-                self.specialWord = showWord && i == act.peak ? act.word : nil
                 if i == act.peak { self.haptics.play(.squish, intensity: 0.3) }
                 if holdPeak && i == act.peak { return }
                 try? await Task.sleep(for: .seconds(beat.seconds))
             }
             guard let self, !Task.isCancelled else { return }
             self.specialPose = nil
-            self.specialProp = nil
-            self.specialWord = nil
         }
     }
 

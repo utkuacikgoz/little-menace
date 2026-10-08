@@ -23,7 +23,6 @@ struct GremlinPose: Equatable {
     var sleeping = false
     var gritted: CGFloat = 0        // 1 = clenched teeth showing
     var sick: CGFloat = 0           // 1 = green around the gills
-    var backTurned = false          // sulking: face to the wall
     var propped = false             // matchsticks holding the eyes open
 
     static let idle = GremlinPose()
@@ -82,15 +81,13 @@ struct GremlinPose: Equatable {
         case .furious: // fists up, teeth clenched, glaring
             p.eyeOpen = 0.5; p.browTilt = 24; p.mouthSmile = -0.9; p.mouthOpen = 0.3; p.gritted = 1; p.fang = 0
             p.earDroop = 14; p.squash = 0.96; p.armsUp = 0.35; p.tailWag = 0.2; p.blush = 0.9
-            if Variant.on("S15C") || Variant.on("S15D") { p.backTurned = true }
         case .puke:
             p.eyeOpen = 0.3; p.browTilt = -14; p.mouthOpen = 1; p.mouthSmile = -0.6; p.fang = 0; p.sick = 1
             p.squash = 0.9; p.lean = 10; p.earDroop = 24; p.tailWag = 0.1; p.blush = 0
         case .spite: // bolt upright, eyes forced wide open
             p.eyeOpen = 1.25; p.browTilt = 16; p.browLift = 4; p.mouthSmile = -0.5; p.mouthOpen = 0.05; p.fang = 1
             p.squash = 1.06; p.earDroop = -10; p.armsUp = 0.15; p.tailWag = 0.2
-            if Variant.on("S17C") { p.propped = true }
-            if Variant.on("S17D") { p.browAsym = 1; p.armsUp = 0.55 }
+            p.propped = true
         case .lose:
             p.eyeOpen = 0.8; p.browTilt = -12; p.mouthSmile = -0.5; p.mouthOpen = 0.05; p.earDroop = 16; p.squash = 0.96
         }

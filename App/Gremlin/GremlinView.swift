@@ -90,7 +90,6 @@ struct GremlinView: View {
                     .fill(LinearGradient(colors: [coat.belly, coat.bellyDark], startPoint: .top, endPoint: .bottom))
                     .frame(width: 92, height: 70)
                     .position(x: 100, y: 170)
-                    .opacity(pose.backTurned ? 0 : 1)
 
                 HStack(spacing: 60) {
                     Foot(coat: coat)
@@ -100,7 +99,6 @@ struct GremlinView: View {
 
                 face(blink: blink)
                     .offset(x: pose.look.width * 4 + stretch.width * 0.04, y: pose.look.height * 3)
-                    .opacity(pose.backTurned ? 0 : 1)
 
                 Wearables(hat: hat, neck: neck)
             }

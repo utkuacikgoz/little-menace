@@ -3,13 +3,11 @@ import UIKit
 import MenaceCore
 
 /// Copycat Dance: it dances a routine, you copy it move by move. Every routine copied adds a move;
-/// the first slip ends the round.
+/// the first slip ends the round. Played on a disco floor: tap the glowing tiles or swipe.
 struct CopycatView: View {
     var finish: (ActivityResult) -> Void
 
     private enum Phase { case watch, copy, over }
-    /// Review options: A arrow pad, B swipe anywhere, C coloured pads, D disco floor.
-    private enum Style { case pad, swipe, simon, disco }
 
     @Environment(GameModel.self) private var model
     @State private var match = CopycatMatch(seed: UInt64.random(in: 0...UInt64.max))
@@ -26,18 +24,11 @@ struct CopycatView: View {
         .up: Color(hex: 0xFFD166), .right: Color(hex: 0x06D6A0), .left: Color(hex: 0xEF476F), .down: Color(hex: 0x4CC9F0),
     ]
 
-    private var style: Style {
-        if Variant.on("S18B") { return .swipe }
-        if Variant.on("S18C") { return .simon }
-        if Variant.on("S18D") { return .disco }
-        return .pad
-    }
-
     var body: some View {
         GeometryReader { geo in
             let w = geo.size.width, h = geo.size.height
             ZStack {
-                if style == .disco { DiscoLights(width: w, height: h) }
+                DiscoLights(width: w, height: h)
 
                 GremlinView(pose: pose, hat: model.state.wardrobe.hat, neck: model.state.wardrobe.neck,
                             fur: model.state.wardrobe.fur, size: min(w * 0.5, 200))
@@ -54,7 +45,7 @@ struct CopycatView: View {
                         .accessibilityHidden(true)
                 }
 
-                if style == .disco && match.best > 0 {
+                if match.best > 0 {
                     Text("×\(match.best)")
                         .font(.system(size: 34, weight: .black, design: .rounded))
                         .foregroundStyle(Color(hex: 0xFF4FD8))
@@ -113,67 +104,30 @@ struct CopycatView: View {
 
     // MARK: Controls
 
-    @ViewBuilder private func controls(width w: CGFloat, height h: CGFloat) -> some View {
-        switch style {
-        case .pad:
-            VStack(spacing: 12) {
-                padButton(.up)
-                HStack(spacing: 12) { padButton(.left); padButton(.down); padButton(.right) }
-            }
-        case .swipe:
-            VStack(spacing: 8) {
-                Image(systemName: flash.map(Self.arrow) ?? "hand.draw.fill")
-                    .font(.system(size: 56, weight: .black))
-                    .foregroundStyle(.white)
-                Text("Swipe anywhere")
-                    .font(.system(.headline, design: .rounded).weight(.heavy))
-                    .foregroundStyle(.white.opacity(0.9))
-            }
-            .frame(width: w - 48, height: h * 0.28)
-            .background(.white.opacity(0.14), in: RoundedRectangle(cornerRadius: 28, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: 28, style: .continuous)
-                .strokeBorder(.white.opacity(0.45), style: StrokeStyle(lineWidth: 3, dash: [10, 8])))
-            .allowsHitTesting(false)
-            .accessibilityHidden(true)
-        case .simon, .disco:
-            VStack(spacing: 12) {
-                HStack(spacing: 12) { tile(.up, w); tile(.right, w) }
-                HStack(spacing: 12) { tile(.left, w); tile(.down, w) }
-            }
+    private func controls(width w: CGFloat, height h: CGFloat) -> some View {
+        VStack(spacing: 12) {
+            HStack(spacing: 12) { tile(.up, w); tile(.right, w) }
+            HStack(spacing: 12) { tile(.left, w); tile(.down, w) }
         }
-    }
-
-    private func padButton(_ m: DanceMove) -> some View {
-        Button { input(m) } label: {
-            Image(systemName: Self.arrow(m))
-                .font(.system(size: 32, weight: .heavy))
-                .foregroundStyle(.white)
-                .frame(width: 84, height: 84)
-                .background(.white.opacity(flash == m ? 0.55 : 0.22), in: Circle())
-        }
-        .buttonStyle(SquishButtonStyle())
-        .disabled(phase != .copy)
-        .accessibilityLabel(Self.name(m))
     }
 
     private func tile(_ m: DanceMove, _ w: CGFloat) -> some View {
         let color = Self.colors[m] ?? .white
         let on = flash == m || (phase == .watch && dancing == m)
-        let disco = style == .disco
         return Button { input(m) } label: {
             Image(systemName: Self.arrow(m))
                 .font(.system(size: 34, weight: .black))
-                .foregroundStyle(disco ? color : .white)
+                .foregroundStyle(color)
                 .frame(width: min(160, w * 0.4), height: 84)
                 .background(
                     RoundedRectangle(cornerRadius: 22, style: .continuous)
-                        .fill(disco ? Color.black.opacity(on ? 0.15 : 0.4) : color.opacity(on ? 1 : 0.75))
+                        .fill(Color.black.opacity(on ? 0.15 : 0.4))
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: 22, style: .continuous)
-                        .strokeBorder(disco ? color : Color.white.opacity(on ? 0.9 : 0), lineWidth: 4)
+                        .strokeBorder(color, lineWidth: 4)
                 )
-                .shadow(color: disco ? color.opacity(on ? 1 : 0.6) : Color.clear, radius: on ? 18 : 8)
+                .shadow(color: color.opacity(on ? 1 : 0.6), radius: on ? 18 : 8)
         }
         .buttonStyle(SquishButtonStyle())
         .disabled(phase != .copy)
@@ -310,7 +264,7 @@ struct CopycatView: View {
     #endif
 }
 
-/// Option D: a dark club with two coloured spotlights and a disco ball.
+/// A dark club with two coloured spotlights and a disco ball.
 private struct DiscoLights: View {
     let width: CGFloat
     let height: CGFloat
