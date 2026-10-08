@@ -6,10 +6,16 @@ public enum Reaction: String, CaseIterable, Sendable {
     case refuseFood, refuseNap, tooSleepy, busy, win, lose, levelUp, discovery
     /// Petted too much, too fast.
     case annoyed
+    /// Too cross to play.
+    case furious
+    /// Overfed one time too many.
+    case puke
+    /// Woken early, now refuses to nap.
+    case spite
 }
 
 public enum Refusal: Error, Equatable, Sendable {
-    case asleep, full, notTired, tooSleepy, busy, awake
+    case asleep, full, notTired, tooSleepy, busy, awake, furious, spite
 
     public var reaction: Reaction {
         switch self {
@@ -19,6 +25,8 @@ public enum Refusal: Error, Equatable, Sendable {
         case .tooSleepy: return .tooSleepy
         case .busy: return .busy
         case .awake: return .idle
+        case .furious: return .furious
+        case .spite: return .spite
         }
     }
 }
@@ -48,6 +56,7 @@ public struct Game: Sendable {
         var events: [GameEvent] = []
         let elapsed = now.timeIntervalSince(state.lastSimulated)
         if elapsed > 0 {
+            state.temper = max(0, state.temper - Tuning.temperCoolPerHour * min(elapsed, Tuning.maxElapsed) / 3600)
             let rate = state.isAsleep ? Tuning.fullnessDecayAsleep : Tuning.fullnessDecayAwake
             state.points.hungryHours += TimeModel.hoursBelow(Tuning.hungryBelow, start: state.needs.fullness, rate: rate,
                                                              floor: Tuning.absenceFloor.fullness,
@@ -104,7 +113,23 @@ public struct Game: Sendable {
         if state.session != nil { return .refused(.busy) }
         if state.needs.fullness >= Tuning.refuseFoodAt {
             losePoints(Tuning.forceFedPenalty, .forceFed, now: now, events: &events)
-            return Outcome(reaction: .refuseFood, refusal: .full, events: events)
+            if let last = state.lastForceFeed, now.timeIntervalSince(last) >= 0, now.timeIntervalSince(last) <= Tuning.pukeWindow {
+                state.forceFeeds += 1
+            } else {
+                state.forceFeeds = 1
+            }
+            state.lastForceFeed = now
+            guard state.forceFeeds >= Tuning.forceFeedsToPuke else {
+                return Outcome(reaction: .refuseFood, refusal: .full, events: events)
+            }
+            // One too many: it all comes back up, and leaves a puddle to clean.
+            state.forceFeeds = 0
+            state.lastForceFeed = nil
+            state.needs.fullness = Tuning.fullnessAfterPuke
+            state.needs.joy -= Tuning.pukeJoyLoss
+            state.needs.clamp()
+            state.mess = true
+            return Outcome(reaction: .puke, refusal: nil, events: events)
         }
         state.needs.fullness += Tuning.feedAmount
         state.needs.joy += Tuning.feedJoy
@@ -132,6 +157,7 @@ public struct Game: Sendable {
             return Outcome(reaction: .annoyed, refusal: nil, events: events)
         }
         state.needs.joy = min(100, state.needs.joy + Tuning.petJoy)
+        state.temper = max(0, state.temper - Tuning.temperPetCool)
         state.counters.pets += 1
         careXP(Tuning.petXP, .petted, now: now, events: &events)
         progressChallenge(.petEight, by: 1, now: now, events: &events)
@@ -142,6 +168,7 @@ public struct Game: Sendable {
         let events = tick(now: now)
         if state.isAsleep { return .refused(.asleep) }
         if state.session != nil { return .refused(.busy) }
+        if let until = state.noNapUntil, now < until { return .refused(.spite) }
         if state.needs.energy >= Tuning.refuseNapAt { return .refused(.notTired) }
         state.napStartedAt = now
         state.pendingWake = false
@@ -159,12 +186,22 @@ public struct Game: Sendable {
             discover(.firstNap, now: now, events: &events)
         } else {
             losePoints(Tuning.wokeEarlyPenalty, .wokeEarly, now: now, events: &events)
+            state.noNapUntil = now.addingTimeInterval(Tuning.spiteNoNap)
         }
         return Outcome(reaction: restful ? .wake : .grumpyWake, refusal: nil, events: events)
     }
 
     /// Clears the "woke while you were away" flag once the app has shown the wake.
     public mutating func acknowledgeWake() { state.pendingWake = false }
+
+    /// Mops up the puddle left by `.puke`.
+    public mutating func cleanMess(now: Date) -> Outcome {
+        var events = tick(now: now)
+        guard state.mess else { return Outcome(reaction: .idle, refusal: nil, events: events) }
+        state.mess = false
+        addXP(Tuning.cleanXP, .cleaned, now: now, events: &events)
+        return Outcome(reaction: .touch, refusal: nil, events: events)
+    }
 
     // MARK: Play
 
@@ -173,6 +210,7 @@ public struct Game: Sendable {
         if state.isAsleep { return .failure(.asleep) }
         if state.session != nil { return .failure(.busy) }
         if state.needs.energy < Tuning.tooSleepyToPlay { return .failure(.tooSleepy) }
+        if state.mood == .furious { return .failure(.furious) }
         let session = ActivitySession(id: UUID(), kind: kind, startedAt: now)
         state.session = session
         return .success(session)
@@ -217,6 +255,8 @@ public struct Game: Sendable {
                 progressChallenge(.firstTryFind, by: 1, now: now, events: &events)
                 discover(.firstTryFind, now: now, events: &events)
             }
+        case .copycat:
+            break
         }
         progressChallenge(.playAllThree, toAtLeast: state.counters.playedKinds.count, now: now, events: &events)
         let hour = days.hour(now)
@@ -262,6 +302,7 @@ public struct Game: Sendable {
         events.append(.xp(amount))
         let gained = state.points.apply(amount, reason, day: days.dayKey(now), at: now)
         if gained != 0 { events.append(.points(gained, reason)) }
+        state.temper = max(0, state.temper - Double(gained))
         let after = state.level
         guard after > before else { return }
         for level in (before + 1)...after {
@@ -274,6 +315,7 @@ public struct Game: Sendable {
     private mutating func losePoints(_ amount: Int, _ reason: PointReason, now: Date, events: inout [GameEvent]) {
         let lost = state.points.apply(-amount, reason, day: days.dayKey(now), at: now)
         if lost != 0 { events.append(.points(lost, reason)) }
+        state.temper = min(Tuning.temperMax, state.temper - Double(lost))
     }
 
     private mutating func careXP(_ amount: Int, _ reason: PointReason, now: Date, events: inout [GameEvent]) {
@@ -362,6 +404,7 @@ public struct Game: Sendable {
         state.howToPlayShown = knowsHowToPlay
         state.prefs.sound = prefs.sound
         state.prefs.haptics = prefs.haptics
+        state.prefs.reviewAskedVersion = prefs.reviewAskedVersion
         _ = tick(now: now)
     }
 }

@@ -3,7 +3,7 @@ import Foundation
 /// Why points moved. Gains mirror the XP sources; losses come from neglect or pushing too hard.
 public enum PointReason: String, Codable, CaseIterable, Sendable {
     // Gains
-    case fed, petted, played, challenge, discovery, stampBonus, weeklyGift, mischief
+    case fed, petted, played, challenge, discovery, stampBonus, weeklyGift, mischief, cleaned
     // Losses
     case hungry, wokeEarly, wornOut, forceFed, poked
 
@@ -24,6 +24,7 @@ public enum PointReason: String, Codable, CaseIterable, Sendable {
         case .stampBonus: return "seal.fill"
         case .weeklyGift: return "gift.fill"
         case .mischief: return "flame.fill"
+        case .cleaned: return "sparkles"
         case .hungry: return "fork.knife.circle"
         case .wokeEarly: return "alarm.fill"
         case .wornOut: return "battery.0percent"
@@ -44,6 +45,7 @@ public enum PointReason: String, Codable, CaseIterable, Sendable {
         case .stampBonus: return "+\(Tuning.stampMilestoneXP) at \(Tuning.stampsForBonus) stamps in a week"
         case .weeklyGift: return "+\(Tuning.giftFallbackXP) when you already own every gift"
         case .mischief: return "+\(Tuning.mischiefXP) for dealing with mischief"
+        case .cleaned: return "+\(Tuning.cleanXP) for cleaning up after it"
         case .hungry: return "−\(Tuning.hungryPenaltyPerHour) every hour it's over \(100 - Int(Tuning.hungryBelow))% hungry"
         case .wokeEarly: return "−\(Tuning.wokeEarlyPenalty) for waking it within \(Int(Tuning.restfulNap / 60)) minutes"
         case .wornOut: return "−\(Tuning.wornOutPenalty) per round played over \(100 - Int(Tuning.wornOutBelow))% sleepy"
@@ -63,6 +65,7 @@ public enum PointReason: String, Codable, CaseIterable, Sendable {
         case .stampBonus: return "Weekly stamp bonus"
         case .weeklyGift: return "Weekly gift"
         case .mischief: return "Handled mischief"
+        case .cleaned: return "Cleaned up"
         case .hungry: return "Left hungry"
         case .wokeEarly: return "Woken too early"
         case .wornOut: return "Played while worn out"
@@ -115,15 +118,9 @@ public struct PointsBook: Codable, Equatable, Sendable {
             gainedToday = 0
             lostToday = 0
         }
-        var change = amount
-        if change < 0 {
-            // Losses are capped per day. They can take the total below zero.
-            change = -min(-change, Tuning.maxPointsLostPerDay - lostToday)
-            guard change < 0 else { return 0 }
-            lostToday -= change
-        } else {
-            gainedToday += change
-        }
+        // No daily cap on losses: they can take the total as far below zero as the player pushes it.
+        let change = amount
+        if change < 0 { lostToday -= change } else { gainedToday += change }
         total += change
         if var last = history.last, last.day == today, last.reason == reason {
             last.amount += change

@@ -21,11 +21,26 @@ struct GremlinPose: Equatable {
     var tailWag: CGFloat = 1        // wag amplitude multiplier
     var look: CGSize = .zero        // −1…1 pupil direction
     var sleeping = false
+    var gritted: CGFloat = 0        // 1 = clenched teeth showing
+    var sick: CGFloat = 0           // 1 = green around the gills
+    var propped = false             // matchsticks holding the eyes open
 
     static let idle = GremlinPose()
 
-    static func base(asleep: Bool, energy: Double) -> GremlinPose {
+    static func base(asleep: Bool, energy: Double, mood: Mood = .calm) -> GremlinPose {
         if asleep { return pose(for: .asleep) }
+        switch mood {
+        case .furious: return pose(for: .furious)
+        case .angry:
+            var p = pose(for: .annoyed)
+            p.lean = 0; p.gritted = 0.6; p.mouthOpen = 0.18
+            return p
+        case .annoyed:
+            var p = GremlinPose()
+            p.browTilt = 10; p.mouthSmile = -0.3; p.eyeOpen = 0.8; p.tailWag = 0.5
+            return p
+        case .calm: break
+        }
         if energy < 30 { return pose(for: .sleepy) }
         return .idle
     }
@@ -63,6 +78,16 @@ struct GremlinPose: Equatable {
             p.eyeHappy = 1; p.armsUp = 1; p.mouthOpen = 0.7; p.mouthSmile = 1; p.squash = 1.06; p.hop = 14; p.blush = 0.9; p.tailWag = 2.4
         case .annoyed: // squinting, ears back, leaning away from the finger
             p.eyeOpen = 0.55; p.browTilt = 18; p.mouthSmile = -0.6; p.mouthOpen = 0.12; p.earDroop = 10; p.squash = 0.94; p.lean = 8; p.fang = 1; p.tailWag = 0.4
+        case .furious: // fists up, teeth clenched, glaring
+            p.eyeOpen = 0.5; p.browTilt = 24; p.mouthSmile = -0.9; p.mouthOpen = 0.3; p.gritted = 1; p.fang = 0
+            p.earDroop = 14; p.squash = 0.96; p.armsUp = 0.35; p.tailWag = 0.2; p.blush = 0.9
+        case .puke:
+            p.eyeOpen = 0.3; p.browTilt = -14; p.mouthOpen = 1; p.mouthSmile = -0.6; p.fang = 0; p.sick = 1
+            p.squash = 0.9; p.lean = 10; p.earDroop = 24; p.tailWag = 0.1; p.blush = 0
+        case .spite: // bolt upright, eyes forced wide open
+            p.eyeOpen = 1.25; p.browTilt = 16; p.browLift = 4; p.mouthSmile = -0.5; p.mouthOpen = 0.05; p.fang = 1
+            p.squash = 1.06; p.earDroop = -10; p.armsUp = 0.15; p.tailWag = 0.2
+            p.propped = true
         case .lose:
             p.eyeOpen = 0.8; p.browTilt = -12; p.mouthSmile = -0.5; p.mouthOpen = 0.05; p.earDroop = 16; p.squash = 0.96
         }
