@@ -96,7 +96,7 @@ final class PointsTests: XCTestCase {
         XCTAssertEqual(TimeModel.hoursBelow(25, start: 10, rate: 8, floor: 20, hours: 2), 2)
     }
 
-    func testLossesGoBelowZeroButStopAtTheDailyCap() {
+    func testLossesGoBelowZeroWithNoDailyCap() {
         var g = makeGame(points: 3)
         g.state.needs.fullness = Tuning.refuseFoodAt
         _ = g.feed(now: monday)
@@ -106,20 +106,18 @@ final class PointsTests: XCTestCase {
         XCTAssertEqual(g.state.level, 1, "levels never drop")
 
         var z = makeGame(points: 0)
-        z.state.needs.fullness = Tuning.refuseFoodAt
-        for _ in 0..<100 { _ = z.feed(now: monday) }
-        XCTAssertEqual(z.state.points.total, -Tuning.maxPointsLostPerDay, "the daily cap still holds below zero")
-
-        var h = makeGame(points: 1000)
-        h.state.needs.fullness = Tuning.refuseFoodAt
-        for _ in 0..<100 { _ = h.feed(now: monday) }
-        XCTAssertEqual(h.state.points.lostToday, Tuning.maxPointsLostPerDay)
-        XCTAssertEqual(h.state.points.total, 1000 - Tuning.maxPointsLostPerDay)
+        for i in 0..<30 {
+            z.state.needs.fullness = 95
+            z.state.forceFeeds = 0
+            _ = z.feed(now: monday.addingTimeInterval(Double(i)))
+        }
+        XCTAssertEqual(z.state.points.total, -30 * Tuning.forceFedPenalty, "no daily cap, even below zero")
+        XCTAssertEqual(z.state.points.lostToday, 30 * Tuning.forceFedPenalty)
         let tomorrow = monday.addingTimeInterval(86400)
-        _ = h.tick(now: tomorrow)
-        h.state.needs.fullness = Tuning.refuseFoodAt
-        _ = h.feed(now: tomorrow)
-        XCTAssertEqual(h.state.points.lostToday, Tuning.forceFedPenalty, "a new day, a new cap")
+        _ = z.tick(now: tomorrow)
+        z.state.needs.fullness = Tuning.refuseFoodAt
+        _ = z.feed(now: tomorrow)
+        XCTAssertEqual(z.state.points.lostToday, Tuning.forceFedPenalty, "the day's tally restarts")
     }
 
     func testHistoryIsCapped() {

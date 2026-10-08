@@ -1,10 +1,12 @@
 import SwiftUI
+import StoreKit
 import MenaceCore
 
 /// Hosts one round at a time: close button, the game, and a tiny result card with replay.
 struct ActivityContainer: View {
     let kind: ActivityKind
     @Environment(GameModel.self) private var model
+    @Environment(\.requestReview) private var requestReview
     @State private var round = 0
     @State private var result: ActivityResult?
     @State private var earnedXP = 0
@@ -76,6 +78,7 @@ struct ActivityContainer: View {
         case .snackToss: return "Tap to toss the snack"
         case .sockTug: return "Pull when it gets tired"
         case .cushionHunt: return "Watch which cushion"
+        case .copycat: return "Watch, then copy the moves"
         }
     }
 
@@ -83,11 +86,19 @@ struct ActivityContainer: View {
         let finish: (ActivityResult) -> Void = { r in
             earnedXP = model.finishActivity(r)
             result = r
+            if model.takeReviewMoment(won: r.won) {
+                // Let the win card land first, then Apple's rating prompt.
+                Task {
+                    try? await Task.sleep(for: .seconds(1.2))
+                    requestReview()
+                }
+            }
         }
         switch kind {
         case .snackToss: SnackTossView(finish: finish)
         case .sockTug: SockTugView(sock: model.state.wardrobe.sock, finish: finish)
         case .cushionHunt: CushionHuntView(finish: finish)
+        case .copycat: CopycatView(finish: finish)
         }
     }
 

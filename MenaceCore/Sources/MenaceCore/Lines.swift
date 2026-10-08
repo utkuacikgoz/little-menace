@@ -110,6 +110,21 @@ public enum Lines {
             "I didn't know I could do that.", "small discovery. big ears.", "one more tiny secret.",
             "we found a thing.", "I shall act surprised again.", "interesting. suspiciously so.", "a new reason to wiggle.",
         ],
+        .furious: [
+            "NO.", "not. now.", "I'm fuming.", "talk to the tail.", "games are cancelled.",
+            "I am a storm.", "do not.", "say sorry with pats.", "steam is coming out.",
+            "I'm counting to ten. slowly.", "you know what you did.", "too cross to play.",
+        ],
+        .puke: [
+            "bleurgh.", "told you.", "that's on you.", "it came back.", "my belly filed a complaint.",
+            "I did warn you.", "everything is spinning.", "refund. returned.", "never again. probably.",
+            "the snack went home.", "oops. on the floor.", "you're cleaning that.",
+        ],
+        .spite: [
+            "I'm up. happy?", "no. I'm awake now.", "too late. eyes open.", "you made this.",
+            "not sleeping. out of spite.", "awake. forever. thanks.", "I'll nap when I choose.",
+            "the moment has passed.", "you woke it. you keep it.", "sleep is cancelled.",
+        ],
     ]
 
     static let contexts: [String: [String]] = [
@@ -122,6 +137,9 @@ public enum Lines {
         "snackMemory": ["catching snacks is a career.", "I've developed snack reflexes.", "still a biscuit athlete.", "I dream in little snack arcs.", "those catches were delicious.", "practising my victory chew.", "catch first. questions later.", "my mouth has excellent aim."],
         "huntMemory": ["the cushions know too much.", "my hiding spot is classified.", "we meet again, cushions.", "I was perfectly camouflaged.", "next time, hide the ears.", "a master of almost invisible.", "cushion three looks nervous.", "my tail gave nothing away."],
         "outfit": ["I chose to look this good.", "an outfit with intentions.", "dressed for minor trouble.", "do my ears look expensive?", "a very important little look.", "fashion has paws now.", "don't wrinkle my confidence.", "same menace. new silhouette."],
+        "cross": ["hmph. still cross.", "I'm still a bit cross.", "not talking. mostly.", "a pat might help.", "I remember everything.", "my ears are sulking.", "fine. FINE.", "glaring, quietly."],
+        "mess": ["someone should clean that.", "the floor looks sticky.", "not my puddle.", "mop. please.", "I'm not stepping in that.", "it smells like regret."],
+        "danceMemory": ["my feet still remember.", "left, left, up, sorry.", "I invented that dance.", "dance-off later?", "my moves are copyrighted.", "rhythm is a snack."],
         "return": ["oh, it's you. excellent.", "I kept the floor company.", "welcome back to my nonsense.", "right where we left our paws.", "you arrived at a good wiggle.", "I have acquired no wisdom.", "another day. still tiny.", "our little routine. I like it."],
     ]
 
@@ -130,7 +148,10 @@ public enum Lines {
         guard reaction == .idle else { return table[reaction] ?? [] }
         if state.isAsleep { return table[.asleep] ?? [] }
         if state.needs.energy < 30 { return table[.sleepy] ?? [] }
+        if state.mood >= .angry { return table[.furious] ?? [] }
+        if state.mess { return contexts["mess"] ?? [] }
         if state.needs.fullness < 35 { return contexts["hungry"] ?? [] }
+        if state.mood == .annoyed { return contexts["cross"] ?? [] }
         var pool = table[.idle] ?? []
         if hour < 5 || hour >= 21 { pool += contexts["night"] ?? [] }
         else if hour < 11 { pool += contexts["morning"] ?? [] }
@@ -139,6 +160,7 @@ public enum Lines {
         if state.counters.rounds(.sockTug) > 0 { pool += contexts["tugMemory"] ?? [] }
         if state.counters.rounds(.snackToss) > 0 { pool += contexts["snackMemory"] ?? [] }
         if state.counters.rounds(.cushionHunt) > 0 { pool += contexts["huntMemory"] ?? [] }
+        if state.counters.rounds(.copycat) > 0 { pool += contexts["danceMemory"] ?? [] }
         if state.wardrobe.hat != nil || state.wardrobe.neck != nil { pool += contexts["outfit"] ?? [] }
         if state.counters.visitDays > 1 { pool += contexts["return"] ?? [] }
         if state.needs.fullness >= Tuning.refuseFoodAt {

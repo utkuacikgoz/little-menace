@@ -21,7 +21,7 @@ public struct Needs: Codable, Equatable, Sendable {
 }
 
 public enum ActivityKind: String, Codable, CaseIterable, Sendable {
-    case snackToss, sockTug, cushionHunt
+    case snackToss, sockTug, cushionHunt, copycat
 }
 
 /// A play round in progress. Deliberately not persisted: a round interrupted by
@@ -135,6 +135,8 @@ public struct Preferences: Codable, Equatable, Sendable {
     public var reminderOfferShown = false
     public var reminderHour = 18
     public var reminderMinute = 30
+    /// App version in which Apple's rating prompt was last requested.
+    public var reviewAskedVersion: String?
 
     public init() {}
 }
@@ -168,6 +170,15 @@ public struct PetState: Codable, Equatable, Sendable {
     public var points: PointsBook
     /// Whether the first-run "how to play" has been shown.
     public var howToPlayShown = false
+    /// 0 calm … `Tuning.temperMax`. Builds with lost points, cools with care and time.
+    public var temper = 0.0
+    /// Snacks pushed on a full belly in the current burst, and when the last one was.
+    public var forceFeeds = 0
+    public var lastForceFeed: Date?
+    /// A puddle on the floor after it threw up. Tap to clean.
+    public var mess = false
+    /// After a grumpy wake it refuses naps until this time.
+    public var noNapUntil: Date?
 
     /// In-memory only.
     public var session: ActivitySession?
@@ -208,6 +219,7 @@ public struct PetState: Codable, Equatable, Sendable {
     }
 
     public var isAsleep: Bool { napStartedAt != nil }
+    public var mood: Mood { Mood(temper: temper) }
     public var level: Int { Tuning.level(forXP: xp) }
     /// Still to earn before the next level. Every gain adds to XP and points alike, so this is
     /// also how many more points the player needs to earn.
@@ -215,7 +227,8 @@ public struct PetState: Codable, Equatable, Sendable {
 
     enum CodingKeys: String, CodingKey {
         case name, namePromptShown, recentLines, createdAt, lastSimulated, needs, napStartedAt, pendingWake, xp, discoveries,
-             personality, mischief, stamps, challenge, granted, wardrobe, counters, prefs, points, howToPlayShown
+             personality, mischief, stamps, challenge, granted, wardrobe, counters, prefs, points, howToPlayShown,
+             temper, forceFeeds, lastForceFeed, mess, noNapUntil
     }
 
     public init(from decoder: Decoder) throws {
@@ -249,5 +262,33 @@ public struct PetState: Codable, Equatable, Sendable {
         }
         // Players who already have progress skip the first-run guide.
         howToPlayShown = try c.decodeIfPresent(Bool.self, forKey: .howToPlayShown) ?? (xp > 0 || counters.feeds > 0 || counters.pets > 0)
+        temper = min(Tuning.temperMax, max(0, try c.decodeIfPresent(Double.self, forKey: .temper) ?? 0))
+        forceFeeds = max(0, try c.decodeIfPresent(Int.self, forKey: .forceFeeds) ?? 0)
+        lastForceFeed = try c.decodeIfPresent(Date.self, forKey: .lastForceFeed)
+        mess = try c.decodeIfPresent(Bool.self, forKey: .mess) ?? false
+        noNapUntil = try c.decodeIfPresent(Date.self, forKey: .noNapUntil)
+    }
+}
+
+/// How cross it is, from `PetState.temper`.
+public enum Mood: Int, Comparable, CaseIterable, Sendable {
+    case calm, annoyed, angry, furious
+
+    public init(temper: Double) {
+        if temper >= Tuning.furiousAt { self = .furious }
+        else if temper >= Tuning.angryAt { self = .angry }
+        else if temper >= Tuning.annoyedAt { self = .annoyed }
+        else { self = .calm }
+    }
+
+    public static func < (a: Mood, b: Mood) -> Bool { a.rawValue < b.rawValue }
+
+    public var label: String {
+        switch self {
+        case .calm: return "Calm"
+        case .annoyed: return "Annoyed"
+        case .angry: return "Angry"
+        case .furious: return "Furious"
+        }
     }
 }

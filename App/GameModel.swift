@@ -89,6 +89,10 @@ final class GameModel {
         await purchases.refreshEntitlements()
         await purchases.loadProducts()
         notificationsDenied = state.prefs.remindersEnabled ? !(await reminders.isAuthorized()) : false
+        #if DEBUG
+        // Idle-act screenshots show only what the act itself says.
+        if UserDefaults.standard.string(forKey: "LMScreen") == "idleAct" { return }
+        #endif
         if bubble == nil && !homeObscured { say(.idle) }
     }
 
@@ -136,7 +140,14 @@ final class GameModel {
                     self.say(.wake)
                 }
                 if !self.homeObscured && !self.showHowToPlay && self.activity == nil && !self.showNamePrompt && !self.showReminderOffer && self.bubble == nil && self.specialPose == nil {
-                    self.say(.idle, chance: 0.55)
+                    // Now and then it does something on its own instead of talking.
+                    let roll = Double.random(in: 0..<1, using: &self.rng)
+                    if !self.state.isAsleep && self.state.mood < .angry && self.transient == nil && roll < 0.35,
+                       let act = IdleAct.all.randomElement(using: &self.rng) {
+                        self.performIdle(act)
+                    } else {
+                        self.say(.idle, chance: 0.55)
+                    }
                 }
             }
         }
@@ -147,7 +158,7 @@ final class GameModel {
     var pose: GremlinPose {
         if state.isAsleep { return .pose(for: .asleep) }
         if let specialPose { return specialPose }
-        var p = transient.map(GremlinPose.pose(for:)) ?? GremlinPose.base(asleep: state.isAsleep, energy: state.needs.energy)
+        var p = transient.map(GremlinPose.pose(for:)) ?? GremlinPose.base(asleep: state.isAsleep, energy: state.needs.energy, mood: state.mood)
         if transient == nil || transient == .attention { p.look = look }
         return p
     }
@@ -229,6 +240,23 @@ final class GameModel {
         }
     }
 
+    /// Plays one idle act (a sneeze, a yawn…). `holdPeak` stops on the big moment (screenshots).
+    func performIdle(_ act: IdleAct, holdPeak: Bool = false) {
+        specialTask?.cancel()
+        showLine(act.line, duration: holdPeak ? 30 : act.beats.reduce(0) { $0 + $1.seconds } + 1.5)
+        specialTask = Task { [weak self] in
+            for (i, beat) in act.beats.enumerated() {
+                guard let self, !Task.isCancelled else { return }
+                self.specialPose = beat.pose
+                if i == act.peak { self.haptics.play(.squish, intensity: 0.3) }
+                if holdPeak && i == act.peak { return }
+                try? await Task.sleep(for: .seconds(beat.seconds))
+            }
+            guard let self, !Task.isCancelled else { return }
+            self.specialPose = nil
+        }
+    }
+
     // MARK: Care intents
 
     func pet() {
@@ -240,6 +268,11 @@ final class GameModel {
             react(.annoyed, for: 1.6)
             haptics.play(.nope)
             say(.annoyed, chance: 0.8)
+        } else if state.mood >= .angry {
+            // Still cross: it takes the pat, but grudgingly.
+            react(.annoyed, for: 1.2)
+            haptics.play(.squish, intensity: 0.5)
+            say(.furious, chance: 0.5)
         } else {
             react(.touch)
             haptics.play(.squish)
@@ -259,12 +292,29 @@ final class GameModel {
     @discardableResult
     func feed() -> Bool {
         let out = game.feed(now: Date())
-        finishCare(out)
-        if out.refusal == nil {
+        finishCare(out, duration: out.reaction == .puke ? 2.6 : 1.4)
+        let ate = out.reaction == .feed
+        if ate {
             sounds.play(.chomp)
             haptics.play(.thud, intensity: 0.6)
+        } else if out.reaction == .puke {
+            sounds.play(.lose)
+            haptics.play(.thud)
         }
-        return out.refusal == nil
+        return ate
+    }
+
+    /// Tap the puddle.
+    func cleanMess() {
+        let out = game.cleanMess(now: Date())
+        guard out.reaction != .idle else { return }
+        cancelSpecial()
+        react(.touch, for: 1.2)
+        showLine("much better.")
+        sounds.play(.pop)
+        haptics.play(.success)
+        handle(out.events)
+        save()
     }
 
     func toggleSleep() {
@@ -322,6 +372,16 @@ final class GameModel {
             if case .points(let n, _) = e { return total + n }
             return total
         }
+    }
+
+    /// Apple's rating prompt goes up right after a won round, once the player is a regular.
+    /// Returns true when the caller should request it; records the ask so it happens once per version.
+    func takeReviewMoment(won: Bool) -> Bool {
+        let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "0"
+        guard ReviewPolicy.shouldAsk(state, wonRound: won, appVersion: version) else { return false }
+        game.state.prefs.reviewAskedVersion = version
+        save()
+        return true
     }
 
     /// Leaving a round early (close button, interruption, backgrounding).
@@ -558,6 +618,22 @@ final class GameModel {
             _ = feed()
             react(.refuseFood, for: 30)
         case "dialogue": showLine("my alibi is adorable.", duration: 30)
+        case "furious":
+            game.state.temper = Tuning.temperMax
+            showLine("not. now.", duration: 30)
+        case "puke":
+            game.state.needs.fullness = 95
+            for _ in 0..<Tuning.forceFeedsToPuke { _ = game.feed(now: Date()) }
+            react(.puke, for: 30)
+            showLine("bleurgh.", duration: 30)
+        case "spite":
+            game.state.needs.energy = 40
+            _ = game.sleep(now: Date())
+            _ = game.wake(now: Date())
+            react(game.sleep(now: Date()).reaction, for: 30)
+            showLine("I'm up. happy?", duration: 30)
+        case "idleAct":
+            if let act = IdleAct.find(UserDefaults.standard.string(forKey: "LMAct") ?? "sneeze") { performIdle(act, holdPeak: true) }
         case "namePrompt": showNamePrompt = true
         case "reminderOffer": showReminderOffer = true
         case "reminders":
