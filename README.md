@@ -2,6 +2,8 @@
 
 A native iPhone pet toy. It has one chaotic little gremlin that players name themselves, one bold background, and almost no text. It is written in SwiftUI for iOS 17+, with no third-party packages, no accounts and no backend.
 
+**On the App Store:** https://apps.apple.com/app/id6816104570 · Website: https://littlemenace.fun
+
 > **Honest status:** this repository started empty. The prototype, the original `DESIGN.md`/`GAMEPLAY.md` and the generated mascot art named in the brief were not present, so everything here was rebuilt from the brief. The character uses an animated vector rig. The rules engine (`MenaceCore`) is compiled and tested. The iOS app builds and launches in CI on simulators, but nobody has played it on a device yet (see *Validation*).
 
 ## Layout
