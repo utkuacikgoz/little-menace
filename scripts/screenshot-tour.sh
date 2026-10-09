@@ -49,15 +49,16 @@ elif [ "$PART" = new ]; then
     local S=$1; shift
     for V in A B C D; do shot "$PM" "v-$S-$V" -LMVariant "$S$V" "$@"; done
   }
-  abcd S21 -LMScreen stamps -LMPage 4
-  abcd S22 -LMScreen wardrobe -LMPreview nightcap -LMPrice '$3.99'
-  # The same wardrobe options on the smallest phone, where space runs out first.
+  # Final check of the owner's picks S21C and S22C. For a new review, use abcd.
+  shot "$PM" f-S21-stamps -LMScreen stamps -LMPage 4
+  shot "$PM" f-S22-wardrobe -LMScreen wardrobe -LMPreview nightcap -LMPrice '$3.99'
   xcrun simctl shutdown "$PM"
   SE=$(udid "iPhone SE (3rd generation)")
   [ -n "$SE" ] || SE=$(udid "iPhone 16e")
   if [ -n "$SE" ]; then
     boot "$SE"
-    for V in A B C D; do shot "$SE" "v-S22-$V-se" -LMVariant "S22$V" -LMScreen wardrobe -LMPreview nightcap -LMPrice '$3.99'; done
+    shot "$SE" f-S21-stamps-se -LMScreen stamps -LMPage 4
+    shot "$SE" f-S22-wardrobe-se -LMScreen wardrobe -LMPreview nightcap -LMPrice '$3.99'
   fi
 elif [ "$PART" = a ]; then
   shot "$PM" 01-home -LMScreen home

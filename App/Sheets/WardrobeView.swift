@@ -8,14 +8,6 @@ struct WardrobeView: View {
     @State private var preview: Item?
     @State private var openCollection = false
 
-    /// Review options: A current, B compact, C one scroll with a pinned buy bar, D dressing room.
-    private var style: Int {
-        if Variant.on("S22B") { return 1 }
-        if Variant.on("S22C") { return 2 }
-        if Variant.on("S22D") { return 3 }
-        return 0
-    }
-
     /// A paid item being tried on: show how to buy it.
     private var buyingID: String? {
         if let preview, case .collection(let productID) = preview.source, !model.owns(preview) { return productID }
@@ -23,17 +15,10 @@ struct WardrobeView: View {
     }
 
     var body: some View {
-        Group {
-            switch style {
-            case 1: compact
-            case 2: scrolling
-            case 3: dressingRoom
-            default: classic
-            }
-        }
-        .foregroundStyle(Ink.body)
-        .presentationDetents([.large])
-        .presentationBackground(style == 3 ? ThemePalette.forID(shownWardrobe.theme).day : Ink.eye)
+        scrolling
+            .foregroundStyle(Ink.body)
+            .presentationDetents([.large])
+            .presentationBackground(Ink.eye)
         .animation(.spring(response: 0.35, dampingFraction: 0.8), value: preview)
         .onDisappear { model.cancelSpecial() }
         .sheet(isPresented: $openCollection) {
@@ -120,47 +105,9 @@ struct WardrobeView: View {
         }
     }
 
-    // MARK: A: current
+    // MARK: Layout
 
-    private var classic: some View {
-        VStack(spacing: 16) {
-            previewStage(height: 210, size: 150)
-            specialLineText
-            if !ownsCollection { promoStrip }
-            tabs
-            ScrollView { grid }
-            if let buyingID {
-                BuyBar(productID: buyingID)
-                    .transition(.move(edge: .bottom).combined(with: .opacity))
-            }
-        }
-        .padding(20)
-    }
-
-    // MARK: B: compact
-
-    /// The stage shrinks on short screens, the strip steps aside while a paid item is tried on,
-    /// and buying is a single row, so the items always keep room.
-    private var compact: some View {
-        GeometryReader { geo in
-            let stage = min(210, max(130, geo.size.height * 0.24))
-            VStack(spacing: 14) {
-                previewStage(height: stage, size: stage * 0.72)
-                if !ownsCollection && buyingID == nil { promoStrip }
-                tabs
-                ScrollView { grid.padding(.vertical, 4) }
-                if let buyingID {
-                    BuyBar(productID: buyingID, compact: true)
-                        .transition(.move(edge: .bottom).combined(with: .opacity))
-                }
-            }
-            .padding(20)
-        }
-    }
-
-    // MARK: C: one scroll
-
-    /// Everything scrolls together; buying stays pinned to the bottom as one slim row.
+    /// Everything scrolls together, so the items always have room; buying stays pinned to the bottom as one slim row.
     private var scrolling: some View {
         ScrollView {
             VStack(spacing: 16) {
@@ -181,80 +128,6 @@ struct WardrobeView: View {
                     .transition(.move(edge: .bottom).combined(with: .opacity))
             }
         }
-    }
-
-    // MARK: D: dressing room
-
-    /// The gremlin stands big on its own sky; items sit in a drawer; buying floats over the sky.
-    private var dressingRoom: some View {
-        let wardrobe = shownWardrobe
-        return GeometryReader { geo in
-            let stageHeight = geo.size.height * 0.42
-            VStack(spacing: 0) {
-                ZStack {
-                    if slot == .sock {
-                        SockView(style: wardrobe.sock).rotationEffect(.degrees(12)).scaleEffect(1.3)
-                    } else {
-                        GremlinView(pose: model.specialPose ?? .pose(for: preview == nil ? .idle : .touch), hat: wardrobe.hat, neck: wardrobe.neck,
-                                    fur: wardrobe.fur, size: min(geo.size.width * 0.58, stageHeight * 0.78))
-                    }
-                }
-                .frame(maxWidth: .infinity)
-                .frame(height: stageHeight)
-                .accessibilityElement(children: .ignore)
-                .accessibilityLabel(previewLabel)
-                .overlay(alignment: .topLeading) {
-                    if !ownsCollection {
-                        Button { openCollection = true } label: {
-                            Label("Midnight Snack", systemImage: "sparkles")
-                                .font(.system(.subheadline, design: .rounded).weight(.heavy))
-                                .padding(.horizontal, 12).padding(.vertical, 8)
-                                .background(ThemePalette.forID("midnight").day, in: Capsule())
-                                .foregroundStyle(Ink.eye)
-                        }
-                        .buttonStyle(SquishButtonStyle())
-                        .padding(16)
-                    }
-                }
-                .overlay(alignment: .bottom) {
-                    if let buyingID {
-                        buyPill(buyingID)
-                            .padding(.horizontal, 16).padding(.bottom, 12)
-                            .transition(.move(edge: .bottom).combined(with: .opacity))
-                    }
-                }
-
-                VStack(spacing: 14) {
-                    tabs
-                    ScrollView { grid.padding(.vertical, 4) }
-                }
-                .padding(.horizontal, 20).padding(.top, 20)
-                .frame(maxHeight: .infinity)
-                .background(Ink.eye, in: UnevenRoundedRectangle(topLeadingRadius: 32, topTrailingRadius: 32, style: .continuous))
-                .ignoresSafeArea(edges: .bottom)
-            }
-        }
-    }
-
-    private func buyPill(_ productID: String) -> some View {
-        let name = Catalog.collections.first { $0.id == productID }?.name ?? "Collection"
-        let price = BuyBar.price(productID, model: model)
-        return Button {
-            Task { await model.purchases.purchase(productID) }
-        } label: {
-            HStack(spacing: 8) {
-                Image(systemName: "sparkles")
-                Text(price.map { "\(name) · Buy for \($0)" } ?? "\(name) · Store unavailable")
-                    .lineLimit(1).minimumScaleFactor(0.8)
-            }
-            .font(.system(.headline, design: .rounded).weight(.heavy))
-            .frame(maxWidth: .infinity, minHeight: 52)
-            .background(Ink.body, in: Capsule())
-            .foregroundStyle(Ink.eye)
-            .shadow(color: .black.opacity(0.25), radius: 8, y: 3)
-        }
-        .disabled(price == nil || model.purchases.state == .purchasing || model.purchases.state == .pending)
-        .accessibilityIdentifier("buy")
     }
 
     /// Midnight Snack items are always listed (with a ✦ badge) so players can try them on.
