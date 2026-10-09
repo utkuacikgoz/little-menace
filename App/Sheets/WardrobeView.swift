@@ -8,77 +8,32 @@ struct WardrobeView: View {
     @State private var preview: Item?
     @State private var openCollection = false
 
+    /// Review options: A current, B compact, C one scroll with a pinned buy bar, D dressing room.
+    private var style: Int {
+        if Variant.on("S22B") { return 1 }
+        if Variant.on("S22C") { return 2 }
+        if Variant.on("S22D") { return 3 }
+        return 0
+    }
+
+    /// A paid item being tried on: show how to buy it.
+    private var buyingID: String? {
+        if let preview, case .collection(let productID) = preview.source, !model.owns(preview) { return productID }
+        return nil
+    }
+
     var body: some View {
-        let wardrobe = shownWardrobe
-        VStack(spacing: 16) {
-            ZStack {
-                RoundedRectangle(cornerRadius: 28, style: .continuous)
-                    .fill(ThemePalette.forID(wardrobe.theme).day)
-                if slot == .sock {
-                    SockView(style: wardrobe.sock).rotationEffect(.degrees(12))
-                } else {
-                    GremlinView(pose: model.specialPose ?? .pose(for: preview == nil ? .idle : .touch), hat: wardrobe.hat, neck: wardrobe.neck, fur: wardrobe.fur, size: 150)
-                }
-            }
-            .overlay(alignment: .topLeading) {
-                if let prop = model.specialProp {
-                    Image(systemName: prop).font(.title).foregroundStyle(Ink.eye).padding(20)
-                }
-            }
-            .frame(height: 210)
-            .accessibilityElement(children: .ignore)
-            .accessibilityLabel(previewLabel)
-            if preview != nil, let line = model.specialLine {
-                Text(line).font(.system(.subheadline, design: .rounded)).multilineTextAlignment(.center)
-            }
-
-            if !ownsCollection {
-                promoStrip
-            }
-
-            HStack(spacing: 10) {
-                ForEach(Slot.allCases, id: \.self) { s in
-                    Button {
-                        slot = s
-                        preview = nil
-                    } label: {
-                        // Icons only; the chosen tab spells out its name.
-                        HStack(spacing: 6) {
-                            Image(systemName: symbol(for: s)).font(.title3.weight(.bold))
-                            if slot == s {
-                                Text(slotName(s)).font(.system(.subheadline, design: .rounded).weight(.heavy))
-                                    .lineLimit(1).minimumScaleFactor(0.7)
-                            }
-                        }
-                            .frame(maxWidth: slot == s ? CGFloat.infinity : 52, minHeight: 56)
-                            .background(Ink.body.opacity(slot == s ? 1 : 0.08), in: Capsule())
-                            .foregroundStyle(slot == s ? Ink.eye : Ink.body)
-                    }
-                    .accessibilityLabel(slotName(s))
-                    .accessibilityAddTraits(slot == s ? .isSelected : [])
-                }
-            }
-
-            ScrollView {
-                LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 12), count: 4), spacing: 12) {
-                    if slot == .hat || slot == .neck || slot == .fur {
-                        cell(nil)
-                    }
-                    ForEach(visibleItems) { item in
-                        cell(item)
-                    }
-                }
-            }
-
-            if let preview, case .collection(let productID) = preview.source, !model.owns(preview) {
-                BuyBar(productID: productID)
-                    .transition(.move(edge: .bottom).combined(with: .opacity))
+        Group {
+            switch style {
+            case 1: compact
+            case 2: scrolling
+            case 3: dressingRoom
+            default: classic
             }
         }
-        .padding(20)
         .foregroundStyle(Ink.body)
         .presentationDetents([.large])
-        .presentationBackground(Ink.eye)
+        .presentationBackground(style == 3 ? ThemePalette.forID(shownWardrobe.theme).day : Ink.eye)
         .animation(.spring(response: 0.35, dampingFraction: 0.8), value: preview)
         .onDisappear { model.cancelSpecial() }
         .sheet(isPresented: $openCollection) {
@@ -97,6 +52,209 @@ struct WardrobeView: View {
             }
         }
         #endif
+    }
+
+    // MARK: Pieces
+
+    private func previewStage(height: CGFloat, size: CGFloat) -> some View {
+        let wardrobe = shownWardrobe
+        return ZStack {
+            RoundedRectangle(cornerRadius: 28, style: .continuous)
+                .fill(ThemePalette.forID(wardrobe.theme).day)
+            if slot == .sock {
+                SockView(style: wardrobe.sock).rotationEffect(.degrees(12))
+            } else {
+                GremlinView(pose: model.specialPose ?? .pose(for: preview == nil ? .idle : .touch), hat: wardrobe.hat, neck: wardrobe.neck, fur: wardrobe.fur, size: size)
+            }
+        }
+        .overlay(alignment: .topLeading) {
+            if let prop = model.specialProp {
+                Image(systemName: prop).font(.title).foregroundStyle(Ink.eye).padding(20)
+            }
+        }
+        .frame(height: height)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(previewLabel)
+    }
+
+    private var tabs: some View {
+        HStack(spacing: 10) {
+            ForEach(Slot.allCases, id: \.self) { s in
+                Button {
+                    slot = s
+                    preview = nil
+                } label: {
+                    // Icons only; the chosen tab spells out its name.
+                    HStack(spacing: 6) {
+                        Image(systemName: symbol(for: s)).font(.title3.weight(.bold))
+                        if slot == s {
+                            Text(slotName(s)).font(.system(.subheadline, design: .rounded).weight(.heavy))
+                                .lineLimit(1).minimumScaleFactor(0.7)
+                        }
+                    }
+                        .frame(maxWidth: slot == s ? CGFloat.infinity : 52, minHeight: 56)
+                        .background(Ink.body.opacity(slot == s ? 1 : 0.08), in: Capsule())
+                        .foregroundStyle(slot == s ? Ink.eye : Ink.body)
+                }
+                .accessibilityLabel(slotName(s))
+                .accessibilityAddTraits(slot == s ? .isSelected : [])
+            }
+        }
+        .dynamicTypeSize(...DynamicTypeSize.xxLarge)
+    }
+
+    private var grid: some View {
+        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 12), count: 4), spacing: 12) {
+            if slot == .hat || slot == .neck || slot == .fur {
+                cell(nil)
+            }
+            ForEach(visibleItems) { item in
+                cell(item)
+            }
+        }
+    }
+
+    @ViewBuilder private var specialLineText: some View {
+        if preview != nil, let line = model.specialLine {
+            Text(line).font(.system(.subheadline, design: .rounded)).multilineTextAlignment(.center)
+        }
+    }
+
+    // MARK: A: current
+
+    private var classic: some View {
+        VStack(spacing: 16) {
+            previewStage(height: 210, size: 150)
+            specialLineText
+            if !ownsCollection { promoStrip }
+            tabs
+            ScrollView { grid }
+            if let buyingID {
+                BuyBar(productID: buyingID)
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
+        }
+        .padding(20)
+    }
+
+    // MARK: B: compact
+
+    /// The stage shrinks on short screens, the strip steps aside while a paid item is tried on,
+    /// and buying is a single row, so the items always keep room.
+    private var compact: some View {
+        GeometryReader { geo in
+            let stage = min(210, max(130, geo.size.height * 0.24))
+            VStack(spacing: 14) {
+                previewStage(height: stage, size: stage * 0.72)
+                if !ownsCollection && buyingID == nil { promoStrip }
+                tabs
+                ScrollView { grid.padding(.vertical, 4) }
+                if let buyingID {
+                    BuyBar(productID: buyingID, compact: true)
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                }
+            }
+            .padding(20)
+        }
+    }
+
+    // MARK: C: one scroll
+
+    /// Everything scrolls together; buying stays pinned to the bottom as one slim row.
+    private var scrolling: some View {
+        ScrollView {
+            VStack(spacing: 16) {
+                previewStage(height: 210, size: 150)
+                specialLineText
+                if !ownsCollection { promoStrip }
+                tabs
+                grid
+            }
+            .padding(20)
+        }
+        .safeAreaInset(edge: .bottom) {
+            if let buyingID {
+                BuyBar(productID: buyingID, compact: true)
+                    .background(Ink.eye, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+                    .shadow(color: .black.opacity(0.15), radius: 10, y: -2)
+                    .padding(.horizontal, 16).padding(.bottom, 4)
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
+        }
+    }
+
+    // MARK: D: dressing room
+
+    /// The gremlin stands big on its own sky; items sit in a drawer; buying floats over the sky.
+    private var dressingRoom: some View {
+        let wardrobe = shownWardrobe
+        return GeometryReader { geo in
+            let stageHeight = geo.size.height * 0.42
+            VStack(spacing: 0) {
+                ZStack {
+                    if slot == .sock {
+                        SockView(style: wardrobe.sock).rotationEffect(.degrees(12)).scaleEffect(1.3)
+                    } else {
+                        GremlinView(pose: model.specialPose ?? .pose(for: preview == nil ? .idle : .touch), hat: wardrobe.hat, neck: wardrobe.neck,
+                                    fur: wardrobe.fur, size: min(geo.size.width * 0.58, stageHeight * 0.78))
+                    }
+                }
+                .frame(maxWidth: .infinity)
+                .frame(height: stageHeight)
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel(previewLabel)
+                .overlay(alignment: .topLeading) {
+                    if !ownsCollection {
+                        Button { openCollection = true } label: {
+                            Label("Midnight Snack", systemImage: "sparkles")
+                                .font(.system(.subheadline, design: .rounded).weight(.heavy))
+                                .padding(.horizontal, 12).padding(.vertical, 8)
+                                .background(ThemePalette.forID("midnight").day, in: Capsule())
+                                .foregroundStyle(Ink.eye)
+                        }
+                        .buttonStyle(SquishButtonStyle())
+                        .padding(16)
+                    }
+                }
+                .overlay(alignment: .bottom) {
+                    if let buyingID {
+                        buyPill(buyingID)
+                            .padding(.horizontal, 16).padding(.bottom, 12)
+                            .transition(.move(edge: .bottom).combined(with: .opacity))
+                    }
+                }
+
+                VStack(spacing: 14) {
+                    tabs
+                    ScrollView { grid.padding(.vertical, 4) }
+                }
+                .padding(.horizontal, 20).padding(.top, 20)
+                .frame(maxHeight: .infinity)
+                .background(Ink.eye, in: UnevenRoundedRectangle(topLeadingRadius: 32, topTrailingRadius: 32, style: .continuous))
+                .ignoresSafeArea(edges: .bottom)
+            }
+        }
+    }
+
+    private func buyPill(_ productID: String) -> some View {
+        let name = Catalog.collections.first { $0.id == productID }?.name ?? "Collection"
+        let price = BuyBar.price(productID, model: model)
+        return Button {
+            Task { await model.purchases.purchase(productID) }
+        } label: {
+            HStack(spacing: 8) {
+                Image(systemName: "sparkles")
+                Text(price.map { "\(name) · Buy for \($0)" } ?? "\(name) · Store unavailable")
+                    .lineLimit(1).minimumScaleFactor(0.8)
+            }
+            .font(.system(.headline, design: .rounded).weight(.heavy))
+            .frame(maxWidth: .infinity, minHeight: 52)
+            .background(Ink.body, in: Capsule())
+            .foregroundStyle(Ink.eye)
+            .shadow(color: .black.opacity(0.25), radius: 8, y: 3)
+        }
+        .disabled(price == nil || model.purchases.state == .purchasing || model.purchases.state == .pending)
+        .accessibilityIdentifier("buy")
     }
 
     /// Midnight Snack items are always listed (with a ✦ badge) so players can try them on.
@@ -276,18 +434,58 @@ struct ItemSwatch: View {
 struct BuyBar: View {
     let productID: String
     var showsReactions = true
+    /// One row: name and item count beside the buy button.
+    var compact = false
     @Environment(GameModel.self) private var model
 
     /// The localized price from StoreKit. Screenshot tours pass `-LMPrice '$3.99'` (DEBUG only),
     /// because the simulator has no store to load products from.
-    private var displayPrice: String? {
+    static func price(_ productID: String, model: GameModel) -> String? {
         #if DEBUG
         if let price = UserDefaults.standard.string(forKey: "LMPrice") { return price }
         #endif
         return model.purchases.products[productID]?.displayPrice
     }
 
+    private var displayPrice: String? { Self.price(productID, model: model) }
+
     var body: some View {
+        if compact { compactRow } else { full }
+    }
+
+    private var compactRow: some View {
+        let collection = Catalog.collections.first { $0.id == productID }
+        let price = displayPrice
+        return HStack(spacing: 12) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(collection?.name ?? "Collection").font(.system(.headline, design: .rounded).weight(.heavy))
+                Text("\(collection?.itemIDs.count ?? 0) items · yours to keep").font(.caption).opacity(0.7)
+            }
+            Spacer(minLength: 0)
+            Button {
+                Task { await model.purchases.purchase(productID) }
+            } label: {
+                Group {
+                    switch model.purchases.state {
+                    case .purchasing: ProgressView().tint(Ink.eye)
+                    case .pending: Text("Waiting")
+                    default: Text(price.map { "Buy \($0)" } ?? "Unavailable")
+                    }
+                }
+                .font(.system(.headline, design: .rounded).weight(.heavy))
+                .padding(.horizontal, 18).frame(minHeight: 48)
+                .background(Ink.body, in: Capsule())
+                .foregroundStyle(Ink.eye)
+            }
+            .disabled(price == nil || model.purchases.state == .purchasing || model.purchases.state == .pending)
+            .accessibilityIdentifier("buy")
+            .accessibilityLabel(price.map { "Buy \(collection?.name ?? "") for \($0)" } ?? "Store unavailable")
+        }
+        .padding(12)
+        .background(Ink.body.opacity(0.06), in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+    }
+
+    @ViewBuilder private var full: some View {
         let collection = Catalog.collections.first { $0.id == productID }
         let price = displayPrice
         VStack(spacing: 10) {
