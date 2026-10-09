@@ -1,123 +1,222 @@
 import SwiftUI
 import MenaceCore
 
-/// This week's stamps, today's challenge, level and discoveries. Icons and numbers only.
+/// This week's stamps as a punch card, today's challenge, level and discoveries.
+/// Everything is tappable: a bar at the bottom explains what was tapped.
 struct StampCardView: View {
     @Environment(GameModel.self) private var model
-    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
+    /// Something tapped on the card, explained in a bar at the bottom.
+    private enum Detail: Equatable { case day(Int), slot(Int), challenge, level, discovery(Discovery) }
+    @State private var detail: Detail?
 
     var body: some View {
+        punchCard
+            .foregroundStyle(Ink.body)
+            .safeAreaInset(edge: .bottom) {
+                if let detail {
+                    infoBar(detail)
+                        .padding(.horizontal, 16).padding(.bottom, 8)
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                }
+            }
+            .animation(.spring(response: 0.3, dampingFraction: 0.8), value: detail)
+            .presentationDetents([.large])
+            .presentationBackground(Ink.eye)
+        #if DEBUG
+            .onAppear {
+                // Screenshot tours: `-LMPage n` shows discovery n tapped.
+                let n = UserDefaults.standard.integer(forKey: "LMPage")
+                if n > 0, n <= Discovery.allCases.count { detail = .discovery(Discovery.allCases[n - 1]) }
+            }
+        #endif
+    }
+
+    // MARK: Shared
+
+    private var stampCount: Int { model.state.stamps.days.count }
+    private var foundCount: Int { Discovery.allCases.filter { model.state.discoveries.contains($0.rawValue) }.count }
+    private var challengeProgress: Int {
+        let c = model.game.todaysChallenge
+        return model.state.challenge.completed ? c.target : min(model.state.challenge.progress, c.target)
+    }
+
+    private func tap(_ d: Detail) {
+        detail = detail == d ? nil : d
+        model.haptics.play(.tap, intensity: 0.5)
+    }
+
+    private func info(_ d: Detail) -> (symbol: String, title: String, text: String) {
         let s = model.state
-        let days = model.game.days
-        let today = days.weekdayIndex(model.now)
-        let challenge = model.game.todaysChallenge
+        switch d {
+        case .day(let i):
+            let name = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"][i]
+            let today = model.game.days.weekdayIndex(model.now)
+            let key = dayKey(offset: i - today)
+            if s.stamps.goldDays.contains(key) { return ("star.fill", "\(name): gold stamp", "You played and finished the daily challenge.") }
+            if s.stamps.days.contains(key) { return ("pawprint.fill", "\(name): stamped", "You played a round that day.") }
+            if i == today { return ("pawprint", "Today", "Play any round to get today's stamp.") }
+            if i < today { return ("circle.dashed", "\(name)", "No stamp that day.") }
+            return ("calendar", name, "Come back and play to stamp it.")
+        case .slot(let n):
+            switch n {
+            case Tuning.stampsForBonus: return ("sparkles", "Bonus at \(n) stamps", "+\(Tuning.stampMilestoneXP) points when you reach \(n) stamps this week.")
+            case Tuning.stampsForGift: return ("gift.fill", "Gift at \(n) stamps", "A free wardrobe item when you reach \(n) stamps this week.")
+            case 7: return ("seal.fill", "Full card", "Stamp all 7 days for a discovery.")
+            default:
+                return n <= stampCount ? ("pawprint.fill", "Stamp \(n)", "One of this week's stamps.") : ("pawprint", "Stamp \(n)", "Play on another day this week to fill it.")
+            }
+        case .challenge:
+            let c = model.game.todaysChallenge
+            return (c.symbol, c.spoken, "A new one every day. Finish it for +\(Tuning.challengeXP) points and a gold stamp.")
+        case .level:
+            return ("arrow.up.circle.fill", "Level \(s.level)", "\(s.pointsToNextLevel) more points to level \(s.level + 1). Levels unlock wardrobe items and never drop.")
+        case .discovery(let d):
+            return s.discoveries.contains(d.rawValue) ? (d.symbol, d.spoken, "Found!") : ("questionmark", "Not found yet", d.hint)
+        }
+    }
 
-        ScrollView {
-            VStack(spacing: 28) {
-                // Week: seven stamps, Monday first. Missed days are just empty.
-                HStack(spacing: 6) {
-                    ForEach(0..<7, id: \.self) { i in
-                        let key = dayKey(offset: i - today)
-                        let gold = s.stamps.goldDays.contains(key)
-                        let stamped = s.stamps.days.contains(key)
-                        let letter = ["M", "T", "W", "T", "F", "S", "S"][i]
-                        VStack(spacing: 4) {
-                            ZStack {
-                                Circle().fill(stamped ? (gold ? Color(hex: 0xFFC83D) : Ink.body) : Ink.body.opacity(0.08))
-                                if stamped {
-                                    Image(systemName: gold ? "star.fill" : "pawprint.fill")
-                                        .font(.system(size: 20, weight: .bold))
-                                        .foregroundStyle(gold ? Ink.body : Ink.eye)
-                                } else {
-                                    Text(letter).font(.system(.headline, design: .rounded).weight(.heavy)).dynamicTypeSize(...DynamicTypeSize.xLarge).opacity(0.5)
-                                }
-                                if i == today { Circle().stroke(Ink.body, lineWidth: 3).padding(-4) }
-                            }
-                            .frame(width: 42, height: 42)
-                        }
-                    }
-                }
-                .accessibilityElement(children: .ignore)
-                .accessibilityLabel("\(s.stamps.days.count) of 7 stamps this week. \(Tuning.stampsForBonus) earns a bonus, \(Tuning.stampsForGift) earns a gift.")
+    private func infoBar(_ d: Detail) -> some View {
+        let i = info(d)
+        return HStack(spacing: 12) {
+            Image(systemName: i.symbol)
+                .font(.title3.weight(.bold))
+                .frame(width: 44, height: 44)
+                .background(Ink.body.opacity(0.08), in: Circle())
+            VStack(alignment: .leading, spacing: 2) {
+                Text(i.title).font(.system(.headline, design: .rounded).weight(.heavy))
+                Text(i.text).font(.subheadline).fixedSize(horizontal: false, vertical: true)
+            }
+            Spacer(minLength: 0)
+            Button { detail = nil } label: {
+                Image(systemName: "xmark").font(.subheadline.weight(.heavy)).frame(width: 44, height: 44)
+            }
+            .accessibilityLabel("Close")
+        }
+        .foregroundStyle(Ink.body)
+        .padding(12)
+        .background(Color(hex: 0xFFE7B8), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .shadow(color: .black.opacity(0.15), radius: 10, y: 4)
+        .accessibilityElement(children: .combine)
+    }
 
-                HStack(spacing: 22) {
-                    milestone(count: Tuning.stampsForBonus, symbol: "sparkles", have: s.stamps.days.count)
-                    milestone(count: Tuning.stampsForGift, symbol: "gift.fill", have: s.stamps.days.count)
-                }
+    // MARK: Card
 
-                // Today's challenge.
-                HStack(spacing: 14) {
-                    Image(systemName: challenge.symbol)
-                        .font(.title.weight(.bold))
-                        .frame(width: 60, height: 60)
-                        .background(Ink.body.opacity(0.08), in: Circle())
-                    HStack(spacing: 6) {
-                        ForEach(0..<challenge.target, id: \.self) { i in
-                            Capsule()
-                                .fill(i < min(s.challenge.progress, challenge.target) || s.challenge.completed ? Ink.body : Ink.body.opacity(0.12))
-                                .frame(width: challenge.target > 3 ? 14 : 30, height: 10)
-                        }
-                    }
-                    if s.challenge.completed {
-                        Image(systemName: "checkmark.seal.fill").font(.title2).foregroundStyle(Color(hex: 0x2FBF71))
-                    }
-                }
-                .accessibilityElement(children: .ignore)
-                .accessibilityLabel("Today: \(challenge.spoken). \(s.challenge.completed ? "Done" : "\(min(s.challenge.progress, challenge.target)) of \(challenge.target)")")
-
-                // Level.
-                VStack(spacing: 8) {
-                    HStack(alignment: .firstTextBaseline) {
-                        Image(systemName: "arrow.up.circle.fill")
-                        Text("\(s.level)").font(.system(.title2, design: .rounded).weight(.heavy))
+    private var punchCard: some View {
+        let s = model.state
+        let c = model.game.todaysChallenge
+        let gold = s.stamps.goldDays.count
+        return ScrollView {
+            VStack(spacing: 20) {
+                VStack(alignment: .leading, spacing: 14) {
+                    HStack {
+                        Text("STAMP CARD").font(.system(.caption, design: .rounded).weight(.black)).tracking(1.5)
                         Spacer()
-                        Text("\(s.pointsToNextLevel)").font(.system(.title2, design: .rounded).weight(.heavy))
-                        Text("points to Level \(s.level + 1)")
-                            .font(.system(.subheadline, design: .rounded).weight(.bold))
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.7)
-                            .opacity(0.7)
+                        Text("\(stampCount)/7").font(.system(.headline, design: .rounded).weight(.black))
                     }
-                    ProgressView(value: levelProgress(s)).tint(Ink.body)
+                    .accessibilityElement(children: .ignore)
+                    .accessibilityLabel("\(stampCount) of 7 stamps this week. \(Tuning.stampsForBonus) earns a bonus, \(Tuning.stampsForGift) earns a gift.")
+                    HStack(spacing: 0) {
+                        ForEach(1...7, id: \.self) { n in
+                            Button { tap(.slot(n)) } label: {
+                                VStack(spacing: 4) {
+                                    ZStack {
+                                        Circle().strokeBorder(Ink.body.opacity(0.35), style: StrokeStyle(lineWidth: 2, dash: [4, 3]))
+                                        if n <= stampCount {
+                                            Image(systemName: n <= gold ? "star.fill" : "pawprint.fill")
+                                                .font(.system(size: 20, weight: .black))
+                                                .foregroundStyle(n <= gold ? Color(hex: 0xE59A2E) : Color(hex: 0xC2541A))
+                                                .rotationEffect(.degrees(n % 2 == 0 ? 10 : -12))
+                                        }
+                                    }
+                                    .frame(width: 40, height: 40)
+                                    Image(systemName: n == Tuning.stampsForBonus ? "sparkles" : n == Tuning.stampsForGift ? "gift.fill" : n == 7 ? "seal.fill" : "circle.fill")
+                                        .font(.caption.weight(.bold))
+                                        .opacity(n == Tuning.stampsForBonus || n == Tuning.stampsForGift || n == 7 ? 1 : 0)
+                                }
+                                .frame(maxWidth: .infinity, minHeight: 56)
+                                .contentShape(Rectangle())
+                            }
+                            .accessibilityLabel(info(.slot(n)).title)
+                        }
+                    }
+                    Text("A stamp for every day you play. Gold when you finish the daily challenge.")
+                        .font(.footnote).opacity(0.7)
                 }
-                .accessibilityElement(children: .ignore)
-                .accessibilityLabel("Level \(s.level). \(s.pointsToNextLevel) more points to level \(s.level + 1).")
+                .padding(.vertical, 18).padding(.horizontal, 14)
+                .background(Color(hex: 0xFFE7B8), in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).strokeBorder(Ink.body.opacity(0.25), style: StrokeStyle(lineWidth: 2, dash: [6, 4])))
+                .rotationEffect(.degrees(-1))
 
-                // Discoveries: found ones show their icon, the rest are mysteries.
-                LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 5), spacing: 14) {
+                Button { tap(.challenge) } label: {
+                    HStack(spacing: 0) {
+                        VStack(spacing: 6) {
+                            Text("TODAY").font(.system(.caption2, design: .rounded).weight(.black)).tracking(1)
+                            Image(systemName: c.symbol).font(.title2.weight(.bold))
+                        }
+                        .frame(width: 78).frame(maxHeight: .infinity)
+                        .background(Ink.body)
+                        .foregroundStyle(Ink.eye)
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(c.spoken).font(.system(.headline, design: .rounded).weight(.heavy)).multilineTextAlignment(.leading)
+                            Text(s.challenge.completed ? "Done! Gold stamp earned." : "\(challengeProgress) of \(c.target) · +\(Tuning.challengeXP) points")
+                                .font(.subheadline).opacity(0.75)
+                        }
+                        .padding(14)
+                        Spacer(minLength: 0)
+                    }
+                    .fixedSize(horizontal: false, vertical: true)
+                    .background(Ink.body.opacity(0.06))
+                    .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+                }
+
+                Button { tap(.level) } label: {
+                    VStack(spacing: 8) {
+                        HStack(alignment: .firstTextBaseline) {
+                            Text("Level \(s.level)").font(.system(.title3, design: .rounded).weight(.heavy))
+                            Spacer()
+                            Text("\(s.pointsToNextLevel) points to level \(s.level + 1)").font(.subheadline.weight(.semibold)).opacity(0.7)
+                        }
+                        ProgressView(value: levelProgress(s)).tint(Ink.body)
+                    }
+                }
+
+                HStack {
+                    Text("Discoveries").font(.system(.title3, design: .rounded).weight(.heavy))
+                    Spacer()
+                    Text("\(foundCount) of \(Discovery.allCases.count)").font(.subheadline.weight(.bold)).opacity(0.65)
+                }
+                LazyVGrid(columns: [GridItem(.flexible(), spacing: 10), GridItem(.flexible())], spacing: 10) {
                     ForEach(Discovery.allCases, id: \.self) { d in
                         let found = s.discoveries.contains(d.rawValue)
-                        Image(systemName: found ? d.symbol : "questionmark")
-                            .font(.title3.weight(.bold))
-                            .frame(width: 52, height: 52)
-                            .background(Ink.body.opacity(found ? 0.12 : 0.04), in: Circle())
-                            .opacity(found ? 1 : 0.4)
-                            .accessibilityLabel(found ? d.spoken : "Undiscovered")
+                        Button { tap(.discovery(d)) } label: {
+                            HStack(spacing: 10) {
+                                Image(systemName: found ? d.symbol : "questionmark")
+                                    .font(.headline.weight(.bold))
+                                    .frame(width: 38, height: 38)
+                                    .background(Ink.body.opacity(found ? 0.14 : 0.05), in: Circle())
+                                Text(found ? d.spoken : "???")
+                                    .font(.system(.footnote, design: .rounded).weight(.heavy))
+                                    .multilineTextAlignment(.leading)
+                                    .lineLimit(2)
+                                Spacer(minLength: 0)
+                            }
+                            .padding(8)
+                            .background(Ink.body.opacity(detail == .discovery(d) ? 0.14 : 0.05), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                            .opacity(found ? 1 : 0.6)
+                        }
+                        .accessibilityLabel(found ? d.spoken : "Undiscovered. \(d.hint)")
                     }
                 }
             }
-            .padding(24)
+            .padding(20)
         }
-        .foregroundStyle(Ink.body)
-        .presentationDetents(dynamicTypeSize.isAccessibilitySize ? [.large] : [.medium, .large]) // big text needs the full height
-        .presentationBackground(Ink.eye)
     }
 
     private func dayKey(offset: Int) -> String {
         let days = model.game.days
         let date = days.calendar.date(byAdding: .day, value: offset, to: model.now) ?? model.now
         return days.dayKey(date)
-    }
-
-    private func milestone(count: Int, symbol: String, have: Int) -> some View {
-        HStack(spacing: 6) {
-            Image(systemName: symbol)
-            Text("\(count)").font(.system(.headline, design: .rounded).weight(.heavy))
-        }
-        .padding(.horizontal, 14).padding(.vertical, 8)
-        .background(Ink.body.opacity(have >= count ? 0.9 : 0.08), in: Capsule())
-        .foregroundStyle(have >= count ? Ink.eye : Ink.body)
-        .accessibilityHidden(true)
     }
 
     private func levelProgress(_ s: PetState) -> Double {

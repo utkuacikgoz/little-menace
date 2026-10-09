@@ -75,6 +75,22 @@ public enum Discovery: String, CaseIterable, Sendable {
         case .regular: return "Visited on five days"
         }
     }
+
+    /// How to earn it, shown when a locked one is tapped.
+    public var hint: String {
+        switch self {
+        case .firstBite: return "Feed it a snack."
+        case .firstNap: return "Let it nap for 5 minutes."
+        case .firstTugWin: return "Win a sock tug."
+        case .perfectToss: return "Catch all 8 snacks in a toss."
+        case .firstTryFind: return "Find it on your first guess."
+        case .nightOwl: return "Play a round after midnight."
+        case .menace: return "Let its mischief happen. Often."
+        case .softie: return "Stop its mischief. Often."
+        case .fullCard: return "Get a stamp all 7 days of a week."
+        case .regular: return "Visit on 5 different days."
+        }
+    }
 }
 
 public enum GameEvent: Equatable, Sendable {

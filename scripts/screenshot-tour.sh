@@ -49,13 +49,17 @@ elif [ "$PART" = new ]; then
     local S=$1; shift
     for V in A B C D; do shot "$PM" "v-$S-$V" -LMVariant "$S$V" "$@"; done
   }
-  # Final check of the owner's picks S15B S16A S17C S18D S19C S20C. For a new review, use abcd.
-  shot "$PM" f-S15-furious -LMScreen furious
-  shot "$PM" f-S16-puke -LMScreen puke
-  shot "$PM" f-S17-spite -LMScreen spite
-  shot "$PM" f-S18-copycat -LMScreen copycat -LMFreeze YES
-  shot "$PM" f-S19-play-picker -LMScreen playPicker
-  shot "$PM" f-S20-idle-sneeze -LMScreen idleAct -LMAct sneeze
+  # Final check of the owner's picks S21C and S22C. For a new review, use abcd.
+  shot "$PM" f-S21-stamps -LMScreen stamps -LMPage 4
+  shot "$PM" f-S22-wardrobe -LMScreen wardrobe -LMPreview nightcap -LMPrice '$3.99'
+  xcrun simctl shutdown "$PM"
+  SE=$(udid "iPhone SE (3rd generation)")
+  [ -n "$SE" ] || SE=$(udid "iPhone 16e")
+  if [ -n "$SE" ]; then
+    boot "$SE"
+    shot "$SE" f-S21-stamps-se -LMScreen stamps -LMPage 4
+    shot "$SE" f-S22-wardrobe-se -LMScreen wardrobe -LMPreview nightcap -LMPrice '$3.99'
+  fi
 elif [ "$PART" = a ]; then
   shot "$PM" 01-home -LMScreen home
   shot "$PM" 02-name-prompt -LMScreen namePrompt

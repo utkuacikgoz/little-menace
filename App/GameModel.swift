@@ -618,6 +618,16 @@ final class GameModel {
             _ = feed()
             react(.refuseFood, for: 30)
         case "dialogue": showLine("my alibi is adorable.", duration: 30)
+        case "stamps":
+            // A believable week: stamps so far, one gold, three discoveries, a challenge under way.
+            let today = game.days.weekdayIndex(Date())
+            for back in 0...min(2, today) {
+                let key = game.days.dayKey(Date().addingTimeInterval(Double(-back) * 86400))
+                game.state.stamps.days.append(key)
+                if back == 1 { game.state.stamps.goldDays.append(key) }
+            }
+            for d in [Discovery.firstBite, .firstNap, .firstTugWin] { game.state.discoveries.insert(d.rawValue) }
+            game.state.challenge.progress = 1
         case "furious":
             game.state.temper = Tuning.temperMax
             showLine("not. now.", duration: 30)
