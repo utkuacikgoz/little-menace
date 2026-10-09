@@ -93,7 +93,7 @@ footer.site a { color: var(--muted); }
 .home .top nav a:hover { color: var(--orange-text); }
 
 .home .hero { max-width: 1160px; margin: 0 auto; padding: 48px 24px 88px; display: grid; grid-template-columns: 1.15fr .85fr; gap: 40px; align-items: center; }
-.home .hero h1 { font: 900 clamp(56px, 9vw, 124px)/.95 var(--display); letter-spacing: -.04em; word-spacing: .05em; color: var(--ink); margin: 0 0 28px; text-wrap: balance; }
+.home .hero h1 { font: 900 clamp(44px, 6.4vw, 92px)/.95 var(--display); letter-spacing: -.04em; word-spacing: .05em; color: var(--ink); margin: 0 0 28px; text-wrap: balance; }
 .home .hero h1 .o { color: var(--orange-text); }
 .lede { font-size: clamp(19px, 2vw, 22px); font-weight: 600; color: var(--ink); max-width: 31ch; margin: 0 0 30px; line-height: 1.45; }
 .lede em { font-style: normal; background: linear-gradient(transparent 58%, rgba(255, 212, 107, .9) 58%); }
