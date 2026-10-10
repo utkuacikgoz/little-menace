@@ -43,6 +43,13 @@ if [ "$PART" = store ]; then
   shot "$PM" 12-iap-collection -LMScreen collection -LMPrice '$3.99'
   shot "$PM" 13-iap-collection-buy -LMScreen collection -LMPage 2 -LMPrice '$3.99'
   shot "$PM" 14-iap-wardrobe-preview -LMScreen wardrobe -LMPreview nightcap -LMPrice '$3.99'
+  # 1.0.1 screens, also the source art for the product page header and search results assets.
+  shot "$PM" 15-furious -LMScreen furious
+  shot "$PM" 16-puke -LMScreen puke
+  shot "$PM" 17-spite -LMScreen spite
+  shot "$PM" 18-copycat -LMScreen copycat -LMFreeze YES
+  shot "$PM" 19-stamps -LMScreen stamps -LMPage 4
+  shot "$PM" 20-sneeze -LMScreen idleAct -LMAct sneeze
 elif [ "$PART" = new ]; then
   # Owner review: every screen four times, as option A, B, C and D (-LMVariant, DEBUG only).
   abcd() { # screen-id [launch args...]
