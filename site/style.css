@@ -189,71 +189,30 @@ footer.site a { color: var(--muted); }
   html { scroll-behavior: smooth; }
 }
 
-/* The live gremlin (gremlin.js). Poses mirror GremlinPose.swift. */
-.gremlin { display: block; -webkit-tap-highlight-color: transparent; }
-.gr { display: block; width: 100%; height: auto; overflow: visible; }
-.gr-rig { transform-box: view-box; transform-origin: 100px 207px; animation: gr-breathe 2.6s ease-in-out infinite; }
-.gr-hop { transform-box: view-box; transition: transform .35s cubic-bezier(.3, 1.6, .5, 1); }
-.gr-tail { transform-box: view-box; transform-origin: 160px 195px; animation: gr-wag 1.1s ease-in-out infinite alternate; }
-.gr-blink { transform-box: fill-box; transform-origin: center; animation: gr-blink 4.3s infinite; }
-.gr-twitch { transform-box: fill-box; transform-origin: 50% 100%; animation: gr-twitch 7s 1.5s infinite; }
-.gr-eyeball, .gr-brow, .gr-ear, .gr-arm { transform-box: fill-box; transition: transform .3s cubic-bezier(.3, 1.5, .5, 1), opacity .15s; }
-.gr-eyeball, .gr-brow { transform-origin: center; }
-.gr-ear { transform-origin: 50% 100%; }
-.gr-arm { transform-origin: 50% 0; }
-.gr-iris { transition: transform .15s ease-out; }
-.gr-lid, .gr-m, .gr-steam { opacity: 0; transition: opacity .15s; }
-.gr-blush { opacity: .35; transition: opacity .2s; }
-.is-calm .gr-m-calm, .is-alert .gr-m-happy, .is-happy .gr-m-happy, .is-cross .gr-m-cross, .is-furious .gr-m-furious { opacity: 1; }
-.is-happy .gr-eyeball { opacity: 0; }
-.is-happy .gr-lid { opacity: 1; }
-.is-happy .gr-blush, .is-furious .gr-blush { opacity: .95; }
-.is-happy .gr-hop { transform: translateY(-9px); }
-.is-alert .gr-eyeball { transform: scale(1.1); }
-.is-alert .gr-ear-l { transform: rotate(12deg); }
-.is-alert .gr-ear-r { transform: rotate(-12deg); }
-.is-alert .gr-brow { transform: translateY(-4px); }
-.is-cross .gr-eyeball { transform: scaleY(.6); }
-.is-cross .gr-brow-l { transform: translateY(4px) rotate(18deg); }
-.is-cross .gr-brow-r { transform: translateY(4px) rotate(-18deg); }
-.is-cross .gr-ear-l { transform: rotate(-10deg); }
-.is-cross .gr-ear-r { transform: rotate(10deg); }
-.is-furious .gr-eyeball { transform: scaleY(.5); }
-.is-furious .gr-brow-l { transform: translateY(6px) rotate(24deg); }
-.is-furious .gr-brow-r { transform: translateY(6px) rotate(-24deg); }
-.is-furious .gr-ear-l { transform: rotate(-14deg); }
-.is-furious .gr-ear-r { transform: rotate(14deg); }
-.is-furious .gr-arm-l { transform: rotate(-46deg); }
-.is-furious .gr-arm-r { transform: rotate(46deg); }
-.is-furious .gr-rig { animation: gr-shake .12s linear infinite; }
-.is-furious .gr-steam { opacity: 1; }
-.gr-puff { transform-box: fill-box; transform-origin: center; animation: gr-puff-l 1.3s ease-out infinite; opacity: 0; }
-.gr-puff1, .gr-puff3, .gr-puff5 { animation-name: gr-puff-r; }
-.gr-puff2, .gr-puff3 { animation-delay: .43s; }
-.gr-puff4, .gr-puff5 { animation-delay: .86s; }
-@keyframes gr-breathe { 50% { transform: scale(.992, 1.018); } }
-@keyframes gr-wag { from { transform: rotate(-9deg); } to { transform: rotate(9deg); } }
-@keyframes gr-blink { 0%, 95%, 100% { transform: none; } 97% { transform: scaleY(.08); } }
-@keyframes gr-twitch { 0%, 88%, 94%, 100% { transform: none; } 90% { transform: rotate(16deg); } 92% { transform: rotate(-5deg); } }
-@keyframes gr-shake { 25% { transform: translateX(-1.5px); } 75% { transform: translateX(1.5px); } }
-@keyframes gr-puff-l { from { transform: translate(0, 0) scale(.5); opacity: .9; } to { transform: translate(-22px, -58px) scale(2); opacity: 0; } }
-@keyframes gr-puff-r { from { transform: translate(0, 0) scale(.5); opacity: .9; } to { transform: translate(22px, -58px) scale(2); opacity: 0; } }
-@media (prefers-reduced-motion: reduce) {
-  .gr *, .sticker { animation: none !important; transition-duration: 0s !important; }
-  .is-furious .gr-puff { opacity: .8; }
-}
-
-/* Live gremlin in the hero, standing on the blob. */
-.hero-art .live { position: relative; z-index: 1; width: min(400px, 74vw); cursor: pointer; }
-.hero-art .blob { transition: background-color .3s; }
-.hero-art:has(.is-furious) .blob { background: #FF6B57; }
-.sticker.s1.pop { animation: sticker-pop .35s cubic-bezier(.3, 1.6, .5, 1); }
-@keyframes sticker-pop { from { transform: rotate(-7deg) scale(.5); } to { transform: rotate(-7deg) scale(1); } }
-
-/* A gremlin head peeking over a button. */
+/* Gremlin heads peeking over the download buttons (gremlin.js), posed like GremlinPose.swift. */
 .has-peek { position: relative; }
-.peek { position: absolute; bottom: calc(100% - 3px); width: 44px; pointer-events: none; transition: transform .25s cubic-bezier(.3, 1.6, .5, 1); }
+.peek { position: absolute; bottom: calc(100% - 3px); pointer-events: none; transition: transform .25s cubic-bezier(.3, 1.6, .5, 1); -webkit-tap-highlight-color: transparent; }
 .nav-get .peek { right: 14px; width: 34px; }
 .store .peek { right: 18px; width: 54px; }
 .cta:has(.peek) { padding-top: 22px; }
 .has-peek:hover .peek, .has-peek:focus-visible .peek { transform: translateY(-5px); }
+.gr { display: block; width: 100%; height: auto; overflow: visible; }
+.gr-rig { transform-box: view-box; transform-origin: 100px 207px; animation: gr-breathe 2.6s ease-in-out infinite; }
+.gr-hop { transform-box: view-box; transition: transform .35s cubic-bezier(.3, 1.6, .5, 1); }
+.gr-blink { transform-box: fill-box; transform-origin: center; animation: gr-blink 4.3s infinite; }
+.gr-twitch { transform-box: fill-box; transform-origin: 50% 100%; animation: gr-twitch 7s 1.5s infinite; }
+.gr-eyeball { transform-box: fill-box; transform-origin: center; transition: opacity .15s; }
+.gr-iris { transition: transform .15s ease-out; }
+.gr-lid, .gr-m-happy { opacity: 0; transition: opacity .15s; }
+.gr-blush { opacity: .35; transition: opacity .2s; }
+.is-happy .gr-eyeball, .is-happy .gr-m-calm { opacity: 0; }
+.is-happy .gr-lid, .is-happy .gr-m-happy { opacity: 1; }
+.is-happy .gr-blush { opacity: .95; }
+.is-happy .gr-hop { transform: translateY(-9px); }
+@keyframes gr-breathe { 50% { transform: scale(.992, 1.018); } }
+@keyframes gr-blink { 0%, 95%, 100% { transform: none; } 97% { transform: scaleY(.08); } }
+@keyframes gr-twitch { 0%, 88%, 94%, 100% { transform: none; } 90% { transform: rotate(16deg); } 92% { transform: rotate(-5deg); } }
+@media (prefers-reduced-motion: reduce) {
+  .gr *, .peek { animation: none !important; transition-duration: 0s !important; }
+  .has-peek:hover .peek, .has-peek:focus-visible .peek { transform: none; }
+}
