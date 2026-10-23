@@ -645,6 +645,10 @@ final class GameModel {
         case "idleAct":
             if let act = IdleAct.find(UserDefaults.standard.string(forKey: "LMAct") ?? "sneeze") { performIdle(act, holdPeak: true) }
         case "namePrompt": showNamePrompt = true
+        case "demo":
+            // The website reel: no name prompt or mischief interrupting the take.
+            game.state.namePromptShown = true
+            game.state.mischief.nextAt = Date().addingTimeInterval(3600)
         case "reminderOffer": showReminderOffer = true
         case "reminders":
             game.state.prefs.remindersEnabled = true

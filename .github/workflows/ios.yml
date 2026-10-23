@@ -8,9 +8,9 @@ on:
   workflow_dispatch:
     inputs:
       tour:
-        description: "review: every screen, small. store: full-size 6.9\" App Store shots. new: the newest screens, for review."
+        description: "review: every screen, small. store: full-size 6.9\" App Store shots. new: the newest screens, for review. video: the website demo reel (artifact only)."
         type: choice
-        options: [review, store, new]
+        options: [review, store, new, video]
         default: review
 
 # A newer push to the same branch cancels the older run.
@@ -83,7 +83,7 @@ jobs:
     timeout-minutes: 20
     strategy:
       matrix:
-        part: ${{ fromJSON(inputs.tour == 'store' && '["store"]' || inputs.tour == 'new' && '["new"]' || '["a","b"]') }}
+        part: ${{ fromJSON(inputs.tour == 'store' && '["store"]' || inputs.tour == 'new' && '["new"]' || inputs.tour == 'video' && '["video"]' || '["a","b"]') }}
     steps:
       - uses: actions/checkout@v7
       - name: Use Xcode 26
@@ -111,6 +111,7 @@ jobs:
   publish:
     name: Publish screenshots
     needs: screenshots
+    if: inputs.tour != 'video'
     runs-on: ubuntu-latest
     permissions:
       contents: write
