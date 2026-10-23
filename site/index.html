@@ -139,12 +139,14 @@
 </script>
 <script defer src="/_vercel/insights/script.js"></script>
 <script defer src="/gremlin.js"></script>
+<script defer src="/share.js"></script>
+<script defer src="/play.js"></script>
 </head>
 <body class="home">
 
-<header class="top">
+<header class="top sticky">
   <a class="wordmark" href="/" aria-label="little menace, home">little menace</a>
-  <nav aria-label="Site"><a href="#games">Games</a><a href="#snack">Midnight Snack</a><a href="/support">Support</a><a class="nav-get has-peek" href="https://apps.apple.com/app/id6816104570"><span class="peek" data-gremlin="head"></span>Get the app</a></nav>
+  <nav aria-label="Site"><a class="nav-get has-peek" href="https://apps.apple.com/app/id6816104570"><span class="peek" data-gremlin="head"></span>Get the app</a></nav>
 </header>
 
 <main>
@@ -158,8 +160,27 @@
   </div>
   <div class="hero-art">
     <span class="blob" aria-hidden="true"></span>
-    <div class="phone tilt-r"><img src="/img/petting.webp" alt="Little Menace on iPhone: a round black gremlin with cat ears giggles with its eyes shut while being petted. Score 1,248 at the top, hungry, bored and sleepy meters below." width="640" height="1391" fetchpriority="high"></div>
-    <span class="sticker s1" aria-hidden="true">hehehe</span>
+    <div class="phone tilt-r live-phone" data-flip>
+      <div class="flip">
+      <div class="screen" role="group" aria-label="Try it: the Little Menace home screen. Pet the gremlin, feed it, play or let it nap.">
+        <div class="sb" aria-hidden="true"><span>9:41</span><span class="sb-island"></span><span class="sb-icons"><svg viewBox="0 0 18 12"><rect x="0" y="8" width="3" height="4" rx="1" fill="#111"/><rect x="5" y="5.5" width="3" height="6.5" rx="1" fill="#111"/><rect x="10" y="3" width="3" height="9" rx="1" fill="#111"/><rect x="15" y="0" width="3" height="12" rx="1" fill="#111"/></svg><svg viewBox="0 0 16 12"><path d="M8 11.5 10.4 9a3.4 3.4 0 0 0-4.8 0Z" fill="#111"/><path d="M3.6 7a6.2 6.2 0 0 1 8.8 0M1.2 4.4a9.6 9.6 0 0 1 13.6 0" fill="none" stroke="#111" stroke-width="1.8" stroke-linecap="round"/></svg><svg viewBox="0 0 27 12"><rect x=".7" y=".7" width="22" height="10.6" rx="3.2" fill="none" stroke="#111" stroke-opacity=".45" stroke-width="1.4"/><rect x="2.4" y="2.4" width="18.6" height="7.2" rx="1.8" fill="#111"/><rect x="24" y="4" width="2" height="4" rx="1" fill="#111" fill-opacity=".45"/></svg></span></div>
+        <div class="score"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.8 6.2 6.8.7-5.1 4.6 1.5 6.7L12 17.2l-6 3.5 1.5-6.7-5.1-4.6 6.8-.7z" fill="#FFD46B" stroke="#FFD46B" stroke-width="2" stroke-linejoin="round"/></svg><span class="score-n">1,248</span></div>
+        <div class="today">today <b class="up">+78</b> <b class="down">−10</b></div>
+        <span class="more" aria-hidden="true">•••</span>
+        <p class="bubble" aria-live="polite"></p>
+        <button class="pet-zone" type="button" aria-label="Pet it"><span data-gremlin="full"></span></button>
+        <div class="needs"><button class="need" type="button" data-need="feed" aria-label="Feed"><span class="ring-wrap"><svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="18" fill="rgba(255,255,255,.25)"/><circle class="ring" cx="20" cy="20" r="18" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" pathLength="100" stroke-dasharray="50 100" transform="rotate(-90 20 20)"/></svg><svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="8.6" fill="#D99A4E" stroke="#B9782F" stroke-width="1.2"/><circle cx="7" cy="7.2" r="1.2" fill="#5A3418"/><circle cx="12.6" cy="8.4" r="1.2" fill="#5A3418"/><circle cx="8.6" cy="12.8" r="1.2" fill="#5A3418"/><circle cx="12.8" cy="13" r="1" fill="#5A3418"/></svg></span><span class="need-label">Hungry <i>50</i>%</span></button><button class="need" type="button" data-need="play" aria-label="Play"><span class="ring-wrap"><svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="18" fill="rgba(255,255,255,.25)"/><circle class="ring" cx="20" cy="20" r="18" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" pathLength="100" stroke-dasharray="40 100" transform="rotate(-90 20 20)"/></svg><svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="8.6" fill="#fff"/><path d="M4.2 4.4Q9.4 10 4.2 15.6M15.8 4.4Q10.6 10 15.8 15.6" fill="none" stroke="#FF7A2F" stroke-width="1.6" stroke-linecap="round"/></svg></span><span class="need-label">Bored <i>40</i>%</span></button><button class="need" type="button" data-need="nap" aria-label="Nap"><span class="ring-wrap"><svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="18" fill="rgba(255,255,255,.25)"/><circle class="ring" cx="20" cy="20" r="18" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" pathLength="100" stroke-dasharray="40 100" transform="rotate(-90 20 20)"/></svg><svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><path d="M12.6 2.2A8 8 0 1 0 17.8 13 6.4 6.4 0 1 1 12.6 2.2Z" fill="#fff"/></svg></span><span class="need-label">Sleepy <i>40</i>%</span></button></div>
+        <span class="home-ind" aria-hidden="true"></span>
+      </div>
+      <div class="screen back">
+        <p class="back-k">Scan me.<br>I’ll wait.</p>
+        <img class="qr" src="/img/qr-app-store.svg" alt="QR code that opens Little Menace on the App Store" width="200" height="200">
+        <button class="share-btn" type="button" data-share><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 2v10M6 6l4-4 4 4M5 9H4v9h12V9h-1" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="share-label">Copy the link</span></button>
+        <button class="flip-back" type="button">flip back</button>
+      </div>
+      </div>
+    </div>
+    <span class="sticker s1" aria-hidden="true">try me</span>
     <span class="sticker s2" aria-hidden="true">+78 today</span>
   </div>
 </section>

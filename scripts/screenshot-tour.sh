@@ -22,24 +22,6 @@ PM=$(udid "iPhone 16 Pro Max")
 # Runner images differ: fall back to the newest Pro Max available.
 [ -n "$PM" ] || PM=$(xcrun simctl list devices available | grep -E "iPhone [0-9]+ Pro Max \(" | tail -1 | sed -E 's/.*\(([0-9A-F-]{36})\).*/\1/')
 boot "$PM"
-if [ "$PART" = video ]; then
-  # The website's demo reel: a UI test plays the app while the simulator records. Raw .mov only;
-  # it is trimmed and encoded for the web by hand.
-  xcrun simctl status_bar "$PM" override --time 9:41 --dataNetwork wifi --wifiBars 3 \
-    --cellularMode active --cellularBars 4 --batteryState charged --batteryLevel 100
-  X=(-project LittleMenace.xcodeproj -scheme LittleMenace -destination "id=$PM" -derivedDataPath build CODE_SIGNING_ALLOWED=NO)
-  xcodebuild build-for-testing "${X[@]}" 2>&1 | grep -E "error:|\*\* TEST BUILD"
-  xcrun simctl io "$PM" recordVideo --codec=h264 --force "$OUT/reel.mov" &
-  REC=$!
-  sleep 3
-  TEST_RUNNER_LM_DEMO_REEL=1 xcodebuild test-without-building "${X[@]}" \
-    -only-testing:LittleMenaceUITests/LittleMenaceUITests/testDemoReel 2>&1 \
-    | grep -E "Test Case|error:|\*\* TEST" || echo "::warning::the reel test failed; the recording shows where"
-  kill -INT "$REC"
-  wait "$REC" || true
-  ls -la "$OUT"
-  exit 0
-fi
 if [ "$PART" = store ]; then
   xcrun simctl status_bar "$PM" override --time 9:41 --dataNetwork wifi --wifiBars 3 \
     --cellularMode active --cellularBars 4 --batteryState charged --batteryLevel 100

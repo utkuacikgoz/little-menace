@@ -334,38 +334,6 @@ final class LittleMenaceUITests: XCTestCase {
         XCTAssertTrue(app.buttons["Share"].waitForExistence(timeout: 5))
     }
 
-    // MARK: Website reel
-
-    /// Plays the app like a person for the website's screen recording (`screenshot-tour.sh video`).
-    /// Paced to watch, not to test; skipped everywhere else.
-    func testDemoReel() throws {
-        try XCTSkipUnless(ProcessInfo.processInfo.environment["LM_DEMO_REEL"] == "1", "only for the website reel")
-        launch(["-LMScreen", "demo"])
-        sleep(2)
-        pet.tap()
-        sleep(1)
-        let head = pet.coordinate(withNormalizedOffset: CGVector(dx: 0.4, dy: 0.35))
-        for _ in 0..<2 {
-            head.press(forDuration: 0.05, thenDragTo: head.withOffset(CGVector(dx: 50, dy: 0)), withVelocity: .slow, thenHoldForDuration: 0.1)
-            usleep(400_000)
-        }
-        sleep(1)
-        app.buttons["Feed"].press(forDuration: 0.1, thenDragTo: pet)
-        sleep(2)
-        open("Snack toss")
-        let snack = app.otherElements["Snack"].firstMatch
-        XCTAssertTrue(snack.waitForExistence(timeout: 5))
-        for _ in 0..<8 {
-            if !snack.exists { break }
-            snack.swipeUp(velocity: .fast)
-            usleep(300_000)
-        }
-        finishRound(timeout: 10)
-        sleep(1)
-        for _ in 0..<12 { pet.tap() }
-        sleep(3)
-    }
-
     // MARK: Accessibility
 
     func testLargestTextSizeSheets() {
