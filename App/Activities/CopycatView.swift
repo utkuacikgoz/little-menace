@@ -19,6 +19,7 @@ struct CopycatView: View {
     @State private var flash: DanceMove?
     @State private var flashID = 0
     @State private var demo: Task<Void, Never>?
+    @ScaledMetric(relativeTo: .largeTitle) private var bestSize: CGFloat = 34
 
     private static let colors: [DanceMove: Color] = [
         .up: Color(hex: 0xFFD166), .right: Color(hex: 0x06D6A0), .left: Color(hex: 0xEF476F), .down: Color(hex: 0x4CC9F0),
@@ -47,7 +48,7 @@ struct CopycatView: View {
 
                 if match.best > 0 {
                     Text("×\(match.best)")
-                        .font(.system(size: 34, weight: .black, design: .rounded))
+                        .font(.system(size: bestSize, weight: .black, design: .rounded))
                         .foregroundStyle(Color(hex: 0xFF4FD8))
                         .shadow(color: Color(hex: 0xFF4FD8).opacity(0.8), radius: 8)
                         .position(x: w - 52, y: 40)
@@ -159,7 +160,7 @@ struct CopycatView: View {
                 model.sounds.play(.pop)
                 model.haptics.play(.tap, intensity: 0.4)
                 if UIAccessibility.isVoiceOverRunning {
-                    UIAccessibility.post(notification: .announcement, argument: Self.name(move))
+                    Announcer.now(Self.name(move))
                 }
                 try? await Task.sleep(for: .seconds(beat))
                 dancing = nil
@@ -168,7 +169,7 @@ struct CopycatView: View {
             guard !Task.isCancelled else { return }
             demoIndex = -1
             phase = .copy
-            UIAccessibility.post(notification: .announcement, argument: "Your turn")
+            Announcer.say("Your turn")
         }
     }
 
@@ -197,6 +198,8 @@ struct CopycatView: View {
             }
         case .mistake, .finished:
             model.haptics.play(match.outcome == true ? .success : .nope)
+            if match.outcome != true { model.sounds.play(.miss) }
+            Announcer.say(match.outcome == true ? "\(match.best) moves!" : "Oops. \(match.best) moves.")
             end()
         }
     }

@@ -57,6 +57,7 @@ struct ShareCardView: View {
 struct ShareCardSheet: View {
     @Environment(GameModel.self) private var model
     @State private var image: Image?
+    @State private var failed = false
 
     var body: some View {
         VStack(spacing: 20) {
@@ -74,12 +75,21 @@ struct ShareCardSheet: View {
                         .background(Ink.body, in: Capsule())
                         .foregroundStyle(Ink.eye)
                 }
+            } else if failed {
+                VStack(spacing: 14) {
+                    Text("Couldn’t draw the card.")
+                        .font(.system(.headline, design: .rounded).weight(.heavy))
+                    Button("Try again") { failed = false; render() }
+                        .font(.system(.headline, design: .rounded).weight(.heavy))
+                }
+                .foregroundStyle(Ink.body)
             } else {
                 ProgressView()
             }
         }
         .padding(24)
         .presentationDetents([.large])
+        .presentationDragIndicator(.visible)
         .presentationBackground(Ink.eye)
         .task { render() }
     }
@@ -89,6 +99,6 @@ struct ShareCardSheet: View {
         if pose.sleeping == false { pose.look = .zero }
         let renderer = ImageRenderer(content: ShareCardView(state: model.state, pose: pose))
         renderer.scale = 3 // 1080 × 1350
-        if let ui = renderer.uiImage { image = Image(uiImage: ui) }
+        if let ui = renderer.uiImage { image = Image(uiImage: ui) } else { failed = true }
     }
 }

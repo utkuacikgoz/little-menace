@@ -8,25 +8,28 @@ struct MischiefSheet: View {
     @Environment(GameModel.self) private var model
 
     var body: some View {
-        VStack(spacing: 18) {
-            HStack(spacing: 14) {
-                GremlinView(pose: .pose(for: .mischief), hat: model.state.wardrobe.hat, neck: model.state.wardrobe.neck, fur: model.state.wardrobe.fur, size: 96)
-                    .accessibilityHidden(true)
-                VStack(alignment: .leading, spacing: 8) {
-                    Image(systemName: event.prop).font(.title2.weight(.bold))
+        ScrollView {
+            VStack(spacing: 18) {
+                HStack(spacing: 14) {
+                    GremlinView(pose: .pose(for: .mischief), hat: model.state.wardrobe.hat, neck: model.state.wardrobe.neck, fur: model.state.wardrobe.fur, size: 96)
                         .accessibilityHidden(true)
-                    Text(event.line)
-                        .font(.system(.title3, design: .rounded).weight(.heavy))
-                        .fixedSize(horizontal: false, vertical: true)
+                    VStack(alignment: .leading, spacing: 8) {
+                        Image(systemName: event.prop).font(.title2.weight(.bold))
+                            .accessibilityHidden(true)
+                        Text(event.line)
+                            .font(.system(.title3, design: .rounded).weight(.heavy))
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    Spacer(minLength: 0)
                 }
-                Spacer(minLength: 0)
+                HStack(spacing: 14) {
+                    choice(event.indulge, indulge: true)
+                    choice(event.redirect, indulge: false)
+                }
             }
-            HStack(spacing: 14) {
-                choice(event.indulge, indulge: true)
-                choice(event.redirect, indulge: false)
-            }
+            .padding(20)
         }
-        .padding(20)
+        .scrollBounceBehavior(.basedOnSize)
         .foregroundStyle(Ink.body)
         .presentationBackground(Ink.eye)
     }

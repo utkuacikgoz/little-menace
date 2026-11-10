@@ -58,6 +58,18 @@ final class TugMatchTests: XCTestCase {
         XCTAssertLessThanOrEqual(m.elapsed, 0.5 + 1e-9)
     }
 
+    func testAssistedTiredWindowsLastLonger() {
+        func firstWindow(_ length: Double) -> Double {
+            var m = TugMatch(seed: 2, tiredLength: length)
+            while !m.gremlinTired && m.outcome == nil { m.step(dt: 1.0 / 60, pull: 0.3) }
+            let start = m.elapsed
+            while m.gremlinTired && m.outcome == nil { m.step(dt: 1.0 / 60, pull: 0.3) }
+            return m.elapsed - start
+        }
+        XCTAssertEqual(firstWindow(TugMatch.tiredLength), TugMatch.tiredLength, accuracy: 0.05)
+        XCTAssertEqual(firstWindow(TugMatch.assistedTiredLength), TugMatch.assistedTiredLength, accuracy: 0.05)
+    }
+
     func testFinishedMatchIgnoresFurtherSteps() {
         var m = TugMatch(seed: 1)
         run(&m) { _ in 0 }

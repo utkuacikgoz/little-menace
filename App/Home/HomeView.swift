@@ -14,6 +14,7 @@ enum HomeSheet: String, Identifiable {
 struct HomeView: View {
     @Environment(GameModel.self) private var model
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.dynamicTypeSize) private var typeSize
 
     @State private var sheet: HomeSheet?
     @State private var showPlay = false
@@ -38,8 +39,7 @@ struct HomeView: View {
                 }
 
                 if model.state.isAsleep {
-                    // Night while it naps: a darker sky with a moon.
-                    Color.black.opacity(0.25).ignoresSafeArea().allowsHitTesting(false)
+                    // Night while it naps: the background already dims; the moon says so.
                     Image(systemName: "moon.stars.fill")
                         .font(.system(size: 44, weight: .bold))
                         .foregroundStyle(Ink.irisLight)
@@ -108,6 +108,8 @@ struct HomeView: View {
             .animation(.spring(response: 0.35, dampingFraction: 0.7), value: model.toast)
             .animation(.spring(response: 0.4, dampingFraction: 0.7), value: model.showReminderOffer)
             .animation(.spring(response: 0.4, dampingFraction: 0.7), value: model.showNamePrompt)
+            // The red sky fades in rather than flashing on.
+            .animation(.easeInOut(duration: 0.6), value: model.state.mood == .furious)
             .overlayPreferenceValue(CoachAnchorKey.self) { anchors in
                 if model.showHowToPlay {
                     CoachMarks(anchors: anchors)
@@ -149,7 +151,8 @@ struct HomeView: View {
                     showMischief = false
                     model.resolveMischief(event, indulge: indulge)
                 }
-                .presentationDetents([.height(300)])
+                // Big text needs room: the line and both choices must stay reachable.
+                .presentationDetents(typeSize.isAccessibilitySize ? [.large] : [.height(300), .large])
             }
         }
         .fullScreenCover(item: $model.activity) { kind in
@@ -285,6 +288,7 @@ struct HomeView: View {
                 .accessibilityHint("Double tap to clean it up")
             CleanChip(text: "tap to clean")
                 .allowsHitTesting(false)
+                .accessibilityHidden(true) // the puddle button already says it
                 .position(x: spot.x, y: spot.y + 46)
         }
     }
@@ -319,9 +323,10 @@ struct HomeView: View {
             }
             HStack(spacing: 28) {
                 feedButton(fullness: needs.fullness / 100, mouth: mouth)
-                RingButton(ring: needs.joy / 100, label: "Play", caption: needCaption(.joy, needs.joy), action: {
+                RingButton(ring: needs.joy / 100, label: showPlay ? "Close games" : "Play", caption: needCaption(.joy, needs.joy), action: {
                     withAnimation(.spring(response: 0.35, dampingFraction: 0.7)) { showPlay.toggle() }
                     model.haptics.play(.tap)
+                    if showPlay { Announcer.say("Games: snack toss, sock tug, cushion hunt, copycat dance.") }
                 }) {
                     Image(systemName: showPlay ? "xmark" : "tennisball.fill")
                         .font(.system(size: 28, weight: .bold))
@@ -422,6 +427,8 @@ struct HomeView: View {
 private struct PlayPicker: View {
     var pick: (ActivityKind) -> Void
 
+    @ScaledMetric(relativeTo: .caption2) private var badgeSize: CGFloat = 11
+
     var body: some View {
         // Four in a row; the newest game wears a NEW badge.
         HStack(spacing: 14) { snack; tug; hunt; dance }
@@ -446,7 +453,7 @@ private struct PlayPicker: View {
         }
         .overlay(alignment: .topTrailing) {
             Text("NEW")
-                .font(.system(size: 11, weight: .black, design: .rounded))
+                .font(.system(size: badgeSize, weight: .black, design: .rounded))
                 .foregroundStyle(.white)
                 .padding(.horizontal, 6).padding(.vertical, 3)
                 .background(Color(hex: 0xFF3B7F), in: Capsule())
@@ -496,16 +503,17 @@ private struct NamePrompt: View {
                 .accessibilityLabel("Name")
             Button { model.rename(name) } label: {
                 Image(systemName: "checkmark").font(.headline.weight(.heavy))
-                    .frame(width: 40, height: 40).background(Ink.body, in: Circle()).foregroundStyle(Ink.eye)
+                    .frame(width: 44, height: 44).background(Ink.body, in: Circle()).foregroundStyle(Ink.eye)
             }
             .disabled(name.trimmingCharacters(in: .whitespaces).isEmpty)
             .accessibilityLabel("Save name")
             Button { model.rename("") } label: {
                 Image(systemName: "xmark").font(.headline.weight(.heavy))
-                    .frame(width: 40, height: 40).background(Ink.body.opacity(0.12), in: Circle()).foregroundStyle(Ink.body)
+                    .frame(width: 44, height: 44).background(Ink.body.opacity(0.12), in: Circle()).foregroundStyle(Ink.body)
             }
             .accessibilityLabel("Not now")
         }
+        .onAppear { Announcer.say("Want to give it a name? Name field.") }
         .padding(12)
         .background(Ink.eye, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
         .padding(.bottom, 12)

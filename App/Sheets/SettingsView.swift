@@ -22,6 +22,9 @@ struct SettingsView: View {
                 Section {
                     TextField("Name", text: $nameDraft, prompt: Text("Your gremlin"))
                         .onSubmit { model.rename(nameDraft) }
+                        .onChange(of: nameDraft) { _, new in
+                            if new.count > PetState.maxNameLength { nameDraft = String(new.prefix(PetState.maxNameLength)) }
+                        }
                         .textInputAutocapitalization(.words)
                         .autocorrectionDisabled()
                         .accessibilityLabel("Name")
@@ -96,6 +99,12 @@ struct SettingsView: View {
                             if model.purchases.state == .purchasing { ProgressView() }
                             if model.purchases.state == .restored { Image(systemName: "checkmark") }
                         }
+                    }
+                    if model.purchases.state == .restored {
+                        Text(model.purchases.entitlements.isEmpty ? "Nothing to restore on this Apple Account." : "Purchases restored.")
+                            .font(.footnote).foregroundStyle(.secondary)
+                    } else if case .failed(let message) = model.purchases.state {
+                        Text(message).font(.footnote).foregroundStyle(.secondary)
                     }
                     Link(destination: AppLinks.privacy) { Label("Privacy", systemImage: "hand.raised.fill") }
                     Link(destination: AppLinks.support) { Label("Support", systemImage: "questionmark.circle.fill") }

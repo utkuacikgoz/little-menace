@@ -8,7 +8,8 @@ struct SockTugView: View {
     var finish: (ActivityResult) -> Void
 
     @Environment(GameModel.self) private var model
-    @State private var match = TugMatch(seed: UInt64.random(in: 0...UInt64.max))
+    @State private var match = TugMatch(seed: UInt64.random(in: 0...UInt64.max),
+                                        tiredLength: UIAccessibility.isVoiceOverRunning ? TugMatch.assistedTiredLength : TugMatch.tiredLength)
     @State private var lastFrame: Date?
     @State private var wasTired = false
     @State private var reported = false
@@ -96,7 +97,7 @@ struct SockTugView: View {
             wasTired = match.gremlinTired
             if wasTired {
                 model.haptics.play(.tap, intensity: 1)
-                UIAccessibility.post(notification: .announcement, argument: "Now!")
+                Announcer.now("Now!")
             }
         } else if pull > 0.6 && !match.gremlinTired && !match.isWarmingUp && date.timeIntervalSince(lastSlip) > 0.25 {
             lastSlip = date

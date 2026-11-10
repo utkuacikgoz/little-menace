@@ -55,7 +55,7 @@ struct PointsBadge: View {
                         .monospacedDigit()
                         .contentTransition(.numericText(value: Double(s.points.total)))
                 }
-                .font(.system(size: 40, weight: .heavy, design: .rounded))
+                .font(.system(.largeTitle, design: .rounded, weight: .heavy))
                 .foregroundStyle(.white)
                 .shadow(color: .black.opacity(0.25), radius: 3, y: 1)
                 // The change pops on the free left side, so nothing shifts and the menu stays clear.

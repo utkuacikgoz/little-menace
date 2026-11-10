@@ -22,6 +22,7 @@ struct StampCardView: View {
             }
             .animation(.spring(response: 0.3, dampingFraction: 0.8), value: detail)
             .presentationDetents([.large])
+            .presentationDragIndicator(.visible)
             .presentationBackground(Ink.eye)
         #if DEBUG
             .onAppear {
@@ -44,6 +45,10 @@ struct StampCardView: View {
     private func tap(_ d: Detail) {
         detail = detail == d ? nil : d
         model.haptics.play(.tap, intensity: 0.5)
+        if detail != nil {
+            let i = info(d)
+            Announcer.say("\(i.title). \(i.text)")
+        }
     }
 
     private func info(_ d: Detail) -> (symbol: String, title: String, text: String) {
@@ -138,6 +143,7 @@ struct StampCardView: View {
                                 .contentShape(Rectangle())
                             }
                             .accessibilityLabel(info(.slot(n)).title)
+                            .accessibilityValue(n <= stampCount ? (n <= gold ? "Gold stamp" : "Stamped") : "Empty")
                         }
                     }
                     Text("A stamp for every day you play. Gold when you finish the daily challenge.")
@@ -198,7 +204,7 @@ struct StampCardView: View {
                                 Text(found ? d.spoken : "???")
                                     .font(.system(.footnote, design: .rounded).weight(.heavy))
                                     .multilineTextAlignment(.leading)
-                                    .lineLimit(2)
+                                    .fixedSize(horizontal: false, vertical: true)
                                 Spacer(minLength: 0)
                             }
                             .padding(8)

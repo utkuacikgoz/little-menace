@@ -12,7 +12,9 @@ public struct TugMatch: Sendable {
     /// Yanking while the gremlin pulls strong makes the sock slip (quadratic, so light tension is fine).
     static let slip = 0.35
     static let playerInTired = 1.1
-    static let tiredLength = 0.75
+    public static let tiredLength = 0.75
+    /// With VoiceOver the "Now!" cue has to be heard before the player can act, so windows last longer.
+    public static let assistedTiredLength = 1.5
 
     /// −1 the gremlin has the sock … +1 the player has it.
     public private(set) var rope = 0.0
@@ -23,13 +25,13 @@ public struct TugMatch: Sendable {
     private var windows: [ClosedRange<Double>] = []
     private var usedCurrent = false
 
-    public init(seed: UInt64) {
+    public init(seed: UInt64, tiredLength: Double = TugMatch.tiredLength) {
         var rng = SplitMix64(seed: seed)
         var t = Self.warmup
         while t < Self.duration {
             t += Double.random(in: 1.3...2.3, using: &rng)
-            windows.append(t...(t + Self.tiredLength))
-            t += Self.tiredLength
+            windows.append(t...(t + tiredLength))
+            t += tiredLength
         }
     }
 

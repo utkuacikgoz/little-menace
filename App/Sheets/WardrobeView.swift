@@ -6,6 +6,9 @@ struct WardrobeView: View {
     @Environment(GameModel.self) private var model
     @State private var slot: Slot = .hat
     @State private var preview: Item?
+    /// Why a tapped item is locked, shown briefly on the stage.
+    @State private var lockNote: String?
+    @State private var lockNoteTask: Task<Void, Never>?
     @State private var openCollection = false
 
     /// A paid item being tried on: show how to buy it.
@@ -18,12 +21,19 @@ struct WardrobeView: View {
         scrolling
             .foregroundStyle(Ink.body)
             .presentationDetents([.large])
+            .presentationDragIndicator(.visible)
             .presentationBackground(Ink.eye)
         .animation(.spring(response: 0.35, dampingFraction: 0.8), value: preview)
+        .animation(.spring(response: 0.3, dampingFraction: 0.8), value: lockNote)
         .onDisappear { model.cancelSpecial() }
         .sheet(isPresented: $openCollection) {
             if let pack = Catalog.collections.first {
-                NavigationStack { CollectionView(collection: pack) }
+                NavigationStack {
+                    CollectionView(collection: pack)
+                        .toolbar {
+                            ToolbarItem(placement: .confirmationAction) { Button("Done") { openCollection = false } }
+                        }
+                }
             }
         }
         #if DEBUG
@@ -41,6 +51,23 @@ struct WardrobeView: View {
 
     // MARK: Pieces
 
+    private func explainLock(_ item: Item) {
+        let note: String
+        switch item.source {
+        case .level(let n): note = "Unlocks at level \(n)"
+        case .weeklyGift: note = "A weekly gift: 5 stamps in a week"
+        default: return
+        }
+        lockNote = note
+        Announcer.say("\(item.name). \(note).")
+        lockNoteTask?.cancel()
+        lockNoteTask = Task {
+            try? await Task.sleep(for: .seconds(2.2))
+            guard !Task.isCancelled else { return }
+            lockNote = nil
+        }
+    }
+
     private func previewStage(height: CGFloat, size: CGFloat) -> some View {
         let wardrobe = shownWardrobe
         return ZStack {
@@ -55,6 +82,18 @@ struct WardrobeView: View {
         .overlay(alignment: .topLeading) {
             if let prop = model.specialProp {
                 Image(systemName: prop).font(.title).foregroundStyle(Ink.eye).padding(20)
+            }
+        }
+        .overlay(alignment: .bottom) {
+            if let lockNote {
+                Label(lockNote, systemImage: "lock.fill")
+                    .font(.system(.subheadline, design: .rounded).weight(.heavy))
+                    .foregroundStyle(Ink.eye)
+                    .padding(.horizontal, 14).padding(.vertical, 8)
+                    .background(Ink.body.opacity(0.9), in: Capsule())
+                    .padding(12)
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+                    .accessibilityHidden(true) // announced when it appears
             }
         }
         .frame(height: height)
@@ -185,6 +224,7 @@ struct WardrobeView: View {
                 model.haptics.play(.tap)
             } else {
                 model.haptics.play(.nope)
+                explainLock(item)
             }
         } label: {
             ZStack(alignment: .topTrailing) {
@@ -199,6 +239,7 @@ struct WardrobeView: View {
         }
         .buttonStyle(SquishButtonStyle())
         .accessibilityLabel(cellLabel(item, owned: owned, equipped: equipped))
+        .accessibilityHint(item.map { !owned && isPaid($0) } == true ? "Previews it on your gremlin" : "")
     }
 
     private func isPaid(_ item: Item) -> Bool {
@@ -236,7 +277,7 @@ struct WardrobeView: View {
             switch item.source {
             case .level(let n): label += ", unlocks at level \(n)"
             case .weeklyGift: label += ", weekly stamp gift"
-            case .collection: label += ", in the Midnight Snack collection. Double tap to preview"
+            case .collection: label += ", in the Midnight Snack collection"
             case .starter: break
             }
         }
@@ -336,13 +377,19 @@ struct BuyBar: View {
             }
             Spacer(minLength: 0)
             Button {
-                Task { await model.purchases.purchase(productID) }
+                // No price yet means the store didn't answer: the same button asks again.
+                Task {
+                    if price == nil { await model.purchases.loadProducts() } else { await model.purchases.purchase(productID) }
+                }
             } label: {
                 Group {
                     switch model.purchases.state {
                     case .purchasing: ProgressView().tint(Ink.eye)
-                    case .pending: Text("Waiting")
-                    default: Text(price.map { "Buy \($0)" } ?? "Unavailable")
+                    case .pending: Text("Waiting for approval")
+                    default:
+                        if let price { Text("Buy \(price)") }
+                        else if model.purchases.isLoadingProducts { ProgressView().tint(Ink.eye) }
+                        else { Text("Try again") }
                     }
                 }
                 .font(.system(.headline, design: .rounded).weight(.heavy))
@@ -350,9 +397,9 @@ struct BuyBar: View {
                 .background(Ink.body, in: Capsule())
                 .foregroundStyle(Ink.eye)
             }
-            .disabled(price == nil || model.purchases.state == .purchasing || model.purchases.state == .pending)
+            .disabled(model.purchases.isLoadingProducts || model.purchases.state == .purchasing || model.purchases.state == .pending)
             .accessibilityIdentifier("buy")
-            .accessibilityLabel(price.map { "Buy \(collection?.name ?? "") for \($0)" } ?? "Store unavailable")
+            .accessibilityLabel(price.map { "Buy \(collection?.name ?? "") for \($0)" } ?? "Store unavailable. Try again")
         }
         .padding(12)
         .background(Ink.body.opacity(0.06), in: RoundedRectangle(cornerRadius: 22, style: .continuous))
@@ -413,7 +460,7 @@ struct BuyBar: View {
                     .frame(minHeight: 44)
             }
             if case .failed(let message) = model.purchases.state {
-                Text(message).font(.footnote).foregroundStyle(.red)
+                Text(message).font(.footnote).foregroundStyle(Color(hex: 0xB3261E)) // dark red: readable on cream
             }
         }
         .padding(14)

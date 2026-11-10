@@ -17,9 +17,9 @@ enum CoachTarget: Int, CaseIterable {
 
     var body: String {
         switch self {
-        case .pet: return "Pets make it happy. Too many, too fast, and it gets annoyed."
+        case .pet: return "Pets make it happy. Drag to squish it, hold for a sly grin. Too many pets, too fast, and it gets annoyed."
         case .feed: return "Tap, or drag the snack to its mouth. Don't feed a full belly."
-        case .play: return "Three tiny games. Better rounds earn more points."
+        case .play: return "Four tiny games. Better rounds earn more points."
         case .nap: return "Naps restore energy. Waking it early costs points."
         case .points: return "Care earns points. Neglect costs them. Tap here for the rules."
         }
@@ -112,6 +112,12 @@ struct CoachMarks: View {
     }
 
     private func next() {
-        if step < CoachTarget.allCases.count - 1 { step += 1 } else { model.finishHowToPlay() }
+        if step < CoachTarget.allCases.count - 1 {
+            step += 1
+            let target = CoachTarget.allCases[step]
+            Announcer.say("\(target.title). \(target.body)")
+        } else {
+            model.finishHowToPlay()
+        }
     }
 }

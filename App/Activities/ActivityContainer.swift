@@ -10,6 +10,7 @@ struct ActivityContainer: View {
     @State private var round = 0
     @State private var result: ActivityResult?
     @State private var earnedXP = 0
+    @AccessibilityFocusState private var resultFocused: Bool
 
     var body: some View {
         ZStack {
@@ -23,7 +24,7 @@ struct ActivityContainer: View {
 
             if let result {
                 ResultCard(result: result, xp: earnedXP, hat: model.state.wardrobe.hat, neck: model.state.wardrobe.neck,
-                           fur: model.state.wardrobe.fur, replay: replay, done: { model.closeActivity(won: result.won) })
+                           fur: model.state.wardrobe.fur, focus: $resultFocused, replay: replay, done: { model.closeActivity(won: result.won) })
                     .transition(.scale(scale: 0.8).combined(with: .opacity))
             }
 
@@ -60,6 +61,8 @@ struct ActivityContainer: View {
             }
             .padding(16)
             .opacity(result == nil ? 1 : 0)
+            .allowsHitTesting(result == nil)
+            .accessibilityHidden(result != nil)
         }
         .animation(.spring(response: 0.4, dampingFraction: 0.75), value: result)
         #if DEBUG
@@ -86,6 +89,11 @@ struct ActivityContainer: View {
         let finish: (ActivityResult) -> Void = { r in
             earnedXP = model.finishActivity(r)
             result = r
+            // VoiceOver lands on the result instead of staying on the finished game.
+            Task {
+                try? await Task.sleep(for: .seconds(0.4))
+                resultFocused = true
+            }
             if model.takeReviewMoment(won: r.won) {
                 // Let the win card land first, then Apple's rating prompt.
                 Task {
@@ -120,6 +128,7 @@ private struct ResultCard: View {
     let hat: String?
     let neck: String?
     let fur: String?
+    var focus: AccessibilityFocusState<Bool>.Binding
     let replay: () -> Void
     let done: () -> Void
 
@@ -138,6 +147,7 @@ private struct ResultCard: View {
             .background(Ink.body, in: Capsule())
             .accessibilityElement(children: .ignore)
             .accessibilityLabel("\(result.won ? "Won" : "Lost"). \(xp >= 0 ? "Plus" : "Minus") \(abs(xp)) points")
+            .accessibilityFocused(focus)
 
             HStack(spacing: 24) {
                 Button(action: replay) {

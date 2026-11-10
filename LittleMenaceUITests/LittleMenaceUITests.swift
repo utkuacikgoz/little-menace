@@ -184,16 +184,21 @@ final class LittleMenaceUITests: XCTestCase {
         finishRound(timeout: 30) // rounds end by 20 s at the latest
     }
 
+    /// Cushions are labelled by colour and position ("Green cushion, left"); find one by where it sits.
+    private func cushion(_ spot: String) -> XCUIElement {
+        app.buttons.matching(NSPredicate(format: "label ENDSWITH %@", " cushion, \(spot)")).firstMatch
+    }
+
     func testCushionHuntRound() {
         launch(["-LMScreen", "home"])
         open("Cushion hunt")
-        let left = app.buttons["Cushion left"]
+        let left = cushion("left")
         XCTAssertTrue(left.waitForExistence(timeout: 5))
         let enabled = NSPredicate(format: "isEnabled == true")
         wait(for: [expectation(for: enabled, evaluatedWith: left)], timeout: 10)
-        for name in ["Cushion left", "Cushion middle", "Cushion right"] {
+        for spot in ["left", "middle", "right"] {
             if app.buttons["Done"].exists { break }
-            let b = app.buttons[name]
+            let b = cushion(spot)
             if b.isEnabled { b.tap(); sleep(1) }
         }
         finishRound(timeout: 8)
@@ -206,7 +211,7 @@ final class LittleMenaceUITests: XCTestCase {
         XCTAssertTrue(app.buttons["Play"].waitForExistence(timeout: 5))
         // If the abandoned round were still active, the next one would be refused as busy.
         open("Cushion hunt")
-        XCTAssertTrue(app.buttons["Cushion left"].waitForExistence(timeout: 5))
+        XCTAssertTrue(cushion("left").waitForExistence(timeout: 5))
     }
 
     // MARK: Guide and points

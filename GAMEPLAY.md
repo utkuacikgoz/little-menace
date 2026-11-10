@@ -46,8 +46,8 @@ Points have no daily loss cap: the score can keep falling, and the mood is what 
 
 Each one is fun without rewards. XP is shown only on the small result card.
 
-1. **Snack toss**: The gremlin sways at the top of the screen. Flick cookies up from the bottom, 8 per round. Catches are decided at launch by solving the arc against the gremlin's known sway, so frame rate never changes the result. Won at 5 or more catches. VoiceOver and Switch Control get a "Throw to the gremlin" action that aims and can still miss.
-2. **Sock tug**: drag the sock down. The gremlin alternates strong pulls (1.3–2.3 s) with 0.75 s tired windows. The tired window is telegraphed by the gremlin's face, a haptic tick, and a VoiceOver "Now!".
+1. **Snack toss**: The gremlin sways at the top of the screen. Flick cookies up from the bottom, 8 per round, or tap to toss one roughly at the gremlin (it can still miss). Catches are decided at launch by solving the arc against the gremlin's known sway, so frame rate never changes the result. Won at 5 or more catches. VoiceOver and Switch Control get a "Throw to the gremlin" action that aims and can still miss.
+2. **Sock tug**: drag the sock down. The gremlin alternates strong pulls (1.3–2.3 s) with 0.75 s tired windows. The tired window is telegraphed by the gremlin's face, a haptic tick, and a VoiceOver "Now!". With VoiceOver on, tired windows last 1.5 s so the cue can be heard and acted on.
    - Pulling in a tired window wins ground fast.
    - Holding light tension during strong pulls is fine. Yanking hard during strong pulls makes the sock slip. Nonstop yanking **loses**, and a test checks this.
    - Rounds last up to 20 s. A cancelled gesture resets the pull to 0 (`@GestureState`).
@@ -75,7 +75,7 @@ There is one challenge per local day, picked by a stable hash of the date (the s
 - find the gremlin on the first try
 - pet 8 times
 - a proper nap (5 min or more)
-- play all three games
+- play three different games
 
 Completing it grants 30 XP and a **gold stamp** once. It is shown only as an icon and progress pips on the stamp card.
 
@@ -125,7 +125,7 @@ The menu has a **Share** item. It renders a 1080×1350 card from the real state:
   - three ready-made looks on the collection page: Night Owl, Aurora Raid, Galaxy Brain. Tapping a look or any single item dresses the preview stage.
 - In the **Wardrobe**, every Midnight Snack item is listed with a ✦ badge (tap to preview on the gremlin), under a Midnight Snack banner that opens the collection until it is owned. It is also always reachable from **Settings › Midnight Snack**, a quiet page that lets anyone, including App Review, preview it and buy it. It never appears on the home screen.
 - Every item and every reaction can be **previewed on the gremlin** before buying. Buying is a separate, explicit tap on the localized price.
-- Normal care, all three toys, progression and weekly gifts are free.
+- Normal care, all four toys, progression and weekly gifts are free.
 - Handling:
   - StoreKit 2, with only verified transactions counted
   - pending (Ask to Buy) is shown as "Waiting for approval"

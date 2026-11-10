@@ -19,6 +19,8 @@ struct CushionHuntView: View {
     @State private var found = false
 
     private let colors = [Color(hex: 0xFFD166), Color(hex: 0x06D6A0), Color(hex: 0xEF476F)]
+    /// Spoken names, so VoiceOver players can follow the same cushion sighted players watch.
+    private let colorNames = ["yellow", "green", "red"]
 
     var body: some View {
         GeometryReader { geo in
@@ -40,7 +42,7 @@ struct CushionHuntView: View {
                     .offset(y: lifted.contains(c) ? -90 : 0)
                     .position(x: x(for: c, width: geo.size.width), y: y)
                     .zIndex(Double(slot[c]))
-                    .accessibilityLabel("Cushion \(["left", "middle", "right"][slot[c]])")
+                    .accessibilityLabel("\(colorNames[c].capitalized) cushion, \(["left", "middle", "right"][slot[c]])")
                     .accessibilityHint(phase == .guess ? "Look under this one" : "")
                 }
 
@@ -72,7 +74,7 @@ struct CushionHuntView: View {
     }
 
     private func play() async {
-        UIAccessibility.post(notification: .announcement, argument: "Watch the cushions")
+        Announcer.say("It's hiding under the \(colorNames[hidden]) cushion. Watch the cushions.")
         try? await Task.sleep(for: .seconds(1.3))
         withAnimation(.easeIn(duration: 0.3)) { phase = .shuffle }
         model.sounds.play(.whoosh)
@@ -89,7 +91,7 @@ struct CushionHuntView: View {
             try? await Task.sleep(for: .seconds(speed + 0.06))
         }
         phase = .guess
-        UIAccessibility.post(notification: .announcement, argument: "Where did it go?")
+        Announcer.say("Where did it go?")
     }
 
     private func guess(_ c: Int) {
@@ -99,13 +101,18 @@ struct CushionHuntView: View {
         if c == hidden {
             found = true
             model.sounds.play(.pop)
+            model.haptics.play(.success)
+            Announcer.say(guesses == 1 ? "Found it, first try!" : "Found it!")
             end()
         } else if guesses >= 2 {
             withAnimation(.spring(response: 0.35, dampingFraction: 0.6).delay(0.4)) { _ = lifted.insert(hidden) }
             model.sounds.play(.boing)
+            Announcer.say("Not there. It was under the \(colorNames[hidden]) cushion.")
             end()
         } else {
             model.haptics.play(.nope)
+            model.sounds.play(.miss)
+            Announcer.say("Not there. One guess left.")
         }
     }
 

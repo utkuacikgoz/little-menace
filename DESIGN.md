@@ -74,9 +74,11 @@ Drag: the body stretches toward the finger through a rubber-band curve (limit 70
   - the snack-toss sway is halved and slowed
   - cushion swaps are fewer and slower
   - the mischief prop doesn't bob
+  - snack cookies don't spin, buttons dim instead of squishing when pressed, and the furious sky fades in
 - **VoiceOver**:
   - The gremlin is one element. Its value speaks its state (hungry, sleepy, bored, level). Its actions are pet (default), Feed, Nap/Wake and Tickle.
-  - Speech lines and toasts are announced.
+  - Speech lines, toasts, mood changes, catches and misses, and game results are announced. Announcements queue, so one never cuts off another; only timing cues ("Now!", Copycat moves) interrupt.
+  - Rewards earned during a round wait until the player is back home, so they are seen and heard.
   - Every icon-only control has a label.
   - Each toy has an accessible path: throw action, pull action with a "Now!" cue, and cushions as labelled buttons.
 - **Large text**: the little text there is uses Dynamic Type styles, so it grows and wraps.

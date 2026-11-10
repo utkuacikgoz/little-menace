@@ -7,6 +7,7 @@ struct Toast: Identifiable, Equatable {
     let symbol: String
     var text: String?
     let spoken: String
+    var sound: Sound = .stamp
 }
 
 /// Points just gained or lost, shown next to the score for a moment.
@@ -57,6 +58,8 @@ final class GameModel {
     @ObservationIgnored private var ticker: Task<Void, Never>?
     @ObservationIgnored private var specialTask: Task<Void, Never>?
     @ObservationIgnored private var deltaTask: Task<Void, Never>?
+    /// The last mood VoiceOver heard about, so a change of mood is announced once.
+    @ObservationIgnored private var announcedMood: Mood = .calm
 
     var state: PetState { game.state }
 
@@ -75,6 +78,7 @@ final class GameModel {
         #endif
         showHowToPlay = !game.state.howToPlayShown
         applyPrefs()
+        announcedMood = game.state.mood
         handle(game.tick(now: now))
         if game.state.pendingWake {
             game.acknowledgeWake()
@@ -196,7 +200,7 @@ final class GameModel {
             guard !Task.isCancelled else { return }
             self?.bubble = nil
         }
-        UIAccessibility.post(notification: .announcement, argument: "\(state.titleName): \(line)")
+        Announcer.say("\(state.titleName): \(line)")
     }
 
     func cancelSpecial() {
@@ -333,6 +337,7 @@ final class GameModel {
             react(refusal.reaction, for: 1.6)
             say(refusal.reaction)
             haptics.play(.nope)
+            sounds.play(.nope)
         } else {
             if out.reaction != .asleep { react(out.reaction, for: duration) } else { transient = nil }
             say(out.reaction)
@@ -354,6 +359,7 @@ final class GameModel {
             react(refusal.reaction, for: 1.6)
             say(refusal.reaction)
             haptics.play(.nope)
+            sounds.play(.nope)
         }
     }
 
@@ -389,10 +395,12 @@ final class GameModel {
         game.cancelActivity()
         session = nil
         activity = nil
+        playHeldToasts()
     }
 
     func closeActivity(won: Bool?) {
         activity = nil
+        playHeldToasts()
         if let won { react(won ? .win : .lose, for: 1.8); say(won ? .win : .lose, chance: 0.6) }
         offerRemindersIfUseful()
     }
@@ -423,10 +431,10 @@ final class GameModel {
             case .points(let amount, let reason):
                 showDelta(amount)
                 if amount < 0 {
-                    UIAccessibility.post(notification: .announcement, argument: "Minus \(-amount) points. \(reason.label).")
+                    Announcer.say("Minus \(-amount) points. \(reason.label).")
                 }
             case .levelUp(let level):
-                enqueue(Toast(symbol: "arrow.up.circle.fill", text: "\(level)", spoken: "Level \(level)"))
+                enqueue(Toast(symbol: "arrow.up.circle.fill", text: "\(level)", spoken: "Level \(level)", sound: .levelup))
                 react(.levelUp, for: 2)
             case .unlocked(let id):
                 let name = Catalog.item(id)?.name ?? id
@@ -445,6 +453,20 @@ final class GameModel {
             case .autoWoke:
                 break
             }
+        }
+        announceMoodChange()
+    }
+
+    /// Going furious blocks every game, so it must not be silent.
+    private func announceMoodChange() {
+        let mood = state.mood
+        guard mood != announcedMood else { return }
+        defer { announcedMood = mood }
+        switch mood {
+        case .furious: Announcer.say("\(state.titleName) is furious. Pet it to calm it down.")
+        case .angry where announcedMood < .angry: Announcer.say("\(state.titleName) is angry.")
+        case .calm where announcedMood >= .angry: Announcer.say("\(state.titleName) has calmed down.")
+        default: break
         }
     }
 
@@ -472,6 +494,11 @@ final class GameModel {
 
     private func enqueue(_ t: Toast) {
         toastQueue.append(t)
+        // During a round the home screen is covered; rewards wait until the player is back.
+        if toastTask == nil && activity == nil { showNextToast() }
+    }
+
+    private func playHeldToasts() {
         if toastTask == nil { showNextToast() }
     }
 
@@ -483,8 +510,8 @@ final class GameModel {
         }
         let next = toastQueue.removeFirst()
         toast = next
-        sounds.play(.stamp)
-        UIAccessibility.post(notification: .announcement, argument: next.spoken)
+        sounds.play(next.sound)
+        Announcer.say(next.spoken)
         toastTask = Task { [weak self] in
             try? await Task.sleep(for: .seconds(1.6))
             guard !Task.isCancelled else { return }

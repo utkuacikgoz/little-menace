@@ -184,7 +184,7 @@ struct CollectionView: View {
                     .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).stroke(Ink.body, lineWidth: on ? 3 : 0))
                 Text(item.name)
                     .font(.system(.caption2, design: .rounded).weight(.bold))
-                    .lineLimit(2).multilineTextAlignment(.center)
+                    .lineLimit(3).multilineTextAlignment(.center)
                     .minimumScaleFactor(0.8)
             }
         }

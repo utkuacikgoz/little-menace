@@ -3,6 +3,23 @@ import UIKit
 
 enum Sound: String, CaseIterable {
     case pop, chomp, boing, whoosh, win, lose, snore, stamp
+    /// Level up gets its own fanfare; a miss or slip is a soft thud; a refusal is a short "nuh-uh".
+    case levelup, miss, nope
+}
+
+/// VoiceOver announcements wait their turn instead of cutting off the one being spoken.
+enum Announcer {
+    static func say(_ text: String) {
+        guard UIAccessibility.isVoiceOverRunning else { return }
+        UIAccessibility.post(notification: .announcement,
+                             argument: NSAttributedString(string: text, attributes: [.accessibilitySpeechQueueAnnouncement: true]))
+    }
+
+    /// Timing cues ("Now!", a dance move) must land on the beat, so they interrupt.
+    static func now(_ text: String) {
+        guard UIAccessibility.isVoiceOverRunning else { return }
+        UIAccessibility.post(notification: .announcement, argument: text)
+    }
 }
 
 /// Short bundled effects. Ambient session: respects the silent switch and mixes with music.

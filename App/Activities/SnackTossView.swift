@@ -48,7 +48,7 @@ struct SnackTossView: View {
                         let t = now.timeIntervalSince(f.start)
                         if f.caughtAfter.map({ t < $0 }) ?? (t < 2) {
                             CookieView(size: 40)
-                                .rotationEffect(.degrees(t * 540))
+                                .rotationEffect(.degrees(reduceMotion ? 0 : t * 540))
                                 .position(position(of: f, after: t))
                         }
                     }
@@ -57,11 +57,13 @@ struct SnackTossView: View {
                         CookieView(size: 56)
                             .offset(aim)
                             .position(launchPoint(in: size))
+                            // A tap tosses it roughly at the gremlin; a flick aims it yourself.
+                            .onTapGesture { autoThrow(in: size, spread: 75) }
                             .gesture(flick(in: size))
                             .accessibilityElement()
                             .accessibilityLabel("Snack")
-                            .accessibilityHint("Swipe up to throw. Or use the throw action.")
-                            .accessibilityAction(named: "Throw snack") { autoThrow(in: size) }
+                            .accessibilityHint("Double tap to throw it at the gremlin.")
+                            .accessibilityAction { autoThrow(in: size, spread: 40) }
                     }
 
                     scoreDots
@@ -120,13 +122,14 @@ struct SnackTossView: View {
             }
     }
 
-    /// VoiceOver / Switch Control: aims at where the gremlin will be. Still misses sometimes.
-    private func autoThrow(in size: CGSize) {
+    /// A tap, VoiceOver or Switch Control: aims at where the gremlin will be, give or take `spread` points,
+    /// so it still misses sometimes. A flick is the skilful throw.
+    private func autoThrow(in size: CGSize, spread: CGFloat) {
         let origin = launchPoint(in: size)
         let mouthY = size.height * 0.26 + 150 * 0.08
         let vy: CGFloat = -1650
         guard let t = crossing(originY: origin.y, vy: vy, targetY: mouthY) else { return }
-        let target = gremlinX(at: Date().addingTimeInterval(t), width: size.width) + CGFloat.random(in: -40...40)
+        let target = gremlinX(at: Date().addingTimeInterval(t), width: size.width) + CGFloat.random(in: -spread...spread)
         launch(from: origin, velocity: CGVector(dx: (target - origin.x) / CGFloat(t), dy: vy), size: size)
     }
 
@@ -164,8 +167,11 @@ struct SnackTossView: View {
                 react(.feed)
                 model.sounds.play(.chomp)
                 model.haptics.play(.thud, intensity: 0.7)
+                Announcer.say("Caught. \(caught) of \(Self.snacks).")
             } else {
                 react(.lose)
+                model.sounds.play(.miss)
+                Announcer.say("Missed.")
             }
             if resolved == Self.snacks { end() }
         }

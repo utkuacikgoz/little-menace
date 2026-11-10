@@ -75,15 +75,28 @@ struct RingButton<Icon: View>: View {
         }
         .buttonStyle(SquishButtonStyle())
         .accessibilityLabel(label)
-        .accessibilityValue(ring.map { "\(Int($0 * 100)) percent" } ?? "")
+        // Speak what the screen shows ("Hungry 50%"), not a bare percentage.
+        .accessibilityValue(caption ?? ring.map { "\(Int($0 * 100)) percent" } ?? "")
     }
 }
 
 struct SquishButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .scaleEffect(configuration.isPressed ? 0.88 : 1)
-            .animation(.spring(response: 0.25, dampingFraction: 0.5), value: configuration.isPressed)
+        Squish(pressed: configuration.isPressed) { configuration.label }
+    }
+}
+
+/// The press squish; with Reduce Motion a brief dim instead.
+private struct Squish<Label: View>: View {
+    let pressed: Bool
+    @ViewBuilder var label: () -> Label
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    var body: some View {
+        label()
+            .scaleEffect(pressed && !reduceMotion ? 0.88 : 1)
+            .opacity(pressed && reduceMotion ? 0.7 : 1)
+            .animation(reduceMotion ? .easeOut(duration: 0.1) : .spring(response: 0.25, dampingFraction: 0.5), value: pressed)
     }
 }
 

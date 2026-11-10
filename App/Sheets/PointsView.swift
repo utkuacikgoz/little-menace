@@ -4,6 +4,7 @@ import MenaceCore
 /// The score, today's ups and downs, recent history, and how points are earned and lost.
 /// Opened from Settings and from the score on the home screen.
 struct PointsView: View {
+    @ScaledMetric(relativeTo: .largeTitle) private var headerSize: CGFloat = 44
     @Environment(GameModel.self) private var model
     @State private var tab = 0
 
@@ -57,7 +58,7 @@ struct PointsView: View {
                 Image(systemName: "star.fill").foregroundStyle(Ink.iris)
                 Text(book.total, format: .number).monospacedDigit()
             }
-            .font(.system(size: 44, weight: .heavy, design: .rounded))
+            .font(.system(size: headerSize, weight: .heavy, design: .rounded))
             VStack(spacing: 6) {
                 HStack {
                     Text("Level \(model.state.level)")

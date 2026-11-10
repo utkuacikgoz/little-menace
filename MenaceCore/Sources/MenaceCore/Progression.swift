@@ -32,7 +32,7 @@ public enum ChallengeKind: String, CaseIterable, Sendable {
         case .firstTryFind: return "Find the gremlin on the first try"
         case .petEight: return "Give eight pets"
         case .restfulNap: return "Let it have a proper nap"
-        case .playAllThree: return "Play all three games"
+        case .playAllThree: return "Play three different games"
         }
     }
 
