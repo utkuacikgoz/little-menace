@@ -165,7 +165,8 @@ final class LittleMenaceUITests: XCTestCase {
     func testSnackTossRound() {
         launch(["-LMScreen", "home"])
         open("Snack toss")
-        let snack = app.otherElements["Snack"].firstMatch
+        // The snack takes a tap too, so it can be exposed as a button: find it by name, whatever its type.
+        let snack = app.descendants(matching: .any)["Snack"].firstMatch
         XCTAssertTrue(snack.waitForExistence(timeout: 5))
         for _ in 0..<8 {
             if !snack.exists { break }
@@ -260,7 +261,7 @@ final class LittleMenaceUITests: XCTestCase {
         XCTAssertTrue(b.waitForExistence(timeout: 3))
         XCTAssertTrue(waitHittable(b), "\(item) is ready before selecting it")
         b.tap()
-        XCTAssertTrue(waitGone(menu), "The menu closes after selecting \(item): \(app.debugDescription)")
+        XCTAssertTrue(waitGone(menu), "The menu closes after selecting \(item): \(app.debugDescription.replacingOccurrences(of: "\n", with: " ⏎ "))")
     }
 
     func testWardrobeEquipAndPreview() {
@@ -350,6 +351,12 @@ final class LittleMenaceUITests: XCTestCase {
                       "stamp card opens at the largest text size: \(app.debugDescription.replacingOccurrences(of: "\n", with: " ⏎ "))")
     }
 
+    /// Swipe a sheet away and wait until home is back, so the next menu opens on home, not on a closing sheet.
+    private func dismissSheet() {
+        app.swipeDown(velocity: .fast)
+        XCTAssertTrue(waitHittable(app.buttons["Feed"], timeout: 8), "the sheet closes: \(app.debugDescription.replacingOccurrences(of: "\n", with: " ⏎ "))")
+    }
+
     /// Xcode's built-in audit on each screen. Issues are logged as AUDIT lines for triage;
     /// categories that are genuine bugs for this app fail the test.
     func testAccessibilityAudit() throws {
@@ -366,10 +373,10 @@ final class LittleMenaceUITests: XCTestCase {
         try audit("home")
         menu("Stamps")
         try audit("stamps")
-        app.swipeDown(velocity: .fast)
+        dismissSheet()
         menu("Wardrobe")
         try audit("wardrobe")
-        app.swipeDown(velocity: .fast)
+        dismissSheet()
         menu("Settings")
         try audit("settings")
         XCTAssertTrue(failures.isEmpty, failures.joined(separator: "\n"))
