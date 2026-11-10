@@ -6,6 +6,7 @@ import MenaceCore
 enum AppLinks {
     static let privacy = URL(string: "https://littlemenace.fun/privacy")!
     static let support = URL(string: "https://littlemenace.fun/support")!
+    static let site = URL(string: "https://littlemenace.fun")!
 }
 
 struct SettingsView: View {
@@ -29,6 +30,7 @@ struct SettingsView: View {
                         .autocorrectionDisabled()
                         .accessibilityLabel("Name")
                 }
+                .creamSection()
 
                 Section {
                     NavigationLink {
@@ -53,6 +55,7 @@ struct SettingsView: View {
                         Label("How to Play", systemImage: "book.fill")
                     }
                 }
+                .creamSection()
 
                 Section {
                     Toggle(isOn: Binding(get: { prefs.sound }, set: { model.setSound($0) })) {
@@ -62,6 +65,7 @@ struct SettingsView: View {
                         Label("Haptics", systemImage: "hand.tap.fill")
                     }
                 }
+                .creamSection()
 
                 Section {
                     Toggle(isOn: Binding(get: { prefs.remindersEnabled }, set: { on in Task { await model.setReminders(on) } })) {
@@ -81,6 +85,7 @@ struct SettingsView: View {
                     Text("At most one gentle nudge a day, and they stop if you're away for a few days.")
                         .foregroundStyle(Color.primary.opacity(0.8))
                 }
+                .creamSection()
 
                 Section {
                     ForEach(Catalog.collections) { c in
@@ -109,6 +114,7 @@ struct SettingsView: View {
                     Link(destination: AppLinks.privacy) { Label("Privacy", systemImage: "hand.raised.fill") }
                     Link(destination: AppLinks.support) { Label("Support", systemImage: "questionmark.circle.fill") }
                 }
+                .creamSection()
 
                 Section {
                     Button(role: .destructive) { confirmReset = true } label: {
@@ -118,7 +124,9 @@ struct SettingsView: View {
                     Text("Start Over resets \(model.state.displayName)'s level, points, stamps and discoveries. Purchases stay yours.")
                         .foregroundStyle(Color.primary.opacity(0.8))
                 }
+                .creamSection()
             }
+            .creamForm()
             .onAppear { nameDraft = model.state.name }
             .onDisappear { if nameDraft != model.state.name { model.rename(nameDraft) } }
             .navigationTitle("Settings")

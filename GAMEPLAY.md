@@ -44,14 +44,14 @@ Points have no daily loss cap: the score can keep falling, and the mood is what 
 
 ## Toys (four short, replayable rounds)
 
-Each one is fun without rewards. XP is shown only on the small result card.
+Each one is fun without rewards. A round ends on a full-screen result: won or lost, what happened, the points counting up, the level bar, any level, stamp or gift it earned, the gremlin's own line about it, and a "Brag about it" share button.
 
 1. **Snack toss**: The gremlin sways at the top of the screen. Flick cookies up from the bottom, 8 per round, or tap to toss one roughly at the gremlin (it can still miss). Catches are decided at launch by solving the arc against the gremlin's known sway, so frame rate never changes the result. Won at 5 or more catches. VoiceOver and Switch Control get a "Throw to the gremlin" action that aims and can still miss.
 2. **Sock tug**: drag the sock down. The gremlin alternates strong pulls (1.3–2.3 s) with 0.75 s tired windows. The tired window is telegraphed by the gremlin's face, a haptic tick, and a VoiceOver "Now!". With VoiceOver on, tired windows last 1.5 s so the cue can be heard and acted on.
    - Pulling in a tired window wins ground fast.
    - Holding light tension during strong pulls is fine. Yanking hard during strong pulls makes the sock slip. Nonstop yanking **loses**, and a test checks this.
    - Rounds last up to 20 s. A cancelled gesture resets the pull to 0 (`@GestureState`).
-3. **Cushion hunt**: The gremlin peeks from one of three cushions, then the cushions swap 6 times (4 slower swaps with Reduce Motion). You get two guesses. Finding the gremlin on the first try is the best result.
+3. **Cushion hunt**: The gremlin peeks from one of three identical cushions, then the cushions swap 6 times (4 slower swaps with Reduce Motion). You get two guesses. Finding the gremlin on the first try is the best result. Because the cushions look the same, following the shuffle is the game; VoiceOver announces where it hid and each swap ("Left and right swap."), with slower swaps.
 4. **Copycat Dance**: the gremlin dances a routine of moves (up, down, left, right); you copy it with the arrows or by swiping. Each routine copied adds a move, starting at 3. The first slip ends the round. Copying 5 or more is a win; 12 is a perfect round. Never the same move three times in a row.
 
 ## Progression
@@ -65,7 +65,7 @@ Each one is fun without rewards. XP is shown only on the small result card.
   - Level 3: Scarf
   - Level 4: Argyle sock
   - Level 5: Bubblegum background
-- **Discoveries** (10, each granted once): first snack, first nap, first tug win, perfect toss, first-try find, playing after midnight, menace personality, softie personality, seven stamps in a week, five visit days. Undiscovered ones show as "?".
+- **Discoveries** (10, each granted once; one not found yet shows a teaser in the gremlin's voice, e.g. "Past its bedtime. And yours."): first snack, first nap, first tug win, perfect toss, first-try find, playing after midnight, menace personality, softie personality, seven stamps in a week, five visit days. Undiscovered ones show as "?".
 
 ## Daily challenge
 

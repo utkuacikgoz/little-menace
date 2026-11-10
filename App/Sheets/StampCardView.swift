@@ -201,17 +201,25 @@ struct StampCardView: View {
                                     .font(.headline.weight(.bold))
                                     .frame(width: 38, height: 38)
                                     .background(Ink.body.opacity(found ? 0.14 : 0.05), in: Circle())
-                                Text(found ? d.spoken : "???")
-                                    .font(.system(.footnote, design: .rounded).weight(.heavy))
+                                // Not found yet: a nudge in its own voice, enough to chase.
+                                Text(found ? d.spoken : d.teaser)
+                                    .font(.system(.footnote, design: .rounded).weight(found ? .heavy : .semibold))
+                                    .italic(!found)
                                     .multilineTextAlignment(.leading)
                                     .fixedSize(horizontal: false, vertical: true)
                                 Spacer(minLength: 0)
                             }
                             .padding(8)
                             .background(Ink.body.opacity(detail == .discovery(d) ? 0.14 : 0.05), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-                            .opacity(found ? 1 : 0.6)
+                            .overlay {
+                                if !found {
+                                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                        .strokeBorder(Ink.body.opacity(0.3), style: StrokeStyle(lineWidth: 1.5, dash: [4, 3]))
+                                }
+                            }
+                            .opacity(found ? 1 : 0.85)
                         }
-                        .accessibilityLabel(found ? d.spoken : "Undiscovered. \(d.hint)")
+                        .accessibilityLabel(found ? d.spoken : "Undiscovered. \(d.teaser) \(d.hint)")
                     }
                 }
             }

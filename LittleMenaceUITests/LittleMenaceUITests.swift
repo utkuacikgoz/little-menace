@@ -185,9 +185,9 @@ final class LittleMenaceUITests: XCTestCase {
         finishRound(timeout: 30) // rounds end by 20 s at the latest
     }
 
-    /// Cushions are labelled by colour and position ("Green cushion, left"); find one by where it sits.
+    /// The cushions are identical and labelled by where they sit ("Cushion, left").
     private func cushion(_ spot: String) -> XCUIElement {
-        app.buttons.matching(NSPredicate(format: "label ENDSWITH %@", " cushion, \(spot)")).firstMatch
+        app.buttons["Cushion, \(spot)"]
     }
 
     func testCushionHuntRound() {

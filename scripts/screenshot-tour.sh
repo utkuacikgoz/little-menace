@@ -52,21 +52,17 @@ if [ "$PART" = store ]; then
   shot "$PM" 20-sneeze -LMScreen idleAct -LMAct sneeze
 elif [ "$PART" = new ]; then
   # Owner review: every screen four times, as option A, B, C and D (-LMVariant, DEBUG only).
-  abcd() { # screen-id [launch args...]
-    local S=$1; shift
-    for V in A B C D; do shot "$PM" "v-$S-$V" -LMVariant "$S$V" "$@"; done
+  abcd() { # screen-id shot-name [launch args...]
+    local S=$1 N=$2; shift 2
+    for V in A B C D; do shot "$PM" "v-$N-$V" -LMVariant "$S$V" "$@"; done
   }
-  # Final check of the owner's picks S21C and S22C. For a new review, use abcd.
-  shot "$PM" f-S21-stamps -LMScreen stamps -LMPage 4
-  shot "$PM" f-S22-wardrobe -LMScreen wardrobe -LMPreview nightcap -LMPrice '$3.99'
-  xcrun simctl shutdown "$PM"
-  SE=$(udid "iPhone SE (3rd generation)")
-  [ -n "$SE" ] || SE=$(udid "iPhone 16e")
-  if [ -n "$SE" ]; then
-    boot "$SE"
-    shot "$SE" f-S21-stamps-se -LMScreen stamps -LMPage 4
-    shot "$SE" f-S22-wardrobe-se -LMScreen wardrobe -LMPreview nightcap -LMPrice '$3.99'
-  fi
+  # Final check of the owner's picks S24D, S25B, S26C and S27B (S23 kept A). For a new review, use abcd.
+  shot "$PM" f-S24-win -LMScreen snackToss -LMResult win
+  shot "$PM" f-S24-lose -LMScreen sockTug -LMFreeze YES -LMResult lose
+  shot "$PM" f-S25-settings -LMScreen settings
+  shot "$PM" f-S25-points -LMScreen points
+  shot "$PM" f-S26-discoveries -LMScreen stamps
+  shot "$PM" f-S27-cushions -LMScreen cushionHunt -LMFreeze YES
 elif [ "$PART" = a ]; then
   shot "$PM" 01-home -LMScreen home
   shot "$PM" 02-name-prompt -LMScreen namePrompt

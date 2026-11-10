@@ -19,14 +19,26 @@ struct CookieView: View {
     }
 }
 
+/// A plump cushion with a seam, a button tuft and corner tassels. All three in Cushion hunt are identical,
+/// so following the shuffle is the game.
 struct CushionView: View {
-    var color: Color = Color(hex: 0xFFD166)
     var body: some View {
+        let base = Color(hex: 0xF4B942), dark = Color(hex: 0xC98A1F)
         ZStack {
-            RoundedRectangle(cornerRadius: 30, style: .continuous).fill(color)
-            RoundedRectangle(cornerRadius: 30, style: .continuous).stroke(.black.opacity(0.12), lineWidth: 3)
-            Circle().fill(.black.opacity(0.15)).frame(width: 10, height: 10)
+            RoundedRectangle(cornerRadius: 34, style: .continuous)
+                .fill(LinearGradient(colors: [Color(hex: 0xFFD77A), base, dark], startPoint: .top, endPoint: .bottom))
+            RoundedRectangle(cornerRadius: 28, style: .continuous).inset(by: 7)
+                .stroke(dark.opacity(0.55), style: StrokeStyle(lineWidth: 1.5, dash: [3, 3]))
+            Ellipse().fill(.white.opacity(0.35)).frame(width: 46, height: 12).offset(x: -14, y: -20).blur(radius: 1)
+            Circle().fill(dark).frame(width: 11, height: 11)
+                .overlay(Circle().fill(.white.opacity(0.4)).frame(width: 4, height: 4).offset(x: -1.5, y: -1.5))
+                .shadow(color: dark.opacity(0.6), radius: 2, y: 1)
+            ForEach(0..<4, id: \.self) { i in
+                Circle().fill(Color(hex: 0xE5283B)).frame(width: 9, height: 9)
+                    .offset(x: i % 2 == 0 ? -44 : 44, y: i < 2 ? -31 : 31)
+            }
         }
+        .shadow(color: .black.opacity(0.18), radius: 4, y: 3)
         .frame(width: 96, height: 70)
         .accessibilityHidden(true)
     }

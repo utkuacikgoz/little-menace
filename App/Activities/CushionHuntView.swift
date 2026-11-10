@@ -18,9 +18,8 @@ struct CushionHuntView: View {
     @State private var guesses = 0
     @State private var found = false
 
-    private let colors = [Color(hex: 0xFFD166), Color(hex: 0x06D6A0), Color(hex: 0xEF476F)]
-    /// Spoken names, so VoiceOver players can follow the same cushion sighted players watch.
-    private let colorNames = ["yellow", "green", "red"]
+    /// The cushions are identical, so VoiceOver players follow the same thing sighted players do: the swaps.
+    private static let spots = ["left", "middle", "right"]
 
     var body: some View {
         GeometryReader { geo in
@@ -35,14 +34,14 @@ struct CushionHuntView: View {
 
                 ForEach(0..<3, id: \.self) { c in
                     Button { guess(c) } label: {
-                        CushionView(color: colors[c])
+                        CushionView()
                     }
                     .buttonStyle(SquishButtonStyle())
                     .disabled(phase != .guess || lifted.contains(c))
                     .offset(y: lifted.contains(c) ? -90 : 0)
                     .position(x: x(for: c, width: geo.size.width), y: y)
                     .zIndex(Double(slot[c]))
-                    .accessibilityLabel("\(colorNames[c].capitalized) cushion, \(["left", "middle", "right"][slot[c]])")
+                    .accessibilityLabel("Cushion, \(Self.spots[slot[c]])")
                     .accessibilityHint(phase == .guess ? "Look under this one" : "")
                 }
 
@@ -74,18 +73,29 @@ struct CushionHuntView: View {
     }
 
     private func play() async {
-        Announcer.say("It's hiding under the \(colorNames[hidden]) cushion. Watch the cushions.")
+        #if DEBUG
+        // Screenshot tours: `-LMFreeze YES` holds the shuffle.
+        if UserDefaults.standard.bool(forKey: "LMFreeze") {
+            phase = .shuffle
+            slot = [2, 0, 1]
+            return
+        }
+        #endif
+        Announcer.say("It's hiding under the \(Self.spots[slot[hidden]]) cushion. Listen for the swaps.")
         try? await Task.sleep(for: .seconds(1.3))
         withAnimation(.easeIn(duration: 0.3)) { phase = .shuffle }
         model.sounds.play(.whoosh)
         try? await Task.sleep(for: .seconds(0.45))
 
         let swaps = reduceMotion ? 4 : 6
-        let speed = reduceMotion ? 0.7 : 0.42
+        // VoiceOver players follow spoken swaps, which need time to be heard.
+        let speed = UIAccessibility.isVoiceOverRunning ? 1.2 : reduceMotion ? 0.7 : 0.42
         for _ in 0..<swaps {
             guard !Task.isCancelled else { return }
             let a = Int.random(in: 0...2)
             let b = (a + Int.random(in: 1...2)) % 3
+            let cols = [slot[a], slot[b]].sorted()
+            Announcer.say("\(Self.spots[cols[0]].capitalized) and \(Self.spots[cols[1]]) swap.")
             withAnimation(.easeInOut(duration: speed)) { slot.swapAt(a, b) }
             model.haptics.play(.tap, intensity: 0.4)
             try? await Task.sleep(for: .seconds(speed + 0.06))
@@ -107,7 +117,7 @@ struct CushionHuntView: View {
         } else if guesses >= 2 {
             withAnimation(.spring(response: 0.35, dampingFraction: 0.6).delay(0.4)) { _ = lifted.insert(hidden) }
             model.sounds.play(.boing)
-            Announcer.say("Not there. It was under the \(colorNames[hidden]) cushion.")
+            Announcer.say("Not there. It was under the \(Self.spots[slot[hidden]]) cushion.")
             end()
         } else {
             model.haptics.play(.nope)

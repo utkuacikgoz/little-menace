@@ -39,6 +39,8 @@ Ink:
 
 Type is SF Rounded heavy, used only in bubbles, toasts and numbers.
 
+Sheets share one look: a cream page (`Ink.eye`). Wardrobe, Stamps, Share and Midnight Snack use soft tiles; Settings and Points are lists on the cream page with white rows, rounded type and orange controls.
+
 ## Character rig (`App/Gremlin`)
 
 The gremlin is drawn in a 200×220 design space from separate parts:

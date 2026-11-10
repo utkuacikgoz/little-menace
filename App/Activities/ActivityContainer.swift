@@ -2,7 +2,7 @@ import SwiftUI
 import StoreKit
 import MenaceCore
 
-/// Hosts one round at a time: close button, the game, and a tiny result card with replay.
+/// Hosts one round at a time: close button, the game, then the round's result with replay.
 struct ActivityContainer: View {
     let kind: ActivityKind
     @Environment(GameModel.self) private var model
@@ -11,6 +11,8 @@ struct ActivityContainer: View {
     @State private var result: ActivityResult?
     @State private var earnedXP = 0
     @AccessibilityFocusState private var resultFocused: Bool
+    /// Screenshot tours only: rewards to show on a faked result.
+    @State private var debugRewards: [Toast]?
 
     var body: some View {
         ZStack {
@@ -23,9 +25,9 @@ struct ActivityContainer: View {
                 .opacity(result == nil ? 1 : 0)
 
             if let result {
-                ResultCard(result: result, xp: earnedXP, hat: model.state.wardrobe.hat, neck: model.state.wardrobe.neck,
-                           fur: model.state.wardrobe.fur, focus: $resultFocused, replay: replay, done: { model.closeActivity(won: result.won) })
-                    .transition(.scale(scale: 0.8).combined(with: .opacity))
+                RoundResult(result: result, points: earnedXP, rewards: debugRewards ?? model.roundRewards,
+                            focus: $resultFocused, replay: replay, done: { model.closeActivity(won: result.won) })
+                    .transition(.scale(scale: 0.9).combined(with: .opacity))
             }
 
             if result == nil {
@@ -70,7 +72,11 @@ struct ActivityContainer: View {
             // Screenshot tours: `-LMResult win|lose` shows the result card straight away.
             if let r = UserDefaults.standard.string(forKey: "LMResult") {
                 earnedXP = r == "win" ? 26 : 8
-                result = ActivityResult(kind: kind, quality: r == "win" ? 0.8 : 0.25, score: 3, won: r == "win")
+                result = ActivityResult(kind: kind, quality: r == "win" ? 0.8 : 0.25, score: r == "win" ? 6 : 3, won: r == "win")
+                if r == "win" {
+                    debugRewards = [Toast(symbol: "arrow.up.circle.fill", text: "\(model.state.level)", spoken: "Level \(model.state.level)"),
+                                    Toast(symbol: "seal.fill", text: "3", spoken: "Stamp 3 this week")]
+                }
             }
         }
         #endif
@@ -119,61 +125,5 @@ struct ActivityContainer: View {
             // Too sleepy for another round: back home, where the gremlin shows why.
             model.closeActivity(won: nil)
         }
-    }
-}
-
-private struct ResultCard: View {
-    let result: ActivityResult
-    let xp: Int
-    let hat: String?
-    let neck: String?
-    let fur: String?
-    var focus: AccessibilityFocusState<Bool>.Binding
-    let replay: () -> Void
-    let done: () -> Void
-
-    var body: some View {
-        VStack(spacing: 18) {
-            GremlinView(pose: .pose(for: result.won ? .win : .lose), hat: hat, neck: neck, fur: fur, size: 150)
-            // Dark pill so the reward reads on every background (white on orange was ~2.6:1).
-            HStack(spacing: 8) {
-                Image(systemName: "star.fill").foregroundStyle(Ink.irisLight)
-                Text(signedPoints(xp))
-            }
-            .font(.system(.title2, design: .rounded).weight(.heavy))
-            .foregroundStyle(Ink.eye)
-            .padding(.horizontal, 18)
-            .padding(.vertical, 8)
-            .background(Ink.body, in: Capsule())
-            .accessibilityElement(children: .ignore)
-            .accessibilityLabel("\(result.won ? "Won" : "Lost"). \(xp >= 0 ? "Plus" : "Minus") \(abs(xp)) points")
-            .accessibilityFocused(focus)
-
-            HStack(spacing: 24) {
-                Button(action: replay) {
-                    Image(systemName: "arrow.counterclockwise")
-                        .font(.title.weight(.heavy))
-                        .frame(width: 72, height: 72)
-                        .background(Ink.body.opacity(0.1), in: Circle())
-                        .foregroundStyle(Ink.body)
-                }
-                .buttonStyle(SquishButtonStyle())
-                .accessibilityLabel("Play again")
-                Button(action: done) {
-                    Image(systemName: "checkmark")
-                        .font(.title.weight(.heavy))
-                        .frame(width: 72, height: 72)
-                        .background(Ink.body, in: Circle())
-                        .foregroundStyle(Ink.eye)
-                }
-                .buttonStyle(SquishButtonStyle())
-                .accessibilityLabel("Done")
-            }
-        }
-        .padding(28)
-        // Everything on one cream card.
-        .background(Ink.eye, in: RoundedRectangle(cornerRadius: 32, style: .continuous))
-        .shadow(color: .black.opacity(0.2), radius: 16, y: 6)
-        .padding(.horizontal, 24)
     }
 }
