@@ -1,12 +1,9 @@
 import SwiftUI
 import MenaceCore
 
-/// Review S24 (DEBUG only): the end of a round. B is a bigger card; C a full-screen celebration;
-/// D the celebration plus the gremlin's trash talk and a brag button. A stays `ResultCard`.
+/// The end of a round: a full-screen celebration (confetti on a win), what happened, the points counting up,
+/// the level bar filling, the rewards earned, the gremlin's own take on it, and a brag button.
 struct RoundResult: View {
-    enum Style { case card, celebration, trashTalk }
-
-    let style: Style
     let result: ActivityResult
     let points: Int
     let rewards: [Toast]
@@ -21,70 +18,52 @@ struct RoundResult: View {
     @State private var line: String?
 
     var body: some View {
-        Group {
-            if style == .card { card } else { celebration }
-        }
-        .task { await countUp() }
-        .onAppear { if style == .trashTalk { line = model.roundLine(won: result.won) } }
+        celebration
+            .task { await countUp() }
+            .onAppear { line = model.roundLine(won: result.won) }
     }
 
     // MARK: Layouts
 
-    private var card: some View {
-        VStack(spacing: 16) {
-            Text(headline).font(.system(.title, design: .rounded).weight(.black))
-            GremlinView(pose: .pose(for: result.won ? .win : .lose), hat: wardrobe.hat, neck: wardrobe.neck, fur: wardrobe.fur, size: 140)
-                .accessibilityHidden(true)
-            Text(detail).font(.system(.headline, design: .rounded).weight(.bold)).opacity(0.7)
-            pointsPill
-            levelBar
-            rewardChips
-            buttons
-        }
-        .foregroundStyle(Ink.body)
-        .padding(24)
-        .background(Ink.eye, in: RoundedRectangle(cornerRadius: 32, style: .continuous))
-        .shadow(color: .black.opacity(0.2), radius: 16, y: 6)
-        .padding(.horizontal, 20)
-    }
-
     private var celebration: some View {
-        ZStack {
-            if result.won { Confetti(still: reduceMotion).ignoresSafeArea().allowsHitTesting(false) }
-            VStack(spacing: 18) {
-                Spacer(minLength: 40)
-                Text(headline)
-                    .font(.system(.largeTitle, design: .rounded).weight(.black))
-                    .foregroundStyle(Ink.eye)
-                    .padding(.horizontal, 22).padding(.vertical, 8)
-                    .background(Ink.body.opacity(0.85), in: Capsule())
-                if style == .trashTalk, let line {
-                    SpeechBubble(text: line)
-                        .accessibilityLabel("\(model.state.titleName): \(line)")
-                }
-                GremlinView(pose: .pose(for: result.won ? .win : .lose), hat: wardrobe.hat, neck: wardrobe.neck, fur: wardrobe.fur, size: 210)
-                    .accessibilityHidden(true)
-                VStack(spacing: 12) {
-                    Text(detail).font(.system(.headline, design: .rounded).weight(.bold)).opacity(0.7)
-                    pointsPill
-                    levelBar
-                    rewardChips
-                }
-                .foregroundStyle(Ink.body)
-                .padding(18)
-                .background(Ink.eye, in: RoundedRectangle(cornerRadius: 26, style: .continuous))
-                .padding(.horizontal, 24)
-                Spacer(minLength: 12)
-                buttons.padding(.horizontal, 24)
-                if style == .trashTalk {
+        GeometryReader { geo in
+            ZStack {
+                if result.won { Confetti(still: reduceMotion).ignoresSafeArea().allowsHitTesting(false) }
+                VStack(spacing: 18) {
+                    Spacer(minLength: 40)
+                    Text(headline)
+                        .font(.system(.largeTitle, design: .rounded).weight(.black))
+                        .foregroundStyle(Ink.eye)
+                        .padding(.horizontal, 22).padding(.vertical, 8)
+                        .background(Ink.body.opacity(0.85), in: Capsule())
+                    if let line {
+                        SpeechBubble(text: line)
+                            .accessibilityLabel("\(model.state.titleName): \(line)")
+                    }
+                    // Smaller on short screens (iPhone SE), so the buttons and the brag link always fit.
+                    GremlinView(pose: .pose(for: result.won ? .win : .lose), hat: wardrobe.hat, neck: wardrobe.neck, fur: wardrobe.fur,
+                                size: min(210, geo.size.height * 0.24))
+                        .accessibilityHidden(true)
+                    VStack(spacing: 12) {
+                        Text(detail).font(.system(.headline, design: .rounded).weight(.bold)).opacity(0.7)
+                        pointsPill
+                        levelBar
+                        rewardChips
+                    }
+                    .foregroundStyle(Ink.body)
+                    .padding(18)
+                    .background(Ink.eye, in: RoundedRectangle(cornerRadius: 26, style: .continuous))
+                    .padding(.horizontal, 24)
+                    Spacer(minLength: 12)
+                    buttons.padding(.horizontal, 24)
                     ShareLink(item: AppLinks.site, subject: Text("Little Menace"), message: Text(bragText)) {
                         Label("Brag about it", systemImage: "square.and.arrow.up")
                             .font(.system(.headline, design: .rounded).weight(.heavy))
                             .foregroundStyle(Ink.eye)
                             .frame(minHeight: 44)
                     }
+                    Spacer(minLength: 8)
                 }
-                Spacer(minLength: 8)
             }
         }
     }
@@ -186,9 +165,9 @@ struct RoundResult: View {
         }
         .font(.system(.headline, design: .rounded).weight(.heavy))
         .buttonStyle(SquishButtonStyle())
-        // On the celebration the secondary button sits on the theme colour, so it needs its own ground.
-        .padding(style == .card ? 0 : 6)
-        .background(style == .card ? .clear : Ink.eye, in: Capsule())
+        // The secondary button would sit on the theme colour, so the pair gets its own cream ground.
+        .padding(6)
+        .background(Ink.eye, in: Capsule())
     }
 
     private func countUp() async {

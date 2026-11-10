@@ -19,11 +19,6 @@ struct PointsView: View {
     /// Score on top, then History or Rules.
     var body: some View {
         Form {
-            if SheetSkin.livingHeader {
-                // Review S25 D: it looks pleased or put out depending on how today is going.
-                Section { SheetGremlin(reaction: gained > lost ? .win : lost > gained ? .annoyed : .idle) }
-                    .listRowBackground(Color.clear)
-            }
             Section { header }.creamSection()
             Section {
                 Picker("Show", selection: $tab) {

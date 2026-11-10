@@ -305,8 +305,7 @@ struct HomeView: View {
                 .dynamicTypeSize(...DynamicTypeSize.xxLarge) // stays inside its circle
                 .foregroundStyle(.white)
                 .frame(width: 48, height: 48)
-                // B–D: a dark disc, so the white dots pass contrast on every theme.
-                .background(homeOption == "A" ? Color.white.opacity(0.18) : Ink.body.opacity(0.75), in: Circle())
+                .background(.white.opacity(0.18), in: Circle())
         }
         .accessibilityLabel("More")
     }
@@ -324,8 +323,7 @@ struct HomeView: View {
             }
             HStack(spacing: 28) {
                 feedButton(fullness: needs.fullness / 100, mouth: mouth)
-                RingButton(ring: needs.joy / 100, label: showPlay ? "Close games" : "Play", caption: needCaption(.joy, needs.joy),
-                           darkDisc: homeOption != "A", lowBadge: homeOption == "D" && needLow(needs.joy), action: {
+                RingButton(ring: needs.joy / 100, label: showPlay ? "Close games" : "Play", caption: needCaption(.joy, needs.joy), action: {
                     withAnimation(.spring(response: 0.35, dampingFraction: 0.7)) { showPlay.toggle() }
                     model.haptics.play(.tap)
                     if showPlay { Announcer.say("Games: snack toss, sock tug, cushion hunt, copycat dance.") }
@@ -336,8 +334,7 @@ struct HomeView: View {
                 }
                 .coachTarget(.play)
                 RingButton(ring: needs.energy / 100, label: model.state.isAsleep ? "Wake" : "Nap",
-                           caption: needCaption(.energy, needs.energy),
-                           darkDisc: homeOption != "A", lowBadge: homeOption == "D" && needLow(needs.energy), action: {
+                           caption: needCaption(.energy, needs.energy), action: {
                     showPlay = false
                     model.toggleSleep()
                 }) {
@@ -352,28 +349,13 @@ struct HomeView: View {
 
     private enum Need { case fullness, joy, energy }
 
-    /// Review S23 (DEBUG only): which home option to draw. Release builds always draw A.
-    private var homeOption: Character {
-        ["S23B", "S23C", "S23D"].first(where: Variant.on)?.last ?? "A"
-    }
-
-    private func needLow(_ value: Double) -> Bool { value < 35 }
-
-    /// A: needs read as what the gremlin lacks (Hungry / Bored / Sleepy, counting up).
-    /// B: a word only when the need is low. C: the same direction as the ring. D: no words.
-    private func needCaption(_ need: Need, _ value: Double) -> String? {
-        let v = Int(max(0, min(100, value)).rounded())
-        switch homeOption {
-        case "B":
-            guard needLow(value) else { return nil }
-            switch need { case .fullness: return "hungry"; case .joy: return "bored"; case .energy: return "sleepy" }
-        case "C":
-            switch need { case .fullness: return "Full \(v)%"; case .joy: return "Happy \(v)%"; case .energy: return "Rested \(v)%" }
-        case "D":
-            return nil
-        default:
-            let lack = "\(100 - v)%"
-            switch need { case .fullness: return "Hungry \(lack)"; case .joy: return "Bored \(lack)"; case .energy: return "Sleepy \(lack)" }
+    /// Needs read as what the gremlin lacks: Hungry / Bored / Sleepy, counting up.
+    private func needCaption(_ need: Need, _ value: Double) -> String {
+        let lack = "\(Int(max(0, min(100, 100 - value)).rounded()))%"
+        switch need {
+        case .fullness: return "Hungry \(lack)"
+        case .joy: return "Bored \(lack)"
+        case .energy: return "Sleepy \(lack)"
         }
     }
 
@@ -388,8 +370,7 @@ struct HomeView: View {
                 let close = hypot(v.location.x - mouth.x, v.location.y - mouth.y) < 80
                 deliverSnack(from: v.location, to: mouth, dropped: !close)
             }
-        return RingButton(ring: fullness, label: "Feed", caption: needCaption(.fullness, fullness * 100),
-                          darkDisc: homeOption != "A", lowBadge: homeOption == "D" && needLow(fullness * 100), action: {
+        return RingButton(ring: fullness, label: "Feed", caption: needCaption(.fullness, fullness * 100), action: {
             showPlay = false
             model.feed()
         }) {
