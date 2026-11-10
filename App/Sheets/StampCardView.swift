@@ -192,30 +192,82 @@ struct StampCardView: View {
                     Spacer()
                     Text("\(foundCount) of \(Discovery.allCases.count)").font(.subheadline.weight(.bold)).opacity(0.65)
                 }
-                LazyVGrid(columns: [GridItem(.flexible(), spacing: 10), GridItem(.flexible())], spacing: 10) {
-                    ForEach(Discovery.allCases, id: \.self) { d in
-                        let found = s.discoveries.contains(d.rawValue)
-                        Button { tap(.discovery(d)) } label: {
-                            HStack(spacing: 10) {
-                                Image(systemName: found ? d.symbol : "questionmark")
-                                    .font(.headline.weight(.bold))
-                                    .frame(width: 38, height: 38)
-                                    .background(Ink.body.opacity(found ? 0.14 : 0.05), in: Circle())
-                                Text(found ? d.spoken : "???")
-                                    .font(.system(.footnote, design: .rounded).weight(.heavy))
-                                    .multilineTextAlignment(.leading)
-                                    .fixedSize(horizontal: false, vertical: true)
-                                Spacer(minLength: 0)
+                if Variant.on("S26D") {
+                    stickerAlbum(s)
+                } else {
+                    LazyVGrid(columns: [GridItem(.flexible(), spacing: 10), GridItem(.flexible())], spacing: 10) {
+                        ForEach(Discovery.allCases, id: \.self) { d in
+                            let found = s.discoveries.contains(d.rawValue)
+                            // Review S26 (DEBUG only): B the faded icon and how to earn it; C a teaser in its voice.
+                            let b = Variant.on("S26B"), c = Variant.on("S26C")
+                            Button { tap(.discovery(d)) } label: {
+                                HStack(spacing: 10) {
+                                    Image(systemName: found || b ? d.symbol : "questionmark")
+                                        .font(.headline.weight(.bold))
+                                        .frame(width: 38, height: 38)
+                                        .background(Ink.body.opacity(found ? 0.14 : 0.05), in: Circle())
+                                        .opacity(!found && b ? 0.45 : 1)
+                                    Text(found ? d.spoken : b ? d.hint : c ? d.teaser : "???")
+                                        .font(.system(.footnote, design: .rounded).weight(found || !(b || c) ? .heavy : .semibold))
+                                        .italic(!found && c)
+                                        .multilineTextAlignment(.leading)
+                                        .fixedSize(horizontal: false, vertical: true)
+                                    Spacer(minLength: 0)
+                                }
+                                .padding(8)
+                                .background(Ink.body.opacity(detail == .discovery(d) ? 0.14 : 0.05), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                                .overlay {
+                                    if !found && c {
+                                        RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                            .strokeBorder(Ink.body.opacity(0.3), style: StrokeStyle(lineWidth: 1.5, dash: [4, 3]))
+                                    }
+                                }
+                                .opacity(found ? 1 : (b || c) ? 0.85 : 0.6)
                             }
-                            .padding(8)
-                            .background(Ink.body.opacity(detail == .discovery(d) ? 0.14 : 0.05), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-                            .opacity(found ? 1 : 0.6)
+                            .accessibilityLabel(found ? d.spoken : "Undiscovered. \(d.hint)")
                         }
-                        .accessibilityLabel(found ? d.spoken : "Undiscovered. \(d.hint)")
                     }
                 }
             }
             .padding(20)
+        }
+    }
+
+    /// Review S26 D: discoveries as a sticker album. Found ones are stuck in; the rest are dashed spots with a teaser.
+    private func stickerAlbum(_ s: PetState) -> some View {
+        let colors = [0xFF7A2F, 0x7B4DFF, 0x14B0E0, 0xFF6FB5, 0x06D6A0]
+        return VStack(spacing: 14) {
+            ProgressView(value: Double(foundCount), total: Double(Discovery.allCases.count)).tint(Color(hex: 0xE59A2E))
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 3), spacing: 14) {
+                ForEach(Array(Discovery.allCases.enumerated()), id: \.element) { i, d in
+                    let found = s.discoveries.contains(d.rawValue)
+                    Button { tap(.discovery(d)) } label: {
+                        VStack(spacing: 6) {
+                            ZStack {
+                                if found {
+                                    Circle().fill(Color(hex: UInt32(colors[i % colors.count])))
+                                        .overlay(Circle().stroke(.white, lineWidth: 4))
+                                        .shadow(color: .black.opacity(0.18), radius: 3, y: 2)
+                                    Image(systemName: d.symbol).font(.title2.weight(.bold)).foregroundStyle(.white)
+                                } else {
+                                    Circle().strokeBorder(Ink.body.opacity(0.35), style: StrokeStyle(lineWidth: 2, dash: [5, 4]))
+                                    Image(systemName: d.symbol).font(.title2.weight(.bold)).opacity(0.15)
+                                }
+                            }
+                            .frame(width: 66, height: 66)
+                            .rotationEffect(.degrees(found ? (i % 2 == 0 ? -6 : 5) : 0))
+                            Text(found ? d.spoken : d.teaser)
+                                .font(.system(.caption, design: .rounded).weight(found ? .heavy : .semibold))
+                                .italic(!found)
+                                .multilineTextAlignment(.center)
+                                .fixedSize(horizontal: false, vertical: true)
+                                .opacity(found ? 1 : 0.7)
+                        }
+                        .frame(maxWidth: .infinity)
+                    }
+                    .accessibilityLabel(found ? d.spoken : "Undiscovered. \(d.hint)")
+                }
+            }
         }
     }
 

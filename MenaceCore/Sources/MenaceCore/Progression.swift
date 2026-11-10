@@ -91,6 +91,22 @@ public enum Discovery: String, CaseIterable, Sendable {
         case .regular: return "Visit on 5 different days."
         }
     }
+
+    /// A nudge in its own voice for one not found yet: enough to chase, not the answer.
+    public var teaser: String {
+        switch self {
+        case .firstBite: return "Something about snacks…"
+        case .firstNap: return "It’s tired of you. Let it be."
+        case .firstTugWin: return "It won’t let go of something."
+        case .perfectToss: return "Eight for eight."
+        case .firstTryFind: return "One guess. That’s all."
+        case .nightOwl: return "Past its bedtime. And yours."
+        case .menace: return "What if you just… let it?"
+        case .softie: return "What if you always said no?"
+        case .fullCard: return "Every day. All week."
+        case .regular: return "Keep coming back."
+        }
+    }
 }
 
 public enum GameEvent: Equatable, Sendable {

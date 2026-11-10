@@ -19,7 +19,12 @@ struct PointsView: View {
     /// Score on top, then History or Rules.
     var body: some View {
         Form {
-            Section { header }
+            if SheetSkin.livingHeader {
+                // Review S25 D: it looks pleased or put out depending on how today is going.
+                Section { SheetGremlin(reaction: gained > lost ? .win : lost > gained ? .annoyed : .idle) }
+                    .listRowBackground(Color.clear)
+            }
+            Section { header }.creamSection()
             Section {
                 Picker("Show", selection: $tab) {
                     Text("History").tag(0)
@@ -30,10 +35,10 @@ struct PointsView: View {
                 .listRowInsets(EdgeInsets())
             }
             if tab == 0 {
-                Section("Today") { todayRow }
-                Section("Recent") { historyRows(limit: 40) }
+                Section("Today") { todayRow }.creamSection()
+                Section("Recent") { historyRows(limit: 40) }.creamSection()
             } else {
-                Section("How to earn") { ruleRows(gains) }
+                Section("How to earn") { ruleRows(gains) }.creamSection()
                 Section {
                     ruleRows(losses)
                 } header: {
@@ -41,8 +46,10 @@ struct PointsView: View {
                 } footer: {
                     footerNote
                 }
+                .creamSection()
             }
         }
+        .creamForm()
         .navigationTitle("Points")
         .navigationBarTitleDisplayMode(.inline)
         #if DEBUG

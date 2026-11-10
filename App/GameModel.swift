@@ -42,6 +42,8 @@ final class GameModel {
     /// First-run guide (or reopened from Settings).
     var showHowToPlay = false
     private(set) var pointsDelta: PointsDelta?
+    /// What the last round earned besides points (level, stamp, gift, discovery), for the result screen.
+    private(set) var roundRewards: [Toast] = []
     var homeObscured = false
     private(set) var notificationsDenied = false
 
@@ -354,6 +356,7 @@ final class GameModel {
         case .success(let s):
             session = s
             activity = kind
+            roundRewards = []
             haptics.play(.tap)
         case .failure(let refusal):
             react(refusal.reaction, for: 1.6)
@@ -373,11 +376,19 @@ final class GameModel {
         sounds.play(result.won ? .win : .lose)
         haptics.play(result.won ? .success : .tap)
         handle(out.events)
+        roundRewards = toastQueue // held while the round is on screen
         save()
         return out.events.reduce(0) { total, e in
             if case .points(let n, _) = e { return total + n }
             return total
         }
+    }
+
+    /// One of its own lines about the round, for the result screen.
+    func roundLine(won: Bool) -> String? {
+        let line = Lines.next(for: won ? .win : .lose, state: &game.state, hour: game.days.hour(Date()), using: &rng)
+        save()
+        return line
     }
 
     /// Apple's rating prompt goes up right after a won round, once the player is a regular.
@@ -503,7 +514,7 @@ final class GameModel {
     }
 
     private func showNextToast() {
-        guard !toastQueue.isEmpty else {
+        guard !toastQueue.isEmpty, activity == nil else {
             toast = nil
             toastTask = nil
             return
@@ -614,6 +625,10 @@ final class GameModel {
             game.state.counters.visitDays = max(game.state.counters.visitDays, 3)
         }
         game.state.needs = Needs(fullness: 50, energy: 60, joy: 60)
+        // `-LMNeeds 20,60,25` sets fullness, energy and joy (screens with a low need).
+        if let n = UserDefaults.standard.string(forKey: "LMNeeds")?.split(separator: ",").compactMap({ Double($0) }), n.count == 3 {
+            game.state.needs = Needs(fullness: n[0], energy: n[1], joy: n[2])
+        }
         game.state.points = Self.samplePoints(days: game.days)
         showHowToPlay = screen == "howToPlay"
         // `-LMDelta 18` shows a gain by the score, `-LMLoss 3` a loss (a leading minus would read as a flag).

@@ -11,6 +11,8 @@ struct ActivityContainer: View {
     @State private var result: ActivityResult?
     @State private var earnedXP = 0
     @AccessibilityFocusState private var resultFocused: Bool
+    /// Screenshot tours only: rewards to show on a faked result.
+    @State private var debugRewards: [Toast]?
 
     var body: some View {
         ZStack {
@@ -23,9 +25,17 @@ struct ActivityContainer: View {
                 .opacity(result == nil ? 1 : 0)
 
             if let result {
-                ResultCard(result: result, xp: earnedXP, hat: model.state.wardrobe.hat, neck: model.state.wardrobe.neck,
-                           fur: model.state.wardrobe.fur, focus: $resultFocused, replay: replay, done: { model.closeActivity(won: result.won) })
-                    .transition(.scale(scale: 0.8).combined(with: .opacity))
+                let done = { model.closeActivity(won: result.won) }
+                // Review S24 (DEBUG only): B a bigger card, C a full-screen celebration, D with trash talk.
+                if let style = resultStyle {
+                    RoundResult(style: style, result: result, points: earnedXP, rewards: debugRewards ?? model.roundRewards,
+                                focus: $resultFocused, replay: replay, done: done)
+                        .transition(.scale(scale: 0.9).combined(with: .opacity))
+                } else {
+                    ResultCard(result: result, xp: earnedXP, hat: model.state.wardrobe.hat, neck: model.state.wardrobe.neck,
+                               fur: model.state.wardrobe.fur, focus: $resultFocused, replay: replay, done: done)
+                        .transition(.scale(scale: 0.8).combined(with: .opacity))
+                }
             }
 
             if result == nil {
@@ -70,10 +80,21 @@ struct ActivityContainer: View {
             // Screenshot tours: `-LMResult win|lose` shows the result card straight away.
             if let r = UserDefaults.standard.string(forKey: "LMResult") {
                 earnedXP = r == "win" ? 26 : 8
-                result = ActivityResult(kind: kind, quality: r == "win" ? 0.8 : 0.25, score: 3, won: r == "win")
+                result = ActivityResult(kind: kind, quality: r == "win" ? 0.8 : 0.25, score: r == "win" ? 6 : 3, won: r == "win")
+                if r == "win" {
+                    debugRewards = [Toast(symbol: "arrow.up.circle.fill", text: "\(model.state.level)", spoken: "Level \(model.state.level)"),
+                                    Toast(symbol: "seal.fill", text: "3", spoken: "Stamp 3 this week")]
+                }
             }
         }
         #endif
+    }
+
+    private var resultStyle: RoundResult.Style? {
+        if Variant.on("S24B") { return .card }
+        if Variant.on("S24C") { return .celebration }
+        if Variant.on("S24D") { return .trashTalk }
+        return nil
     }
 
     private var hint: String {

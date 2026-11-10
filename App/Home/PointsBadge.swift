@@ -47,17 +47,25 @@ struct PointsBadge: View {
         let today = model.game.days.dayKey(model.now)
         let gained = s.points.day == today ? s.points.gainedToday : 0
         let lost = s.points.day == today ? s.points.lostToday : 0
+        // Review S23 (DEBUG only): B a small dark chip, C the same size on a dark pill, D just a star button.
+        let compact = Variant.on("S23B"), pill = Variant.on("S23C"), starOnly = Variant.on("S23D")
         Button(action: open) {
             VStack(spacing: 4) {
                 HStack(spacing: 8) {
                     Image(systemName: "star.fill").foregroundStyle(Ink.irisLight)
-                    Text(s.points.total, format: .number)
-                        .monospacedDigit()
-                        .contentTransition(.numericText(value: Double(s.points.total)))
+                    if !starOnly {
+                        Text(s.points.total, format: .number)
+                            .monospacedDigit()
+                            .contentTransition(.numericText(value: Double(s.points.total)))
+                    }
                 }
-                .font(.system(.largeTitle, design: .rounded, weight: .heavy))
+                .font(.system(compact ? .title3 : starOnly ? .title2 : .largeTitle, design: .rounded, weight: .heavy))
                 .foregroundStyle(.white)
-                .shadow(color: .black.opacity(0.25), radius: 3, y: 1)
+                .shadow(color: .black.opacity(compact || pill || starOnly ? 0 : 0.25), radius: 3, y: 1)
+                .padding(.horizontal, compact || pill ? 14 : 0)
+                .padding(.vertical, compact || pill ? 6 : 0)
+                .frame(width: starOnly ? 48 : nil, height: starOnly ? 48 : nil)
+                .background(compact || pill || starOnly ? Ink.body.opacity(0.75) : .clear, in: Capsule())
                 // The change pops on the free left side, so nothing shifts and the menu stays clear.
                 .overlay(alignment: .leading) {
                     if let d = model.pointsDelta {
@@ -70,16 +78,18 @@ struct PointsBadge: View {
                             .transition(.scale(scale: 0.5).combined(with: .opacity))
                     }
                 }
-                HStack(spacing: 6) {
-                    Text("today")
-                    Text(signedPoints(gained)).foregroundStyle(PointColor.gainOnDark)
-                    if lost > 0 { Text(signedPoints(-lost)).foregroundStyle(PointColor.lossOnDark) }
+                if !compact && !starOnly {
+                    HStack(spacing: 6) {
+                        Text("today")
+                        Text(signedPoints(gained)).foregroundStyle(PointColor.gainOnDark)
+                        if lost > 0 { Text(signedPoints(-lost)).foregroundStyle(PointColor.lossOnDark) }
+                    }
+                    .font(.system(.caption, design: .rounded).weight(.heavy))
+                    .monospacedDigit()
+                    .foregroundStyle(Ink.eye)
+                    .padding(.horizontal, 10).padding(.vertical, 3)
+                    .background(Ink.body.opacity(0.85), in: Capsule())
                 }
-                .font(.system(.caption, design: .rounded).weight(.heavy))
-                .monospacedDigit()
-                .foregroundStyle(Ink.eye)
-                .padding(.horizontal, 10).padding(.vertical, 3)
-                .background(Ink.body.opacity(0.85), in: Capsule())
             }
             .dynamicTypeSize(...DynamicTypeSize.xLarge)
         }

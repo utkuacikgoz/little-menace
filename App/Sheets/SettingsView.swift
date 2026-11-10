@@ -6,6 +6,7 @@ import MenaceCore
 enum AppLinks {
     static let privacy = URL(string: "https://littlemenace.fun/privacy")!
     static let support = URL(string: "https://littlemenace.fun/support")!
+    static let site = URL(string: "https://littlemenace.fun")!
 }
 
 struct SettingsView: View {
@@ -14,14 +15,21 @@ struct SettingsView: View {
     @State private var confirmReset = false
     /// Edited locally and committed on return or close, so spaces survive typing.
     @State private var nameDraft = ""
+    /// Review S25 D: how the gremlin at the top reacts to the last change.
+    @State private var reaction: Reaction = .idle
+    @State private var reactionTask: Task<Void, Never>?
 
     var body: some View {
         let prefs = model.state.prefs
         NavigationStack {
             Form {
+                if SheetSkin.livingHeader {
+                    Section { SheetGremlin(reaction: reaction) }
+                        .listRowBackground(Color.clear)
+                }
                 Section {
                     TextField("Name", text: $nameDraft, prompt: Text("Your gremlin"))
-                        .onSubmit { model.rename(nameDraft) }
+                        .onSubmit { model.rename(nameDraft); react(.touch) }
                         .onChange(of: nameDraft) { _, new in
                             if new.count > PetState.maxNameLength { nameDraft = String(new.prefix(PetState.maxNameLength)) }
                         }
@@ -29,6 +37,7 @@ struct SettingsView: View {
                         .autocorrectionDisabled()
                         .accessibilityLabel("Name")
                 }
+                .creamSection()
 
                 Section {
                     NavigationLink {
@@ -53,18 +62,20 @@ struct SettingsView: View {
                         Label("How to Play", systemImage: "book.fill")
                     }
                 }
+                .creamSection()
 
                 Section {
-                    Toggle(isOn: Binding(get: { prefs.sound }, set: { model.setSound($0) })) {
+                    Toggle(isOn: Binding(get: { prefs.sound }, set: { model.setSound($0); react($0 ? .touch : .annoyed) })) {
                         Label("Sound", systemImage: "speaker.wave.2.fill")
                     }
-                    Toggle(isOn: Binding(get: { prefs.haptics }, set: { model.setHaptics($0) })) {
+                    Toggle(isOn: Binding(get: { prefs.haptics }, set: { model.setHaptics($0); react($0 ? .play : .lose) })) {
                         Label("Haptics", systemImage: "hand.tap.fill")
                     }
                 }
+                .creamSection()
 
                 Section {
-                    Toggle(isOn: Binding(get: { prefs.remindersEnabled }, set: { on in Task { await model.setReminders(on) } })) {
+                    Toggle(isOn: Binding(get: { prefs.remindersEnabled }, set: { on in react(on ? .attention : .mischief); Task { await model.setReminders(on) } })) {
                         Label("Reminders", systemImage: "bell.fill")
                     }
                     if prefs.remindersEnabled {
@@ -81,6 +92,7 @@ struct SettingsView: View {
                     Text("At most one gentle nudge a day, and they stop if you're away for a few days.")
                         .foregroundStyle(Color.primary.opacity(0.8))
                 }
+                .creamSection()
 
                 Section {
                     ForEach(Catalog.collections) { c in
@@ -109,6 +121,7 @@ struct SettingsView: View {
                     Link(destination: AppLinks.privacy) { Label("Privacy", systemImage: "hand.raised.fill") }
                     Link(destination: AppLinks.support) { Label("Support", systemImage: "questionmark.circle.fill") }
                 }
+                .creamSection()
 
                 Section {
                     Button(role: .destructive) { confirmReset = true } label: {
@@ -118,7 +131,9 @@ struct SettingsView: View {
                     Text("Start Over resets \(model.state.displayName)'s level, points, stamps and discoveries. Purchases stay yours.")
                         .foregroundStyle(Color.primary.opacity(0.8))
                 }
+                .creamSection()
             }
+            .creamForm()
             .onAppear { nameDraft = model.state.name }
             .onDisappear { if nameDraft != model.state.name { model.rename(nameDraft) } }
             .navigationTitle("Settings")
@@ -136,6 +151,17 @@ struct SettingsView: View {
             } message: {
                 Text("This can't be undone.")
             }
+        }
+    }
+
+    private func react(_ r: Reaction) {
+        guard SheetSkin.livingHeader else { return }
+        reaction = r
+        reactionTask?.cancel()
+        reactionTask = Task {
+            try? await Task.sleep(for: .seconds(1.6))
+            guard !Task.isCancelled else { return }
+            reaction = .idle
         }
     }
 
