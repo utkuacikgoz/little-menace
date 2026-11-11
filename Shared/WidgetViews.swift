@@ -15,6 +15,8 @@ struct GremlinWidgetView: View {
     let family: WidgetFamily
     let state: PetState
     let line: String?
+    /// False in the in-app review gallery, where intent buttons can't run: same look, no action.
+    var interactive = true
 
     var body: some View {
         switch family {
@@ -133,8 +135,13 @@ struct GremlinWidgetView: View {
 
     private var buttons: some View {
         HStack(spacing: 8) {
-            Button(intent: PetGremlinIntent()) { Label("Pet", systemImage: "hand.raised.fill") }
-            Button(intent: FeedGremlinIntent()) { Label("Feed", systemImage: "fork.knife") }
+            if interactive {
+                Button(intent: PetGremlinIntent()) { Label("Pet", systemImage: "hand.raised.fill") }
+                Button(intent: FeedGremlinIntent()) { Label("Feed", systemImage: "fork.knife") }
+            } else {
+                Button {} label: { Label("Pet", systemImage: "hand.raised.fill") }
+                Button {} label: { Label("Feed", systemImage: "fork.knife") }
+            }
         }
         .font(.system(.caption, design: .rounded).weight(.heavy))
         .buttonStyle(.borderedProminent)
@@ -146,7 +153,7 @@ struct GremlinWidgetView: View {
 
     private var circular: some View {
         ZStack {
-            AccessoryWidgetBackground()
+            if interactive { AccessoryWidgetBackground() }
             GremlinView(pose: pose, fur: state.wardrobe.fur, size: 46, animated: false).accessibilityHidden(true)
         }
         .accessibilityLabel(OffscreenCare.summary(state))

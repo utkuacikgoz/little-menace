@@ -36,16 +36,16 @@ struct WidgetGallery: View {
         return VStack(alignment: .leading, spacing: 18) {
             caption("Home Screen")
             HStack(spacing: 22) {
-                box(GremlinWidgetView(look: widgetLook, family: .systemSmall, state: s, line: line), w: 158, h: 158, state: s)
+                box(GremlinWidgetView(look: widgetLook, family: .systemSmall, state: s, line: line, interactive: false), w: 158, h: 158, state: s)
                 appIcons
             }
-            box(GremlinWidgetView(look: widgetLook, family: .systemMedium, state: s, line: line), w: 338, h: 158, state: s)
+            box(GremlinWidgetView(look: widgetLook, family: .systemMedium, state: s, line: line, interactive: false), w: 338, h: 158, state: s)
             caption("Lock Screen")
             HStack(spacing: 14) {
-                GremlinWidgetView(look: widgetLook, family: .accessoryCircular, state: s, line: line)
+                GremlinWidgetView(look: widgetLook, family: .accessoryCircular, state: s, line: line, interactive: false)
                     .frame(width: 72, height: 72)
                     .background(.white.opacity(0.15), in: Circle())
-                GremlinWidgetView(look: widgetLook, family: .accessoryRectangular, state: s, line: line)
+                GremlinWidgetView(look: widgetLook, family: .accessoryRectangular, state: s, line: line, interactive: false)
                     .frame(width: 170, height: 72, alignment: .leading)
             }
             .foregroundStyle(.white)
@@ -98,7 +98,7 @@ struct WidgetGallery: View {
             .padding(.top, 2)
             Text("9:41").font(.system(size: 84, weight: .bold, design: .rounded)).foregroundStyle(.white)
             Spacer()
-            NapBanner(look: napLook, attributes: attributes, state: state)
+            NapBanner(look: napLook, attributes: attributes, state: state, interactive: false)
                 .background(Color(hex: 0x241F33), in: RoundedRectangle(cornerRadius: 24, style: .continuous))
                 .padding(.horizontal, 12)
             Spacer().frame(height: 60)

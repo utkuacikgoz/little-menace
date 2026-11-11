@@ -13,6 +13,8 @@ struct NapBanner: View {
     let look: NapLook
     let attributes: NapAttributes
     let state: NapAttributes.ContentState
+    /// False in the in-app review gallery, where intent buttons can't run: same look, no action.
+    var interactive = true
 
     var body: some View {
         HStack(spacing: 14) {
@@ -49,9 +51,12 @@ struct NapBanner: View {
                     }
                 }
                 if look == .wakeButton {
-                    Button(intent: WakeGremlinIntent()) {
-                        Label("Wake it (it’ll be grumpy)", systemImage: "alarm.fill")
-                            .font(.system(.caption, design: .rounded).weight(.heavy))
+                    Group {
+                        if interactive {
+                            Button(intent: WakeGremlinIntent()) { wakeLabel }
+                        } else {
+                            Button {} label: { wakeLabel }
+                        }
                     }
                     .buttonStyle(.borderedProminent)
                     .tint(Color(hex: 0xFF7A2F))
@@ -61,6 +66,11 @@ struct NapBanner: View {
         }
         .foregroundStyle(Ink.eye)
         .padding(16)
+    }
+
+    private var wakeLabel: some View {
+        Label("Wake it (it’ll be grumpy)", systemImage: "alarm.fill")
+            .font(.system(.caption, design: .rounded).weight(.heavy))
     }
 }
 
