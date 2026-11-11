@@ -18,6 +18,10 @@ struct HomeView: View {
 
     @State private var sheet: HomeSheet?
     @State private var showPlay = false
+    #if DEBUG
+    /// Design review: the widget or nap Live Activity gallery (`-LMScreen widgets` / `nap`).
+    @State private var gallery: String?
+    #endif
     @State private var showMischief = false
     @GestureState private var stretch: CGSize = .zero
     /// Snack being dragged from the feed button, in the home coordinate space.
@@ -164,8 +168,13 @@ struct HomeView: View {
             switch UserDefaults.standard.string(forKey: "LMScreen") {
             case "playPicker": showPlay = true
             case "mischiefSheet": showMischief = true
+            case "widgets": gallery = "widgets"
+            case "nap": gallery = "nap"
             default: break
             }
+        }
+        .fullScreenCover(isPresented: Binding(get: { gallery != nil }, set: { if !$0 { gallery = nil } })) {
+            WidgetGallery(page: gallery ?? "widgets")
         }
         #endif
     }

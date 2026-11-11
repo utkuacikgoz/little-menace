@@ -111,6 +111,12 @@ Apple's rating prompt is requested right after a won round, only once the player
 
 The menu has a **Share** item. It renders a 1080×1350 card from the real state: current pose, outfit, theme, name, level, stamps, discoveries and personality title. The card goes to the system share sheet, and nothing is posted automatically.
 
+## Away from the app
+- Widgets (Home Screen and Lock Screen) show its face and needs, planned every 30 minutes for six hours. Pet and Feed buttons apply the same rules and points as in the app.
+- Siri and Shortcuts: "Feed my gremlin", "Pet my gremlin", "Check on my gremlin". Its reply is a line from its own voice.
+- One save for all of them: the app group container (`group.com.belevate.littlemenace`). The first launch after updating copies the old save across once. The app reloads when a widget or Siri wrote newer.
+- A nap shows a Live Activity until it wakes.
+
 ## Paid collection (hypothesis, sandbox only)
 
 - **Midnight Snack**, `com.belevate.littlemenace.midnight`, non-consumable. The proposed US launch price is $3.99, matching the local test configuration. Production pricing must still be configured in App Store Connect; the app reads localized prices from StoreKit.

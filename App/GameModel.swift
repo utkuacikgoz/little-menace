@@ -1,5 +1,6 @@
 import SwiftUI
 import UIKit
+import WidgetKit
 import MenaceCore
 
 struct Toast: Identifiable, Equatable {
@@ -51,7 +52,10 @@ final class GameModel {
     let sounds = SoundPlayer()
     let haptics = Haptics()
     @ObservationIgnored private let reminders = ReminderScheduler()
-    @ObservationIgnored private let store = SaveStore.appDefault()
+    @ObservationIgnored private let napActivity = NapLiveActivity()
+    @ObservationIgnored private let store = SharedStore.make()
+    /// When this model last wrote the save, so a newer write (from a widget) is noticed and loaded.
+    @ObservationIgnored private var lastSaved: Date?
     @ObservationIgnored private var rng = SystemRandomNumberGenerator()
     @ObservationIgnored private var reactionTask: Task<Void, Never>?
     @ObservationIgnored private var bubbleTask: Task<Void, Never>?
@@ -72,6 +76,7 @@ final class GameModel {
         #endif
         let (loaded, _) = store.load(now: Date())
         game = Game(state: loaded)
+        lastSaved = store.lastWritten
         #if DEBUG
         // UI tests start fresh but skip the guide unless they ask for it with `-LMGuide YES`.
         if UserDefaults.standard.bool(forKey: "LMReset") && !UserDefaults.standard.bool(forKey: "LMGuide") {
@@ -87,6 +92,10 @@ final class GameModel {
             react(.wake, for: 2)
         }
         purchases.onEntitlementsChanged = { [weak self] owned in self?.entitlementsChanged(owned) }
+        if !game.state.isAsleep { napActivity.end() } // one left over from a nap that ended while the app was closed
+        NotificationCenter.default.addObserver(forName: .lmSaveChangedElsewhere, object: nil, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated { self?.reloadIfChangedElsewhere(force: true) }
+        }
     }
 
     // MARK: Lifecycle
@@ -113,6 +122,7 @@ final class GameModel {
             ticker?.cancel()
             save()
             replanReminders()
+            WidgetCenter.shared.reloadAllTimelines()
         default:
             break
         }
@@ -120,12 +130,14 @@ final class GameModel {
 
     /// Time zone or clock changed, or the app returned to the foreground.
     func refreshClock() {
+        reloadIfChangedElsewhere()
         NSTimeZone.resetSystemTimeZone()
         game.days = DayClock(timeZone: .current)
         now = Date()
         handle(game.tick(now: now))
         if game.state.pendingWake {
             game.acknowledgeWake()
+            napActivity.end()
             react(.wake, for: 2)
         }
         save()
@@ -141,6 +153,7 @@ final class GameModel {
                 self.handle(self.game.tick(now: self.now))
                 if self.game.state.pendingWake {
                     self.game.acknowledgeWake()
+                    self.napActivity.end()
                     self.react(.wake, for: 2)
                     self.sounds.play(.pop)
                     self.say(.wake)
@@ -327,6 +340,7 @@ final class GameModel {
         let out = state.isAsleep ? game.wake(now: Date()) : game.sleep(now: Date())
         finishCare(out, duration: out.reaction == .asleep ? 0.1 : 2)
         if out.refusal == nil {
+            if state.isAsleep { napActivity.napStarted(state) } else { napActivity.end() }
             sounds.play(state.isAsleep ? .snore : .boing)
             haptics.play(.squish, intensity: 0.5)
             if state.isAsleep { offerRemindersIfUseful() }
@@ -602,6 +616,7 @@ final class GameModel {
         reactionTask?.cancel()
         bubbleTask?.cancel()
         game.reset(now: Date())
+        napActivity.end()
         Catalog.sanitize(&game.state, entitlements: entitlements)
         session = nil
         activity = nil
@@ -725,9 +740,19 @@ final class GameModel {
         haptics.enabled = game.state.prefs.haptics
     }
 
+    /// A widget button or a Siri action changed the save while the app wasn't looking: pick up its state.
+    func reloadIfChangedElsewhere(force: Bool = false) {
+        guard let written = store.lastWritten, force || written > (lastSaved ?? .distantPast).addingTimeInterval(0.5) else { return }
+        game = Game(state: store.load(now: Date()).0)
+        lastSaved = written
+        Catalog.sanitize(&game.state, entitlements: entitlements)
+        applyPrefs()
+    }
+
     private func save() {
         do {
             try store.save(game.state)
+            lastSaved = store.lastWritten
         } catch {
             // Disk full or similar: keep playing from memory, try again on the next change.
         }

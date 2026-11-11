@@ -101,6 +101,26 @@ public final class SaveStore: @unchecked Sendable {
         try data.write(to: primary, options: .atomic)
     }
 
+    /// When the save was last written (by this process or another one, such as a widget).
+    public var lastWritten: Date? {
+        (try? fm.attributesOfItem(atPath: primary.path))?[.modificationDate] as? Date
+    }
+
+    /// Moving to a new location (the shared app group): copies the old save and its backup across once,
+    /// only if there is nothing here yet. The old files stay where they were.
+    @discardableResult
+    public func adoptIfEmpty(from old: SaveStore) -> Bool {
+        guard old.directory != directory, !fm.fileExists(atPath: primary.path), fm.fileExists(atPath: old.primary.path) else { return false }
+        do {
+            try fm.createDirectory(at: directory, withIntermediateDirectories: true)
+            try fm.copyItem(at: old.primary, to: primary)
+            if fm.fileExists(atPath: old.backup.path) { try? fm.copyItem(at: old.backup, to: backup) }
+            return true
+        } catch {
+            return false
+        }
+    }
+
     public func wipe() {
         try? fm.removeItem(at: primary)
         try? fm.removeItem(at: backup)

@@ -20,7 +20,7 @@ Rebuilt from the owner brief. The original `DESIGN.md` and the generated raster 
   - the one-time reminder offer
 - Asleep: the background dims 35 % and "z"s drift up.
 
-## Tokens (`App/Style/Theme.swift`)
+## Tokens (`Shared/Style/Theme.swift`)
 
 | Theme | Day | Night (dark mode) | Source |
 |---|---|---|---|
@@ -41,7 +41,7 @@ Type is SF Rounded heavy, used only in bubbles, toasts and numbers.
 
 Sheets share one look: a cream page (`Ink.eye`). Wardrobe, Stamps, Share and Midnight Snack use soft tiles; Settings and Points are lists on the cream page with white rows, rounded type and orange controls.
 
-## Character rig (`App/Gremlin`)
+## Character rig (`Shared/Gremlin`)
 
 The gremlin is drawn in a 200×220 design space from separate parts:
 - tail, ears (with inner blush), arms, body, belly, feet
@@ -99,3 +99,9 @@ Drag: the body stretches toward the finger through a rubber-band curve (limit 70
 The home caption is a single centered line or short wrap below the character, never a card. It disappears after five seconds and yields to naming/reminder prompts. The 328 authored lines stay on-device and use persistent repeat avoidance. Do not replace this voice with generic motivational messages or a chat UI.
 
 Collection previews are honest demonstrations: show the actual outfit, prop, animation and punchline. Keep the price localized from StoreKit and explain permanent ownership in one sentence. No store badge, countdown, subscription or currency belongs on the home screen. A new collection must add authored behavior or playable variation; a recolor alone is insufficient.
+
+## Widgets and Live Activity (`Widgets/`, `Shared/`)
+- `Shared/` is compiled into both the app and the widget extension: the rig, theme, mood views, widget and nap views, intents, and the shared save. Keep it free of app-only APIs (UIApplication, UIScreen, UIAccessibility, AVAudio, StoreKit).
+- Widgets draw the same gremlin at rest (`animated: false`) on its theme background, red sky when furious. Lock Screen sizes use the system tint.
+- The nap Live Activity shows on the Lock Screen and in the Dynamic Island, from the nap's start until it wakes (any way).
+- Both targets share `MARKETING_VERSION`: bump them together.

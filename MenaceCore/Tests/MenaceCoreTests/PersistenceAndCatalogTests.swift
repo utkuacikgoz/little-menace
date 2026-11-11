@@ -86,6 +86,34 @@ final class PersistenceTests: XCTestCase {
         XCTAssertEqual(s.lastSimulated, t0)
     }
 
+    func testMovingToTheSharedFolderCopiesTheSaveOnce() throws {
+        let old = SaveStore(directory: dir.appendingPathComponent("old"))
+        let shared = SaveStore(directory: dir.appendingPathComponent("shared"))
+        var s = PetState(now: t0)
+        s.rename("Mo")
+        try old.save(s)
+        try old.save(s) // a second save leaves a backup behind too
+        XCTAssertNil(shared.lastWritten)
+
+        XCTAssertTrue(shared.adoptIfEmpty(from: old))
+        XCTAssertEqual(shared.load(now: t0).0.name, "Mo")
+        XCTAssertNotNil(shared.lastWritten)
+        XCTAssertTrue(FileManager.default.fileExists(atPath: shared.backup.path))
+
+        // Once the shared folder has its own save, the old one is never copied over it again.
+        s.rename("Fang")
+        try shared.save(s)
+        XCTAssertFalse(shared.adoptIfEmpty(from: old))
+        XCTAssertEqual(shared.load(now: t0).0.name, "Fang")
+    }
+
+    func testAdoptingFromNothingDoesNothing() {
+        let empty = SaveStore(directory: dir.appendingPathComponent("none"))
+        let shared = SaveStore(directory: dir.appendingPathComponent("shared"))
+        XCTAssertFalse(shared.adoptIfEmpty(from: empty))
+        XCTAssertEqual(shared.load(now: t0).1, .fresh)
+    }
+
     func testResetKeepsSoundPrefsOnly() {
         var g = Game(state: PetState(now: t0), days: DayClock(timeZone: TimeZone(identifier: "UTC")!))
         g.state.xp = 999
