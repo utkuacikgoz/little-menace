@@ -261,6 +261,8 @@ final class LittleMenaceUITests: XCTestCase {
         XCTAssertTrue(b.waitForExistence(timeout: 3))
         XCTAssertTrue(waitHittable(b), "\(item) is ready before selecting it")
         b.tap()
+        // A tap that lands while a sheet is still settling is dropped by the menu: tap the item once more.
+        if !waitGone(menu, timeout: 3), b.isHittable { b.tap() }
         XCTAssertTrue(waitGone(menu), "The menu closes after selecting \(item): \(app.debugDescription.replacingOccurrences(of: "\n", with: " ⏎ "))")
     }
 
@@ -355,6 +357,9 @@ final class LittleMenaceUITests: XCTestCase {
     private func dismissSheet() {
         app.swipeDown(velocity: .fast)
         XCTAssertTrue(waitHittable(app.buttons["Feed"], timeout: 8), "the sheet closes: \(app.debugDescription.replacingOccurrences(of: "\n", with: " ⏎ "))")
+        // Feed turns hittable before the sheet's closing animation ends; let it finish before the next tap.
+        XCTAssertTrue(waitHittable(app.buttons["More"]))
+        Thread.sleep(forTimeInterval: 0.6)
     }
 
     /// Xcode's built-in audit on each screen. Issues are logged as AUDIT lines for triage;
