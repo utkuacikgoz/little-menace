@@ -69,6 +69,49 @@ struct IdleAct {
         ]),
     ]
 
+    /// Reactions to the phone itself (`PhoneEvent` raw values): a low battery, a charger, a shake,
+    /// a screenshot, a screen recording. `percent` is the battery left, or -1 when unknown.
+    static func phone(_ id: String, percent: Int) -> IdleAct? {
+        switch id {
+        case "lowBattery":
+            let line = percent >= 0 ? "\(percent)% battery. feed it, not me." : "your battery’s low. feed it, not me."
+            return IdleAct(id: id, line: line, peak: 1, beats: [
+                (with(.sleepy) { $0.look = CGSize(width: 0, height: -1); $0.eyeOpen = 0.6 }, 0.6),
+                (with(.sleepy) { $0.eyeOpen = 0.35; $0.earDroop = 30; $0.squash = 0.9; $0.lean = -6; $0.browTilt = -10 }, 1.2),
+                (with(.idle) { $0.browTilt = -6; $0.mouthSmile = 0 }, 0.8),
+            ])
+        case "charging":
+            return IdleAct(id: id, line: "ooh. warm cable.", peak: 1, beats: [
+                (with(.attention) { $0.look = CGSize(width: 0, height: 1); $0.earDroop = -12 }, 0.5),
+                (with(.touch) { $0.eyeHappy = 1; $0.blush = 1; $0.squash = 0.9; $0.tailWag = 1.6 }, 1.2),
+                (with(.touch) { $0.lean = 0 }, 0.6),
+            ])
+        case "shake":
+            return IdleAct(id: id, line: "the room is spinning.", peak: 3, beats: [
+                (with(.idle) { $0.lean = 16; $0.look = CGSize(width: 1, height: 0); $0.eyeOpen = 1.2 }, 0.2),
+                (with(.idle) { $0.lean = -16; $0.look = CGSize(width: -1, height: 0); $0.eyeOpen = 1.2 }, 0.2),
+                (with(.idle) { $0.lean = 12; $0.look = CGSize(width: 0, height: -1); $0.eyeOpen = 1.2 }, 0.2),
+                (with(.idle) { $0.lean = -8; $0.eyeOpen = 0.6; $0.browAsym = 1; $0.mouthSmile = -0.4; $0.mouthOpen = 0.3; $0.sick = 0.5 }, 1.2),
+                (with(.idle) { $0.browTilt = 4 }, 0.6),
+            ])
+        case "screenshot":
+            return IdleAct(id: id, line: "did you just screenshot me?", peak: 1, beats: [
+                (with(.attention) { $0.eyeOpen = 1.2; $0.look = .zero; $0.earDroop = -14 }, 0.5),
+                (with(.mischief) { $0.armsUp = 0.8; $0.blush = 1; $0.browAsym = 1; $0.lean = 8 }, 1.4),
+                (with(.mischief) { $0.armsUp = 0 }, 0.6),
+            ])
+        case "recording":
+            return IdleAct(id: id, line: "are we live? hi chat.", peak: 1, beats: [
+                (with(.attention) { $0.look = .zero; $0.eyeOpen = 1.2 }, 0.4),
+                (with(.win) { $0.armsUp = 1; $0.hop = 10; $0.lean = -6 }, 0.5),
+                (with(.win) { $0.armsUp = 0.6; $0.hop = 0; $0.lean = 6 }, 0.5),
+                (with(.touch) { $0.lean = 0 }, 0.6),
+            ])
+        default:
+            return nil
+        }
+    }
+
     private static func with(_ r: Reaction, _ edit: (inout GremlinPose) -> Void) -> GremlinPose {
         var p = GremlinPose.pose(for: r)
         edit(&p)

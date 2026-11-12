@@ -53,6 +53,10 @@ final class GameModel {
     let haptics = Haptics()
     @ObservationIgnored private let reminders = ReminderScheduler()
     @ObservationIgnored private let napActivity = NapLiveActivity()
+    @ObservationIgnored private let phone = PhoneSense()
+    @ObservationIgnored private var lastPhoneReaction: [PhoneEvent: Date] = [:]
+    /// Which way the phone is tilted (gravity x, y), when it notices that.
+    private(set) var tilt: CGSize = .zero
     @ObservationIgnored private let store = SharedStore.make()
     /// When this model last wrote the save, so a newer write (from a widget) is noticed and loaded.
     @ObservationIgnored private var lastSaved: Date?
@@ -106,7 +110,7 @@ final class GameModel {
         notificationsDenied = state.prefs.remindersEnabled ? !(await reminders.isAuthorized()) : false
         #if DEBUG
         // Idle-act screenshots show only what the act itself says.
-        if UserDefaults.standard.string(forKey: "LMScreen") == "idleAct" { return }
+        if ["idleAct", "phone"].contains(UserDefaults.standard.string(forKey: "LMScreen")) { return }
         #endif
         if bubble == nil && !homeObscured { say(.idle) }
     }
@@ -116,7 +120,9 @@ final class GameModel {
         case .active:
             refreshClock()
             startTicker()
+            startPhoneSense()
         case .background:
+            phone.stop()
             // A round interrupted by leaving the app is dropped: no cost, no reward.
             if session != nil || game.state.session != nil { cancelActivity() }
             ticker?.cancel()
@@ -179,7 +185,38 @@ final class GameModel {
         if let specialPose { return specialPose }
         var p = transient.map(GremlinPose.pose(for:)) ?? GremlinPose.base(asleep: state.isAsleep, energy: state.needs.energy, mood: state.mood)
         if transient == nil || transient == .attention { p.look = look }
+        // Tilting the phone: its eyes roll to the low side and it leans to stay upright.
+        if transient == nil && look == .zero && tilt != .zero {
+            let x = max(-1, min(1, tilt.width))
+            p.look = CGSize(width: max(-1, min(1, x * 1.4)), height: 0.3 * abs(x))
+            p.lean += -asin(x) * 180 / .pi * 0.5
+        }
         return p
+    }
+
+    // MARK: The phone
+
+    private func startPhoneSense() {
+        #if DEBUG
+        if UserDefaults.standard.string(forKey: "LMTilt") != nil { return }
+        #endif
+        phone.start(onEvent: { [weak self] event, percent in self?.phoneEvent(event, percent: percent) },
+                    onTilt: { [weak self] gravity in self?.tiltChanged(gravity) })
+    }
+
+    private func tiltChanged(_ gravity: CGSize) {
+        // Lying flat there is no "down" to roll toward.
+        let g = abs(gravity.height) < 0.25 && abs(gravity.width) < 0.25 ? .zero : gravity
+        if abs(g.width - tilt.width) > 0.04 || abs(g.height - tilt.height) > 0.04 { tilt = g }
+    }
+
+    private func phoneEvent(_ event: PhoneEvent, percent: Int) {
+        guard PhoneAware.allows(event), !state.isAsleep, !homeObscured, activity == nil, !showHowToPlay,
+              specialPose == nil, transient == nil else { return }
+        if let last = lastPhoneReaction[event], Date().timeIntervalSince(last) < 30 { return }
+        guard let act = IdleAct.phone(event.rawValue, percent: percent) else { return }
+        lastPhoneReaction[event] = Date()
+        performIdle(act)
     }
 
     func react(_ reaction: Reaction, for seconds: Double = 1.4) {
@@ -699,6 +736,13 @@ final class GameModel {
             _ = game.wake(now: Date())
             react(game.sleep(now: Date()).reaction, for: 30)
             showLine("I'm up. happy?", duration: 30)
+        case "phone":
+            // `-LMPhone screenshot` plays a phone reaction (if the review option includes it); `-LMTilt 0.7` tilts.
+            if let id = UserDefaults.standard.string(forKey: "LMPhone"), let event = PhoneEvent(rawValue: id),
+               PhoneAware.allows(event), let act = IdleAct.phone(id, percent: 9) { performIdle(act, holdPeak: true) }
+            if PhoneAware.level >= 3, let x = Double(UserDefaults.standard.string(forKey: "LMTilt") ?? "") {
+                tilt = CGSize(width: x, height: -0.7)
+            }
         case "idleAct":
             if let act = IdleAct.find(UserDefaults.standard.string(forKey: "LMAct") ?? "sneeze") { performIdle(act, holdPeak: true) }
         case "namePrompt": showNamePrompt = true

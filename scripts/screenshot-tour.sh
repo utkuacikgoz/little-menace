@@ -56,10 +56,10 @@ elif [ "$PART" = new ]; then
     local S=$1 N=$2; shift 2
     for V in A B C D; do shot "$PM" "v-$N-$V" -LMVariant "$S$V" "$@"; done
   }
-  # Final check of the owner's picks S28B (widgets: needs rings) and S29A (nap: countdown).
-  shot "$PM" f-S28-widgets -LMScreen widgets
-  shot "$PM" f-S28-widgets-hungry -LMScreen widgets -LMNeeds 20,25,30
-  shot "$PM" f-S29-nap -LMScreen nap
+  # S31: what it notices about the phone. A nothing; B battery; C also screenshots; D also tilt.
+  abcd S31 S31-battery -LMScreen phone -LMPhone lowBattery
+  abcd S31 S31-screenshot -LMScreen phone -LMPhone screenshot
+  abcd S31 S31-tilt -LMScreen phone -LMTilt 0.75
 elif [ "$PART" = a ]; then
   shot "$PM" 01-home -LMScreen home
   shot "$PM" 02-name-prompt -LMScreen namePrompt
