@@ -116,6 +116,7 @@ The menu has a **Share** item. It renders a 1080×1350 card from the real state:
 - Siri and Shortcuts: "Feed my gremlin", "Pet my gremlin", "Check on my gremlin". Its reply is a line from its own voice.
 - One save for all of them: the app group container (`group.com.belevate.littlemenace`). The first launch after updating copies the old save across once. The app reloads when a widget or Siri wrote newer.
 - A nap shows a Live Activity until it wakes.
+- It notices the phone: a low battery (20% or less, unplugged), being plugged in, and a shake. Each at most every 30 seconds, never while asleep or mid-game.
 
 ## Paid collection (hypothesis, sandbox only)
 
