@@ -16,13 +16,12 @@ struct LittleMenaceWidgets: WidgetBundle {
 struct GremlinEntry: TimelineEntry {
     let date: Date
     let state: PetState
-    let line: String?
 }
 
 /// Reads the shared save and plans the next few hours: needs drop as time passes, so the face changes too.
 struct GremlinProvider: TimelineProvider {
     func placeholder(in context: Context) -> GremlinEntry {
-        GremlinEntry(date: Date(), state: PetState(now: Date()), line: nil)
+        GremlinEntry(date: Date(), state: PetState(now: Date()))
     }
 
     func getSnapshot(in context: Context, completion: @escaping (GremlinEntry) -> Void) {
@@ -36,13 +35,10 @@ struct GremlinProvider: TimelineProvider {
     /// Every 30 minutes for six hours.
     private func entries(from start: Date, count: Int) -> [GremlinEntry] {
         var game = Game(state: SharedStore.make().load(now: start).0)
-        var rng = SystemRandomNumberGenerator()
         return (0..<count).map { i in
             let date = start.addingTimeInterval(Double(i) * 30 * 60)
             _ = game.tick(now: date)
-            var copy = game.state
-            let line = Lines.next(for: copy.isAsleep ? .asleep : .idle, state: &copy, hour: game.days.hour(date), using: &rng)
-            return GremlinEntry(date: date, state: game.state, line: line)
+            return GremlinEntry(date: date, state: game.state)
         }
     }
 }
@@ -63,7 +59,7 @@ private struct GremlinEntryView: View {
     let entry: GremlinEntry
 
     var body: some View {
-        GremlinWidgetView(look: .portrait, family: family, state: entry.state, line: entry.line)
+        GremlinWidgetView(family: family, state: entry.state)
             .containerBackground(for: .widget) {
                 if family == .systemSmall || family == .systemMedium { GremlinWidgetBackground(state: entry.state) }
             }
@@ -75,13 +71,13 @@ private struct GremlinEntryView: View {
 struct NapLiveActivityWidget: Widget {
     var body: some WidgetConfiguration {
         ActivityConfiguration(for: NapAttributes.self) { context in
-            NapBanner(look: .countdown, attributes: context.attributes, state: context.state)
+            NapBanner(attributes: context.attributes, state: context.state)
                 .activityBackgroundTint(Color(hex: 0x241F33))
                 .activitySystemActionForegroundColor(Color(hex: 0xFFF7EA))
         } dynamicIsland: { context in
             DynamicIsland {
                 DynamicIslandExpandedRegion(.bottom) {
-                    NapBanner(look: .countdown, attributes: context.attributes, state: context.state)
+                    NapBanner(attributes: context.attributes, state: context.state)
                 }
             } compactLeading: {
                 NapIslandLeading()

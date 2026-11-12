@@ -56,10 +56,10 @@ elif [ "$PART" = new ]; then
     local S=$1 N=$2; shift 2
     for V in A B C D; do shot "$PM" "v-$N-$V" -LMVariant "$S$V" "$@"; done
   }
-  # Widgets and the nap Live Activity, drawn in-app by the DEBUG gallery: S28 widgets, S29 nap.
-  abcd S28 S28-widgets -LMScreen widgets
-  abcd S28 S28-widgets-hungry -LMScreen widgets -LMNeeds 20,25,30
-  abcd S29 S29-nap -LMScreen nap
+  # Final check of the owner's picks S28B (widgets: needs rings) and S29A (nap: countdown).
+  shot "$PM" f-S28-widgets -LMScreen widgets
+  shot "$PM" f-S28-widgets-hungry -LMScreen widgets -LMNeeds 20,25,30
+  shot "$PM" f-S29-nap -LMScreen nap
 elif [ "$PART" = a ]; then
   shot "$PM" 01-home -LMScreen home
   shot "$PM" 02-name-prompt -LMScreen namePrompt

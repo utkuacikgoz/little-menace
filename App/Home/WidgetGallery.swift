@@ -5,20 +5,9 @@ import MenaceCore
 
 /// Design review only (`-LMScreen widgets` / `-LMScreen nap`): the widgets and the nap Live Activity drawn in-app
 /// at their real sizes, because a simulator screenshot can't add widgets to the Home Screen.
-/// `-LMVariant S28B` (widgets) or `S29B` (nap) picks the option.
 struct WidgetGallery: View {
     let page: String
     @Environment(GameModel.self) private var model
-
-    private var widgetLook: WidgetLook {
-        let looks: [String: WidgetLook] = ["S28B": .needs, "S28C": .talks, "S28D": .peek]
-        return looks.first { Variant.on($0.key) }?.value ?? .portrait
-    }
-
-    private var napLook: NapLook {
-        let looks: [String: NapLook] = ["S29B": .progress, "S29C": .sign, "S29D": .wakeButton]
-        return looks.first { Variant.on($0.key) }?.value ?? .countdown
-    }
 
     var body: some View {
         ZStack {
@@ -32,20 +21,19 @@ struct WidgetGallery: View {
 
     private var widgetsPage: some View {
         let s = model.state
-        let line = "my alibi is adorable."
         return VStack(alignment: .leading, spacing: 18) {
             caption("Home Screen")
             HStack(spacing: 22) {
-                box(GremlinWidgetView(look: widgetLook, family: .systemSmall, state: s, line: line, interactive: false), w: 158, h: 158, state: s)
+                box(GremlinWidgetView(family: .systemSmall, state: s, interactive: false), w: 158, h: 158, state: s)
                 appIcons
             }
-            box(GremlinWidgetView(look: widgetLook, family: .systemMedium, state: s, line: line, interactive: false), w: 338, h: 158, state: s)
+            box(GremlinWidgetView(family: .systemMedium, state: s, interactive: false), w: 338, h: 158, state: s)
             caption("Lock Screen")
             HStack(spacing: 14) {
-                GremlinWidgetView(look: widgetLook, family: .accessoryCircular, state: s, line: line, interactive: false)
+                GremlinWidgetView(family: .accessoryCircular, state: s, interactive: false)
                     .frame(width: 72, height: 72)
                     .background(.white.opacity(0.15), in: Circle())
-                GremlinWidgetView(look: widgetLook, family: .accessoryRectangular, state: s, line: line, interactive: false)
+                GremlinWidgetView(family: .accessoryRectangular, state: s, interactive: false)
                     .frame(width: 170, height: 72, alignment: .leading)
             }
             .foregroundStyle(.white)
@@ -98,7 +86,7 @@ struct WidgetGallery: View {
             .padding(.top, 2)
             Text("9:41").font(.system(size: 84, weight: .bold, design: .rounded)).foregroundStyle(.white)
             Spacer()
-            NapBanner(look: napLook, attributes: attributes, state: state, interactive: false)
+            NapBanner(attributes: attributes, state: state)
                 .background(Color(hex: 0x241F33), in: RoundedRectangle(cornerRadius: 24, style: .continuous))
                 .padding(.horizontal, 12)
             Spacer().frame(height: 60)

@@ -3,18 +3,10 @@ import SwiftUI
 import WidgetKit
 import MenaceCore
 
-/// Review S28 (DEBUG only): four looks for the Home Screen widget. A portrait with buttons, B its needs as rings,
-/// C it talks, D a big gremlin peeking up from the bottom. Lock Screen widgets are the same for all four.
-enum WidgetLook: String, CaseIterable {
-    case portrait, needs, talks, peek
-}
-
-/// One widget, any size. Interactive: the buttons pet and feed it through the shared save.
+/// One widget, any size: the gremlin and its needs as rings. Interactive: the buttons pet and feed it through the shared save.
 struct GremlinWidgetView: View {
-    let look: WidgetLook
     let family: WidgetFamily
     let state: PetState
-    let line: String?
     /// False in the in-app review gallery, where intent buttons can't run: same look, no action.
     var interactive = true
 
@@ -40,51 +32,19 @@ struct GremlinWidgetView: View {
             .accessibilityHidden(true)
     }
 
-    @ViewBuilder private var small: some View {
-        switch look {
-        case .portrait:
-            VStack(spacing: 2) {
-                gremlin(104)
-                nameTag
-            }
-        case .needs:
-            VStack(spacing: 4) {
-                gremlin(92)
-                needRings(size: 26)
-            }
-        case .talks:
-            VStack(spacing: 2) {
-                bubble(line ?? OffscreenCare.summary(state), lines: 2)
-                gremlin(86)
-            }
-        case .peek:
-            ZStack(alignment: .topLeading) {
-                gremlin(190).offset(y: 70)
-                if let line { bubble(line, lines: 2).padding(.top, 2) }
-            }
+    private var small: some View {
+        VStack(spacing: 4) {
+            gremlin(92)
+            needRings(size: 26)
         }
     }
 
-    @ViewBuilder private var medium: some View {
+    private var medium: some View {
         HStack(spacing: 12) {
-            switch look {
-            case .portrait: gremlin(122)
-            case .needs: gremlin(112)
-            case .talks: gremlin(108)
-            case .peek: gremlin(190).offset(y: 56).frame(width: 140)
-            }
+            gremlin(112)
             VStack(alignment: .leading, spacing: 8) {
-                switch look {
-                case .portrait:
-                    nameTag
-                    Text(OffscreenCare.summary(state)).font(.system(.caption, design: .rounded).weight(.bold))
-                        .foregroundStyle(Ink.eye).lineLimit(2)
-                case .needs:
-                    nameTag
-                    needRings(size: 30)
-                case .talks, .peek:
-                    bubble(line ?? OffscreenCare.summary(state), lines: 3)
-                }
+                nameTag
+                needRings(size: 30)
                 Spacer(minLength: 0)
                 buttons
             }
@@ -101,15 +61,6 @@ struct GremlinWidgetView: View {
         .foregroundStyle(Ink.eye)
         .padding(.horizontal, 10).padding(.vertical, 4)
         .background(Ink.body.opacity(0.85), in: Capsule())
-    }
-
-    private func bubble(_ text: String, lines: Int) -> some View {
-        Text(text)
-            .font(.system(.caption, design: .rounded).weight(.heavy))
-            .foregroundStyle(Ink.body)
-            .lineLimit(lines)
-            .padding(.horizontal, 10).padding(.vertical, 6)
-            .background(Ink.eye, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
     }
 
     private func needRings(size: CGFloat) -> some View {
