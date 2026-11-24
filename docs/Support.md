@@ -2,9 +2,7 @@
 
 > The live page is at [littlemenace.fun/support](https://littlemenace.fun/support). The site source is in `site/`.
 
-[Report a problem or send feedback](https://github.com/utkuacikgoz/little-menace/issues/new).
-
-Include your iPhone model, iOS version, what you tried and what happened. GitHub issues are public, so leave out payment details, receipts and personal information.
+Email [hello@utkuacikgoz.com](mailto:hello@utkuacikgoz.com), or use **Send Feedback** in the app’s Settings, which fills in your app version and iPhone model. Tell us what you tried and what happened.
 
 **A collection is missing:** use Restore Purchases in Settings or on the Midnight Snack page, with the Apple Account used for the purchase.
 

@@ -7,12 +7,16 @@ public struct PlannedReminder: Equatable, Sendable {
 }
 
 /// Optional local reminders. Rules:
-/// - Off until the player turns them on (the offer appears once, after a useful moment).
+/// - Off until the player turns them on (the offer appears after a useful moment, and once more a few days later).
 /// - At most one nudge per day, planned only a few days ahead and re-planned on every visit,
 ///   so an absent player gets a couple of friendly nudges and then silence. Never guilt.
 /// - A nap in progress gets a single "awake" note at the expected wake time.
 public enum ReminderPolicy {
     public static let daysAhead = 3
+    /// A skipped offer comes back once, this long after it was first shown.
+    public static let offerAgainAfter: TimeInterval = 3 * 86400
+    /// A mischief note only between these hours, and only if it is at least an hour away.
+    static let mischiefHours = 9..<21
 
     static let nudges = [
         "{name} found something shiny. Probably yours.",
@@ -23,11 +27,22 @@ public enum ReminderPolicy {
         "{name} hid somewhere. Cushions look suspicious.",
     ]
 
-    /// Show the soft offer after a moment that makes reminders useful (a nap, or a few rounds of play).
-    public static func shouldOffer(_ s: PetState) -> Bool {
-        guard !s.prefs.reminderOfferShown, !s.prefs.remindersEnabled else { return false }
+    /// Show the soft offer after a moment that makes reminders useful (a nap, or a few rounds of play):
+    /// the first time, and once more a few days after it was skipped.
+    public static func shouldOffer(_ s: PetState, now: Date) -> Bool {
+        guard !s.prefs.remindersEnabled else { return false }
+        if s.prefs.reminderOfferShown {
+            // Players who saw it before the second chance existed get theirs at the next useful moment.
+            guard (s.prefs.reminderOfferAgainAt ?? .distantPast) <= now else { return false }
+        }
         let rounds = s.counters.rounds.values.reduce(0, +)
         return s.isAsleep || rounds >= 3
+    }
+
+    /// Records that the offer was shown: the first time schedules the second chance, the second ends it.
+    public static func markOffered(_ s: inout PetState, now: Date) {
+        s.prefs.reminderOfferAgainAt = s.prefs.reminderOfferShown ? .distantFuture : now.addingTimeInterval(offerAgainAfter)
+        s.prefs.reminderOfferShown = true
     }
 
     public static func plan(_ s: PetState, now: Date, days: DayClock) -> [PlannedReminder] {
@@ -45,11 +60,29 @@ public enum ReminderPolicy {
             else { continue }
             guard at > now else { continue }
             let key = days.dayKey(at)
-            let body = nudges[Int(stableHash("nudge:" + key) % UInt64(nudges.count))]
-                .replacingOccurrences(of: "{name}", with: s.titleName)
+            let body = stampNudge(s, on: at, days: days)
+                ?? nudges[Int(stableHash("nudge:" + key) % UInt64(nudges.count))].replacingOccurrences(of: "{name}", with: s.titleName)
             out.append(.init(id: "nudge-" + key, date: at, body: body))
         }
-        return out
+        // Mischief ready while the player is away: that day's one note says so instead.
+        if let at = s.mischief.nextAt, at >= now.addingTimeInterval(3600), mischiefHours.contains(days.hour(at)), !s.isAsleep,
+           at <= cal.date(byAdding: .day, value: daysAhead + 1, to: startOfToday) ?? at {
+            let key = days.dayKey(at)
+            out.removeAll { $0.id == "nudge-" + key }
+            out.append(.init(id: "mischief", date: at, body: "\(s.titleName) is up to something. Come see."))
+        }
+        return out.sorted { $0.date < $1.date }
+    }
+
+    /// On the last day of the week, when one more stamp unlocks a reward.
+    static func stampNudge(_ s: PetState, on date: Date, days: DayClock) -> String? {
+        guard days.weekdayIndex(date) == 6, s.stamps.weekKey == days.weekKey(date),
+              !s.stamps.days.contains(days.dayKey(date)) else { return nil }
+        switch s.stamps.days.count {
+        case 4: return "One more stamp and \(s.titleName)'s weekly gift is yours. Last day!"
+        case 2: return "One more stamp gets this week's bonus. Last day!"
+        default: return nil
+        }
     }
 }
 

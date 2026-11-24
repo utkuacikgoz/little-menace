@@ -428,6 +428,10 @@ final class GameModel {
     /// Apple's rating prompt goes up right after a won round, once the player is a regular.
     /// Returns true when the caller should request it; records the ask so it happens once per version.
     func takeReviewMoment(won: Bool) -> Bool {
+        #if DEBUG
+        // Screenshot tours and UI tests start as a regular (`-LMScreen`): never ask them.
+        if UserDefaults.standard.string(forKey: "LMScreen") != nil { return false }
+        #endif
         let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "0"
         guard ReviewPolicy.shouldAsk(state, wonRound: won, appVersion: version) else { return false }
         game.state.prefs.reviewAskedVersion = version
@@ -625,8 +629,8 @@ final class GameModel {
     }
 
     private func offerRemindersIfUseful() {
-        guard ReminderPolicy.shouldOffer(state) else { return }
-        game.state.prefs.reminderOfferShown = true
+        guard ReminderPolicy.shouldOffer(state, now: Date()) else { return }
+        ReminderPolicy.markOffered(&game.state, now: Date())
         showReminderOffer = true
         save()
     }

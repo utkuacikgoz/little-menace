@@ -113,6 +113,9 @@ struct SettingsView: View {
                     }
                     Link(destination: AppLinks.privacy) { Label("Privacy", systemImage: "hand.raised.fill") }
                     Link(destination: AppLinks.support) { Label("Support", systemImage: "questionmark.circle.fill") }
+                    if let mail = FeedbackMail.url() {
+                        Link(destination: mail) { Label("Send Feedback", systemImage: "envelope.fill") }
+                    }
                 }
                 .creamSection()
 

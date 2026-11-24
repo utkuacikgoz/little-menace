@@ -7,6 +7,9 @@ struct ActivityContainer: View {
     let kind: ActivityKind
     @Environment(GameModel.self) private var model
     @Environment(\.requestReview) private var requestReview
+    @Environment(\.openURL) private var openURL
+    /// "How's your gremlin?": happy players get Apple's rating prompt, the others an email to us.
+    @State private var askingMood = false
     @State private var round = 0
     @State private var result: ActivityResult?
     @State private var earnedXP = 0
@@ -67,6 +70,14 @@ struct ActivityContainer: View {
             .accessibilityHidden(result != nil)
         }
         .animation(.spring(response: 0.4, dampingFraction: 0.75), value: result)
+        .alert("How's \(model.state.displayName) treating you?", isPresented: $askingMood) {
+            Button("Love it 😀") { requestReview() }
+            Button("It's OK 😐") { if let url = FeedbackMail.url(mood: "😐") { openURL(url) } }
+            Button("Not great 😠") { if let url = FeedbackMail.url(mood: "😠") { openURL(url) } }
+            Button("Not now", role: .cancel) {}
+        } message: {
+            Text("Tell us straight. It helps make it better.")
+        }
         #if DEBUG
         .onAppear {
             // Screenshot tours: `-LMResult win|lose` shows the result card straight away.
@@ -101,10 +112,10 @@ struct ActivityContainer: View {
                 resultFocused = true
             }
             if model.takeReviewMoment(won: r.won) {
-                // Let the win card land first, then Apple's rating prompt.
+                // Let the win card land first, then ask how it's going.
                 Task {
                     try? await Task.sleep(for: .seconds(1.2))
-                    requestReview()
+                    askingMood = true
                 }
             }
         }

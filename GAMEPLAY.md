@@ -95,17 +95,20 @@ Completing it grants 30 XP and a **gold stamp** once. It is shown only as an ico
 
 ## Reminders
 
-- **Off by default.** A single soft offer ("Nudge me later?") appears once, after a useful moment: starting a nap or finishing 3 rounds. The iOS permission prompt appears only if the player taps ✓.
+- **Off by default.** A soft offer ("Nudge me later?") appears after a useful moment: starting a nap or finishing 3 rounds. If skipped, it comes back once, 3 days later, then never again. The iOS permission prompt appears only if the player taps ✓.
 - **Plan**:
   - at most one nudge per day, at the player's chosen time
   - never on the current day
   - only 3 days ahead, re-planned on every visit, so an absent player gets 3 friendly nudges and then silence
   - plus one "(name) is awake" note at the expected nap end
+  - on Sunday, if one more stamp unlocks a reward (the weekly gift at 4 stamps, the bonus at 2), that day's nudge says so
+  - when the next mischief is ready while the player is away (between 9:00 and 21:00, at least an hour from now), that day's nudge becomes "(name) is up to something."
 - There is no guilt, distress, or "your gremlin misses you". If permission is denied, Settings says so and links to iOS Settings.
 
-## Rating prompt
+## Rating prompt and feedback
 
-Apple's rating prompt is requested right after a won round, only once the player has visited on 3 days and reached level 3, and at most once per app version (kept across a gremlin reset). Apple decides whether it actually appears and caps it at three times a year.
+- Right after a won round, once the player has visited on 3 days and reached level 3, and at most once per app version (kept across a gremlin reset), it asks "How's (name) treating you?": **Love it** opens Apple's rating prompt (Apple decides whether it appears, at most three times a year); **It's OK** and **Not great** open an email to hello@utkuacikgoz.com with that face in the subject; **Not now** closes it.
+- **Settings › Send Feedback** opens the same email any time. Drafts include the app version, iPhone model and iOS version. Nothing is sent unless the player presses Send.
 
 ## Sharing
 

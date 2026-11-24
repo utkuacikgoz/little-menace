@@ -269,12 +269,50 @@ final class ReminderTests: XCTestCase {
         XCTAssertEqual(plan.first?.id, "wake")
     }
 
-    func testOfferAppearsOnceAfterUsefulMoment() {
+    func testOfferAppearsAfterUsefulMomentAndOnceMoreLater() {
         var s = PetState(now: now)
-        XCTAssertFalse(ReminderPolicy.shouldOffer(s))
+        XCTAssertFalse(ReminderPolicy.shouldOffer(s, now: now))
         s.counters.rounds = ["sockTug": 3]
-        XCTAssertTrue(ReminderPolicy.shouldOffer(s))
+        XCTAssertTrue(ReminderPolicy.shouldOffer(s, now: now))
+        ReminderPolicy.markOffered(&s, now: now)
+        XCTAssertFalse(ReminderPolicy.shouldOffer(s, now: now.addingTimeInterval(86400)))
+        let later = now.addingTimeInterval(ReminderPolicy.offerAgainAfter)
+        XCTAssertTrue(ReminderPolicy.shouldOffer(s, now: later), "a skipped offer comes back once")
+        ReminderPolicy.markOffered(&s, now: later)
+        XCTAssertFalse(ReminderPolicy.shouldOffer(s, now: later.addingTimeInterval(30 * 86400)), "and never again")
+    }
+
+    func testPlayersWhoSawTheOldOfferGetOneMoreChance() {
+        var s = PetState(now: now)
+        s.counters.rounds = ["sockTug": 3]
         s.prefs.reminderOfferShown = true
-        XCTAssertFalse(ReminderPolicy.shouldOffer(s))
+        XCTAssertTrue(ReminderPolicy.shouldOffer(s, now: now))
+        s.prefs.remindersEnabled = true
+        XCTAssertFalse(ReminderPolicy.shouldOffer(s, now: now), "never once they are on")
+    }
+
+    func testLastDayNudgeWhenOneStampFromTheGift() {
+        // 2026-09-21 is a Monday; the plan from Friday covers Sunday the 27th.
+        let friday = now.addingTimeInterval(4 * 86400)
+        var s = PetState(now: friday)
+        s.prefs.remindersEnabled = true
+        s.stamps.weekKey = utc.weekKey(friday)
+        s.stamps.days = ["2026-09-21", "2026-09-22", "2026-09-23", "2026-09-25"]
+        let sunday = ReminderPolicy.plan(s, now: friday, days: utc).first { utc.dayKey($0.date) == "2026-09-27" }
+        XCTAssertEqual(sunday?.body.contains("weekly gift"), true)
+        s.stamps.days.removeLast()
+        let plain = ReminderPolicy.plan(s, now: friday, days: utc).first { utc.dayKey($0.date) == "2026-09-27" }
+        XCTAssertEqual(plain?.body.contains("Last day"), false, "three stamps: nothing to unlock with one more")
+    }
+
+    func testMischiefNoteReplacesThatDaysNudge() {
+        var s = PetState(now: now)
+        s.prefs.remindersEnabled = true
+        s.mischief.nextAt = now.addingTimeInterval(26 * 3600) // tomorrow at noon
+        let plan = ReminderPolicy.plan(s, now: now, days: utc)
+        XCTAssertEqual(plan.filter { utc.dayKey($0.date) == "2026-09-22" }.map(\.id), ["mischief"])
+        XCTAssertEqual(Set(plan.map { utc.dayKey($0.date) }).count, plan.count, "still one note a day")
+        s.mischief.nextAt = now.addingTimeInterval(14 * 3600) // midnight: too late to ping
+        XCTAssertFalse(ReminderPolicy.plan(s, now: now, days: utc).contains { $0.id == "mischief" })
     }
 }

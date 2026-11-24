@@ -131,8 +131,10 @@ public struct Preferences: Codable, Equatable, Sendable {
     public var sound = true
     public var haptics = true
     public var remindersEnabled = false
-    /// Whether the soft in-app reminder offer has been shown. It is shown once.
+    /// Whether the soft in-app reminder offer has been shown.
     public var reminderOfferShown = false
+    /// When a skipped offer may be shown once more; `.distantFuture` after that second time.
+    public var reminderOfferAgainAt: Date?
     public var reminderHour = 18
     public var reminderMinute = 30
     /// App version in which Apple's rating prompt was last requested.
