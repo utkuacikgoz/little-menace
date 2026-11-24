@@ -316,3 +316,44 @@ final class ReminderTests: XCTestCase {
         XCTAssertFalse(ReminderPolicy.plan(s, now: now, days: utc).contains { $0.id == "mischief" })
     }
 }
+
+final class DiaryTests: XCTestCase {
+    let utc = DayClock(timeZone: TimeZone(identifier: "UTC")!)
+    let t0 = ISO8601DateFormatter().date(from: "2026-09-21T10:00:00Z")!
+
+    func testCareIsLoggedForTheDayAndOffencesForLife() {
+        var s = PetState(now: t0)
+        s.needs = Needs(fullness: 40, energy: 80, joy: 50)
+        var g = Game(state: s, days: utc)
+        _ = g.feed(now: t0)
+        _ = g.pet(now: t0.addingTimeInterval(60))
+        XCTAssertEqual(g.state.diary.count, 1)
+        XCTAssertEqual(g.state.diary[0].day, "2026-09-21")
+        XCTAssertEqual(g.state.diary[0].feeds, 1)
+        XCTAssertEqual(g.state.diary[0].pets, 1)
+        g.state.needs.fullness = 100
+        _ = g.feed(now: t0.addingTimeInterval(120))
+        XCTAssertEqual(g.state.rapSheet.snacksRefused, 1)
+        XCTAssertTrue(Diary.line(g.state.diary[0], name: "Mo").hasPrefix("Ate a snack"))
+    }
+
+    func testOnlyTheLastWeekIsKept() {
+        var g = Game(state: PetState(now: t0), days: utc)
+        for d in 0..<10 { g.logDay(t0.addingTimeInterval(Double(d) * 86400)) { $0.pets += 1 } }
+        XCTAssertEqual(g.state.diary.count, Diary.daysKept)
+        XCTAssertEqual(g.state.diary.last?.day, "2026-09-30")
+    }
+
+    func testEmptyDayStillSaysSomething() {
+        XCTAssertEqual(Diary.line(DiaryDay(day: "2026-09-21"), name: "Mo"), "nothing happened. suspicious.")
+    }
+
+    func testDiarySurvivesSaving() throws {
+        var s = PetState(now: t0)
+        s.diary = [DiaryDay(day: "2026-09-21")]
+        s.rapSheet.mischief["cup"] = 2
+        let back = try SaveCodec.decode(try SaveCodec.encode(s))
+        XCTAssertEqual(back.diary, s.diary)
+        XCTAssertEqual(back.rapSheet.totalMischief, 2)
+    }
+}

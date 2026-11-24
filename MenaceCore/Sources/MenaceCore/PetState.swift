@@ -159,6 +159,9 @@ public struct PetState: Codable, Equatable, Sendable {
     public var pendingWake = false
     public var xp: Int
     public var discoveries: Set<String>
+    /// The last week, a line a day, and lifetime offences.
+    public var diary: [DiaryDay] = []
+    public var rapSheet = RapSheet()
     /// -1 sweet … +1 menace. Nudged by mischief choices.
     public var personality: Double
     public var mischief: MischiefState
@@ -230,7 +233,7 @@ public struct PetState: Codable, Equatable, Sendable {
     enum CodingKeys: String, CodingKey {
         case name, namePromptShown, recentLines, createdAt, lastSimulated, needs, napStartedAt, pendingWake, xp, discoveries,
              personality, mischief, stamps, challenge, granted, wardrobe, counters, prefs, points, howToPlayShown,
-             temper, forceFeeds, lastForceFeed, mess, noNapUntil
+             temper, forceFeeds, lastForceFeed, mess, noNapUntil, diary, rapSheet
     }
 
     public init(from decoder: Decoder) throws {
@@ -248,6 +251,8 @@ public struct PetState: Codable, Equatable, Sendable {
         pendingWake = try c.decodeIfPresent(Bool.self, forKey: .pendingWake) ?? false
         xp = max(0, try c.decodeIfPresent(Int.self, forKey: .xp) ?? 0)
         discoveries = try c.decodeIfPresent(Set<String>.self, forKey: .discoveries) ?? []
+        diary = Array((try c.decodeIfPresent([DiaryDay].self, forKey: .diary) ?? []).suffix(Diary.daysKept))
+        rapSheet = try c.decodeIfPresent(RapSheet.self, forKey: .rapSheet) ?? RapSheet()
         personality = min(1, max(-1, try c.decodeIfPresent(Double.self, forKey: .personality) ?? 0))
         mischief = try c.decodeIfPresent(MischiefState.self, forKey: .mischief) ?? mischief
         stamps = try c.decodeIfPresent(StampCard.self, forKey: .stamps) ?? StampCard()

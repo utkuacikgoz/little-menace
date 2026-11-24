@@ -64,6 +64,7 @@ public struct Game: Sendable {
         }
         if TimeModel.advance(&state, to: now) {
             state.counters.naps += 1
+            logDay(now) { $0.naps += 1 }
             events.append(.autoWoke)
             progressChallenge(.restfulNap, by: 1, now: now, events: &events)
             discover(.firstNap, now: now, events: &events)
@@ -120,6 +121,8 @@ public struct Game: Sendable {
             }
             state.lastForceFeed = now
             guard state.forceFeeds >= Tuning.forceFeedsToPuke else {
+                logDay(now) { $0.refusals += 1 }
+                state.rapSheet.snacksRefused += 1
                 return Outcome(reaction: .refuseFood, refusal: .full, events: events)
             }
             // One too many: it all comes back up, and leaves a puddle to clean.
@@ -129,6 +132,8 @@ public struct Game: Sendable {
             state.needs.joy -= Tuning.pukeJoyLoss
             state.needs.clamp()
             state.mess = true
+            logDay(now) { $0.pukes += 1 }
+            state.rapSheet.pukes += 1
             return Outcome(reaction: .puke, refusal: nil, events: events)
         }
         state.needs.fullness += Tuning.feedAmount
@@ -136,6 +141,7 @@ public struct Game: Sendable {
         state.needs.clamp()
         if state.needs.fullness >= Tuning.hungryBelow { state.points.hungryHours = 0 }
         state.counters.feeds += 1
+        logDay(now) { $0.feeds += 1 }
         careXP(Tuning.feedXP, .fed, now: now, events: &events)
         discover(.firstBite, now: now, events: &events)
         return Outcome(reaction: .feed, refusal: nil, events: events)
@@ -154,11 +160,14 @@ public struct Game: Sendable {
         if state.points.pokeBurst > Tuning.pokesAllowed {
             // Too much, too fast: no joy, no reward, and it costs a point.
             losePoints(Tuning.pokePenalty, .poked, now: now, events: &events)
+            logDay(now) { $0.pokes += 1 }
+            state.rapSheet.pokesResented += 1
             return Outcome(reaction: .annoyed, refusal: nil, events: events)
         }
         state.needs.joy = min(100, state.needs.joy + Tuning.petJoy)
         state.temper = max(0, state.temper - Tuning.temperPetCool)
         state.counters.pets += 1
+        logDay(now) { $0.pets += 1 }
         careXP(Tuning.petXP, .petted, now: now, events: &events)
         progressChallenge(.petEight, by: 1, now: now, events: &events)
         return Outcome(reaction: .touch, refusal: nil, events: events)
@@ -182,6 +191,7 @@ public struct Game: Sendable {
         let restful = now.timeIntervalSince(start) >= Tuning.restfulNap
         if restful {
             state.counters.naps += 1
+            logDay(now) { $0.naps += 1 }
             progressChallenge(.restfulNap, by: 1, now: now, events: &events)
             discover(.firstNap, now: now, events: &events)
         } else {
@@ -235,6 +245,7 @@ public struct Game: Sendable {
         let key = session.kind.rawValue
         state.counters.rounds[key, default: 0] += 1
         if result.won { state.counters.wins[key, default: 0] += 1 }
+        logDay(now) { $0.rounds += 1; if result.won { $0.wins += 1 } }
         if !state.counters.playedKinds.contains(key) { state.counters.playedKinds.append(key) }
 
         addXP(Tuning.activityBaseXP + Int((Double(Tuning.activityBonusXP) * result.quality).rounded()), .played, now: now, events: &events)
@@ -281,6 +292,9 @@ public struct Game: Sendable {
         state.needs.fullness += choice.fullness
         state.needs.clamp()
         state.counters.mischiefResolved += 1
+        logDay(now) { $0.mischief.append(id); if indulge { $0.indulged += 1 } }
+        state.rapSheet.mischief[id, default: 0] += 1
+        if indulge { state.rapSheet.indulged += 1 }
         state.mischief.recent = Array((state.mischief.recent + [id]).suffix(8))
         state.mischief.nextAt = now.addingTimeInterval(MischiefBook.gap(seed: "\(id):\(state.counters.mischiefResolved)"))
         addXP(Tuning.mischiefXP, .mischief, now: now, events: &events)

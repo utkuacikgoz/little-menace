@@ -55,6 +55,9 @@ final class GameModel {
     @ObservationIgnored private let napActivity = NapLiveActivity()
     @ObservationIgnored private let phone = PhoneSense()
     @ObservationIgnored private var lastPhoneReaction: [PhoneEvent: Date] = [:]
+    /// Hearts or bite marks around the gremlin after a hot-spot pet.
+    private(set) var flourish: PetFlourish?
+    @ObservationIgnored private var flourishTask: Task<Void, Never>?
     @ObservationIgnored private let store = SharedStore.make()
     /// When this model last wrote the save, so a newer write (from a widget) is noticed and loaded.
     @ObservationIgnored private var lastSaved: Date?
@@ -108,7 +111,7 @@ final class GameModel {
         notificationsDenied = state.prefs.remindersEnabled ? !(await reminders.isAuthorized()) : false
         #if DEBUG
         // Idle-act screenshots show only what the act itself says.
-        if ["idleAct", "phone"].contains(UserDefaults.standard.string(forKey: "LMScreen")) { return }
+        if ["idleAct", "phone", "pet"].contains(UserDefaults.standard.string(forKey: "LMScreen")) { return }
         #endif
         if bubble == nil && !homeObscured { say(.idle) }
     }
@@ -297,6 +300,47 @@ final class GameModel {
     }
 
     // MARK: Care intents
+
+    /// A pet on a particular spot: the same care, with that spot's own reaction (review S32).
+    func pet(zone: PetZone, hold: Bool = false) {
+        guard PetSpots.level > 0, zone != .head, !state.isAsleep, state.mood < .angry, transient != .annoyed else { return pet() }
+        let out = game.pet(now: Date())
+        guard out.reaction != .annoyed else {
+            react(.annoyed, for: 1.6)
+            haptics.play(.nope)
+            say(.annoyed, chance: 0.8)
+            handle(out.events)
+            save()
+            return
+        }
+        let trap = PetSpots.level == 3 && zone == .belly
+        let favourite = PetSpots.level == 2 && zone == PetSpots.favourite(dayKey: game.days.dayKey(Date()))
+        if let act = IdleAct.petSpot(trap ? "bellyTrap" : zone.rawValue) {
+            performIdle(favourite ? IdleAct(id: act.id, line: "that's the spot. today, anyway.", peak: act.peak, beats: act.beats) : act,
+                        holdPeak: hold)
+        }
+        if trap {
+            haptics.play(.thud)
+            sounds.play(.chomp)
+        } else {
+            haptics.play(.squish)
+            sounds.play(.pop)
+        }
+        if trap || favourite { showFlourish(trap ? .bite : .hearts, hold: hold) }
+        handle(out.events)
+        save()
+    }
+
+    private func showFlourish(_ f: PetFlourish, hold: Bool) {
+        flourishTask?.cancel()
+        flourish = f
+        guard !hold else { return }
+        flourishTask = Task { [weak self] in
+            try? await Task.sleep(for: .seconds(1.6))
+            guard !Task.isCancelled else { return }
+            self?.flourish = nil
+        }
+    }
 
     func pet() {
         let out = game.pet(now: Date())
@@ -723,6 +767,28 @@ final class GameModel {
             _ = game.wake(now: Date())
             react(game.sleep(now: Date()).reaction, for: 30)
             showLine("I'm up. happy?", duration: 30)
+        case "diary", "diaryA":
+            // A believable week for the diary and rap sheet (review S33). `diaryA` is option A's stand-in: the stamp card.
+            let names = ["sock", "cup", "pen", "cable", "remote", "cup", "keys"]
+            game.state.diary = (0..<6).reversed().map { back in
+                var d = DiaryDay(day: game.days.dayKey(Date().addingTimeInterval(Double(-back) * 86400)))
+                d.feeds = [3, 2, 4, 1, 3, 2][back]; d.pets = [6, 9, 3, 12, 4, 7][back]; d.rounds = [3, 1, 4, 0, 2, 2][back]
+                d.wins = [2, 1, 4, 0, 1, 2][back]; d.naps = [1, 0, 2, 1, 1, 0][back]; d.refusals = back == 2 ? 2 : 0
+                d.pokes = back == 3 ? 1 : 0; d.mischief = [names[back]]
+                return d
+            }
+            game.state.rapSheet = RapSheet()
+            game.state.rapSheet.mischief = ["cup": 7, "sock": 4, "pen": 3, "cable": 2, "remote": 2]
+            game.state.rapSheet.snacksRefused = 11; game.state.rapSheet.pokesResented = 23; game.state.rapSheet.pukes = 2
+            return screen == "diaryA" || DiaryLook.level == 0 ? .stamps : .diary
+        case "pet":
+            // `-LMPetZone chin` pets that spot and holds the reaction (review S32).
+            if let zone = UserDefaults.standard.string(forKey: "LMPetZone").flatMap(PetZone.init(rawValue:)) {
+                Task { @MainActor in
+                    try? await Task.sleep(for: .seconds(0.6))
+                    self.pet(zone: zone, hold: true)
+                }
+            }
         case "phone":
             // `-LMPhone lowBattery` plays a phone reaction (lowBattery, charging, shake).
             if let id = UserDefaults.standard.string(forKey: "LMPhone"), PhoneEvent(rawValue: id) != nil,

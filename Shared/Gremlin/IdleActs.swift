@@ -69,6 +69,44 @@ struct IdleAct {
         ]),
     ]
 
+    /// Petting a hot spot (`PetZone` raw values), or `bellyTrap` when the belly bites back.
+    static func petSpot(_ id: String) -> IdleAct? {
+        switch id {
+        case "chin":
+            return IdleAct(id: id, line: "chin scratches. finally.", peak: 1, beats: [
+                (with(.touch) { $0.look = CGSize(width: 0, height: -1); $0.lean = -6 }, 0.4),
+                (with(.touch) { $0.eyeOpen = 0; $0.eyeHappy = 1; $0.blush = 1; $0.lean = -10; $0.squash = 1.06; $0.tailWag = 1.8; $0.mouthSmile = 1 }, 1.3),
+                (with(.touch) { $0.lean = 0 }, 0.5),
+            ])
+        case "ears":
+            return IdleAct(id: id, line: "ears are not buttons.", peak: 1, beats: [
+                (with(.idle) { $0.earDroop = 32; $0.eyeOpen = 0.5; $0.squash = 0.94 }, 0.3),
+                (with(.annoyed) { $0.earDroop = -16; $0.browTilt = 10; $0.lean = 0 }, 1.2),
+                (with(.idle) { $0.browTilt = 4 }, 0.5),
+            ])
+        case "belly":
+            return IdleAct(id: id, line: "the belly is a trap.", peak: 1, beats: [
+                (with(.touch) { $0.armsUp = 0.4; $0.squash = 0.92 }, 0.35),
+                (with(.mischief) { $0.armsUp = 1; $0.browAsym = 1; $0.lean = 6; $0.mouthSmile = 0.9 }, 1.2),
+                (with(.touch) { $0.armsUp = 0 }, 0.5),
+            ])
+        case "tail":
+            return IdleAct(id: id, line: "hey. that's attached.", peak: 1, beats: [
+                (with(.attention) { $0.look = CGSize(width: 1, height: 0.4); $0.eyeOpen = 1.2 }, 0.4),
+                (with(.idle) { $0.look = CGSize(width: 1, height: 0.4); $0.lean = 12; $0.browTilt = 8; $0.tailWag = 2; $0.mouthSmile = -0.2 }, 1.2),
+                (with(.idle) { $0.lean = 0 }, 0.5),
+            ])
+        case "bellyTrap":
+            return IdleAct(id: id, line: "gotcha.", peak: 1, beats: [
+                (with(.touch) { $0.armsUp = 0.4; $0.squash = 0.92 }, 0.25),
+                (with(.mischief) { $0.armsUp = 1; $0.mouthOpen = 1; $0.fang = 1; $0.lean = 10; $0.hop = 8; $0.eyeOpen = 1.2; $0.browAsym = 1 }, 1.2),
+                (with(.mischief) { $0.armsUp = 0; $0.hop = 0 }, 0.6),
+            ])
+        default:
+            return nil
+        }
+    }
+
     /// Reactions to the phone itself (`PhoneEvent` raw values): a low battery, a charger, a shake. `percent` is the battery left, or -1 when unknown.
     static func phone(_ id: String, percent: Int) -> IdleAct? {
         switch id {

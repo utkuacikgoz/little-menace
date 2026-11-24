@@ -13,6 +13,8 @@ struct GremlinView: View {
     var stretch: CGSize = .zero
     /// False for snapshots (share card): no timeline, no blink.
     var animated = true
+    /// A fixed moment on the breathing and blinking timeline: one frame of a share video.
+    var frameTime: Double? = nil
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -20,7 +22,9 @@ struct GremlinView: View {
 
     var body: some View {
         Group {
-            if animated {
+            if let frameTime {
+                rig(time: frameTime)
+            } else if animated {
                 TimelineView(.animation(minimumInterval: 1 / 30, paused: reduceMotion && !pose.sleeping)) { ctx in
                     rig(time: ctx.date.timeIntervalSinceReferenceDate)
                 }

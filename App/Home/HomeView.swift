@@ -2,7 +2,7 @@ import SwiftUI
 import MenaceCore
 
 enum HomeSheet: String, Identifiable {
-    case wardrobe, stamps, share, settings, points
+    case wardrobe, stamps, share, settings, points, diary
     #if DEBUG
     /// Screenshot tours only: the Midnight Snack page on its own.
     case collection
@@ -56,6 +56,16 @@ struct HomeView: View {
                 gremlin(size: petSize, center: center)
 
                 inFrontOfGremlin(petSize: petSize, center: center)
+
+                switch model.flourish {
+                case .hearts:
+                    HeartsBurst().position(x: center.x, y: center.y - petSize * 0.2)
+                case .bite:
+                    BiteMarks().position(x: center.x, y: center.y + petSize * 0.15)
+                        .transition(.scale(scale: 1.3).combined(with: .opacity))
+                case nil:
+                    EmptyView()
+                }
 
                 if let bubble = model.bubble, !model.showNamePrompt, !model.showReminderOffer {
                     // Speech bubble above the head; below the gremlin while the mischief chip holds that spot.
@@ -144,6 +154,7 @@ struct HomeView: View {
             case .share: ShareCardSheet()
             case .settings: SettingsView()
             case .points: PointsSheet()
+            case .diary: DiaryView()
             #if DEBUG
             case .collection: NavigationStack { CollectionView(collection: Catalog.collections[0]) }
             #endif
@@ -211,7 +222,10 @@ struct HomeView: View {
                          size: size,
                          stretch: stretch)
             .contentShape(Rectangle())
-            .onTapGesture { model.pet() }
+            .onTapGesture(coordinateSpace: .local) { p in
+                // The rig draws in a 200 × 220 canvas scaled to the gremlin's size.
+                model.pet(zone: PetZone(CGPoint(x: p.x * 200 / size, y: p.y * 220 / (size * 1.1))))
+            }
             .onLongPressGesture(minimumDuration: 0.5) { model.longPress() }
             .gesture(drag)
             .coachTarget(.pet)
@@ -306,6 +320,9 @@ struct HomeView: View {
         Menu {
             Button { sheet = .wardrobe } label: { Label("Wardrobe", systemImage: "tshirt") }
             Button { sheet = .stamps } label: { Label("Stamps", systemImage: "seal") }
+            if DiaryLook.level > 0 {
+                Button { sheet = .diary } label: { Label(DiaryLook.menuTitle, systemImage: DiaryLook.menuSymbol) }
+            }
             Button { sheet = .share } label: { Label("Share", systemImage: "square.and.arrow.up") }
             Button { sheet = .settings } label: { Label("Settings", systemImage: "gearshape") }
         } label: {
