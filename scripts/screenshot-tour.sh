@@ -56,13 +56,11 @@ elif [ "$PART" = new ]; then
     local S=$1 N=$2; shift 2
     for V in A B C D; do shot "$PM" "v-$N-$V" -LMVariant "$S$V" "$@"; done
   }
-  # S32 petting hot spots. A plain pet; B each spot reacts; C + today's favourite spot (hearts); D + the belly trap.
-  abcd S32 S32-chin -LMScreen pet -LMPetZone chin -LMFavourite chin
-  abcd S32 S32-belly -LMScreen pet -LMPetZone belly -LMFavourite chin
-  # S33 diary and rap sheet. A today (the stamp card); B diary; C rap sheet; D diary with the rap sheet on top.
-  abcd S33 S33-diary -LMScreen diary
-  # S34 share card. A today; B with its latest line; C B as a looping video; D a 9:16 video for TikTok and Stories.
-  abcd S34 S34-share -LMScreen share
+  # Final check of the owner's picks: S32C hot spots with today's favourite, S33D diary under the rap sheet, S34C moving card.
+  shot "$PM" f-S32-chin -LMScreen pet -LMPetZone chin -LMFavourite chin
+  shot "$PM" f-S32-belly -LMScreen pet -LMPetZone belly -LMFavourite chin
+  shot "$PM" f-S33-diary -LMScreen diary
+  shot "$PM" f-S34-share -LMScreen share
 elif [ "$PART" = a ]; then
   shot "$PM" 01-home -LMScreen home
   shot "$PM" 02-name-prompt -LMScreen namePrompt

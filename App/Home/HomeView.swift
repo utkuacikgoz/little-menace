@@ -57,14 +57,8 @@ struct HomeView: View {
 
                 inFrontOfGremlin(petSize: petSize, center: center)
 
-                switch model.flourish {
-                case .hearts:
+                if model.flourish == .hearts {
                     HeartsBurst().position(x: center.x, y: center.y - petSize * 0.2)
-                case .bite:
-                    BiteMarks().position(x: center.x, y: center.y + petSize * 0.15)
-                        .transition(.scale(scale: 1.3).combined(with: .opacity))
-                case nil:
-                    EmptyView()
                 }
 
                 if let bubble = model.bubble, !model.showNamePrompt, !model.showReminderOffer {
@@ -320,9 +314,7 @@ struct HomeView: View {
         Menu {
             Button { sheet = .wardrobe } label: { Label("Wardrobe", systemImage: "tshirt") }
             Button { sheet = .stamps } label: { Label("Stamps", systemImage: "seal") }
-            if DiaryLook.level > 0 {
-                Button { sheet = .diary } label: { Label(DiaryLook.menuTitle, systemImage: DiaryLook.menuSymbol) }
-            }
+            Button { sheet = .diary } label: { Label("Diary", systemImage: "book.closed") }
             Button { sheet = .share } label: { Label("Share", systemImage: "square.and.arrow.up") }
             Button { sheet = .settings } label: { Label("Settings", systemImage: "gearshape") }
         } label: {

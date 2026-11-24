@@ -15,14 +15,9 @@ enum PetZone: String, CaseIterable {
     }
 }
 
-/// Review S32 (DEBUG only): petting hot spots. A none; B chin, ears, belly and tail each react;
-/// C B plus a secret favourite spot each day that sends up hearts; D B plus the belly trap that bites.
+/// Petting hot spots: chin, ears, belly and tail each react, and one secret favourite spot a day sends up hearts.
 enum PetSpots {
-    static var level: Int {
-        Variant.on("S32D") ? 3 : Variant.on("S32C") ? 2 : Variant.on("S32B") ? 1 : 0
-    }
-
-    /// Today's favourite spot (option C): the same all day, a different one most days.
+    /// Today's favourite spot: the same all day, a different one most days.
     static func favourite(dayKey: String) -> PetZone {
         let spots: [PetZone] = [.chin, .ears, .belly, .tail]
         #if DEBUG
@@ -34,7 +29,7 @@ enum PetSpots {
 
 /// What appears around the gremlin after a hot-spot pet.
 enum PetFlourish: Equatable {
-    case hearts, bite
+    case hearts
 }
 
 /// A few hearts floating up from the gremlin.
@@ -52,30 +47,5 @@ struct HeartsBurst: View {
         }
         .onAppear { withAnimation(.easeOut(duration: 0.9)) { up = true } }
         .accessibilityHidden(true)
-    }
-}
-
-/// Two arcs of tooth marks: the belly trap closed on your finger.
-struct BiteMarks: View {
-    var body: some View {
-        ZStack {
-            arc(top: true)
-            arc(top: false)
-        }
-        .frame(width: 120, height: 90)
-        .accessibilityHidden(true)
-    }
-
-    private func arc(top: Bool) -> some View {
-        ZStack {
-            ForEach(0..<6, id: \.self) { i in
-                let angle = Angle.degrees(Double(i) * 24 - 60)
-                Capsule()
-                    .fill(Color(hex: 0xB0293B).opacity(0.75))
-                    .frame(width: 9, height: 16)
-                    .rotationEffect(angle)
-                    .offset(x: sin(angle.radians) * 48, y: (top ? -1 : 1) * (cos(angle.radians) * 26 - 8))
-            }
-        }
     }
 }

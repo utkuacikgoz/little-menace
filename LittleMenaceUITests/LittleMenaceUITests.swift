@@ -339,7 +339,8 @@ final class LittleMenaceUITests: XCTestCase {
     func testShareCardRenders() {
         launch(["-LMScreen", "home"])
         menu("Share")
-        XCTAssertTrue(app.buttons["Share"].waitForExistence(timeout: 5))
+        // The card is a short video made on the phone: give it time.
+        XCTAssertTrue(app.buttons["Share"].waitForExistence(timeout: 30))
     }
 
     // MARK: Accessibility

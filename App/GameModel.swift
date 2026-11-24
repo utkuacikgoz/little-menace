@@ -55,7 +55,7 @@ final class GameModel {
     @ObservationIgnored private let napActivity = NapLiveActivity()
     @ObservationIgnored private let phone = PhoneSense()
     @ObservationIgnored private var lastPhoneReaction: [PhoneEvent: Date] = [:]
-    /// Hearts or bite marks around the gremlin after a hot-spot pet.
+    /// Hearts around the gremlin after petting today's favourite spot.
     private(set) var flourish: PetFlourish?
     @ObservationIgnored private var flourishTask: Task<Void, Never>?
     @ObservationIgnored private let store = SharedStore.make()
@@ -301,9 +301,9 @@ final class GameModel {
 
     // MARK: Care intents
 
-    /// A pet on a particular spot: the same care, with that spot's own reaction (review S32).
+    /// A pet on a particular spot: the same care, with that spot's own reaction.
     func pet(zone: PetZone, hold: Bool = false) {
-        guard PetSpots.level > 0, zone != .head, !state.isAsleep, state.mood < .angry, transient != .annoyed else { return pet() }
+        guard zone != .head, !state.isAsleep, state.mood < .angry, transient != .annoyed else { return pet() }
         let out = game.pet(now: Date())
         guard out.reaction != .annoyed else {
             react(.annoyed, for: 1.6)
@@ -313,20 +313,18 @@ final class GameModel {
             save()
             return
         }
-        let trap = PetSpots.level == 3 && zone == .belly
-        let favourite = PetSpots.level == 2 && zone == PetSpots.favourite(dayKey: game.days.dayKey(Date()))
-        if let act = IdleAct.petSpot(trap ? "bellyTrap" : zone.rawValue) {
+        let favourite = zone == PetSpots.favourite(dayKey: game.days.dayKey(Date()))
+        if let act = IdleAct.petSpot(zone.rawValue) {
             performIdle(favourite ? IdleAct(id: act.id, line: "that's the spot. today, anyway.", peak: act.peak, beats: act.beats) : act,
                         holdPeak: hold)
         }
-        if trap {
-            haptics.play(.thud)
-            sounds.play(.chomp)
-        } else {
-            haptics.play(.squish)
-            sounds.play(.pop)
+        haptics.play(favourite ? .success : .squish)
+        sounds.play(.pop)
+        if favourite { showFlourish(.hearts, hold: hold) }
+        if state.name.isEmpty && !state.namePromptShown && !hold {
+            game.state.namePromptShown = true
+            showNamePrompt = true
         }
-        if trap || favourite { showFlourish(trap ? .bite : .hearts, hold: hold) }
         handle(out.events)
         save()
     }
@@ -767,8 +765,8 @@ final class GameModel {
             _ = game.wake(now: Date())
             react(game.sleep(now: Date()).reaction, for: 30)
             showLine("I'm up. happy?", duration: 30)
-        case "diary", "diaryA":
-            // A believable week for the diary and rap sheet (review S33). `diaryA` is option A's stand-in: the stamp card.
+        case "diary":
+            // A believable week for the diary and rap sheet.
             let names = ["sock", "cup", "pen", "cable", "remote", "cup", "keys"]
             game.state.diary = (0..<6).reversed().map { back in
                 var d = DiaryDay(day: game.days.dayKey(Date().addingTimeInterval(Double(-back) * 86400)))
@@ -780,9 +778,9 @@ final class GameModel {
             game.state.rapSheet = RapSheet()
             game.state.rapSheet.mischief = ["cup": 7, "sock": 4, "pen": 3, "cable": 2, "remote": 2]
             game.state.rapSheet.snacksRefused = 11; game.state.rapSheet.pokesResented = 23; game.state.rapSheet.pukes = 2
-            return screen == "diaryA" || DiaryLook.level == 0 ? .stamps : .diary
+            return .diary
         case "pet":
-            // `-LMPetZone chin` pets that spot and holds the reaction (review S32).
+            // `-LMPetZone chin` pets that spot and holds the reaction; `-LMFavourite chin` makes it today's favourite.
             if let zone = UserDefaults.standard.string(forKey: "LMPetZone").flatMap(PetZone.init(rawValue:)) {
                 Task { @MainActor in
                     try? await Task.sleep(for: .seconds(0.6))

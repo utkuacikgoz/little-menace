@@ -1,18 +1,7 @@
 import SwiftUI
 import MenaceCore
 
-/// Review S33 (DEBUG only): A none (today); B a diary, a line a day in its voice; C a shareable rap sheet
-/// of its crimes; D the diary with the rap sheet on top.
-enum DiaryLook {
-    static var level: Int {
-        Variant.on("S33D") ? 3 : Variant.on("S33C") ? 2 : Variant.on("S33B") ? 1 : 0
-    }
-    static var showsDiary: Bool { level == 1 || level == 3 }
-    static var showsRapSheet: Bool { level >= 2 }
-    static var menuTitle: String { level == 2 ? "Rap Sheet" : "Diary" }
-    static var menuSymbol: String { level == 2 ? "list.clipboard" : "book.closed" }
-}
-
+/// The last week, a line a day in its voice, under a shareable rap sheet of its crimes.
 struct DiaryView: View {
     @Environment(GameModel.self) private var model
     @Environment(\.dismiss) private var dismiss
@@ -21,48 +10,44 @@ struct DiaryView: View {
     var body: some View {
         NavigationStack {
             Form {
-                if DiaryLook.showsRapSheet {
-                    Section {
-                        VStack(spacing: 14) {
-                            RapSheetCard(state: model.state)
-                                .scaleEffect(DiaryLook.showsDiary ? 0.62 : 0.86)
-                                .frame(width: 360 * (DiaryLook.showsDiary ? 0.62 : 0.86), height: 450 * (DiaryLook.showsDiary ? 0.62 : 0.86))
-                                .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-                            if let card {
-                                ShareLink(item: card, preview: SharePreview("\(model.state.titleName)'s rap sheet", image: card)) {
-                                    Label("Share the rap sheet", systemImage: "square.and.arrow.up")
-                                        .font(.system(.headline, design: .rounded).weight(.heavy))
-                                        .frame(maxWidth: .infinity, minHeight: 48)
-                                        .background(Ink.body, in: Capsule())
-                                        .foregroundStyle(Ink.eye)
-                                }
-                                .buttonStyle(.plain)
+                Section {
+                    VStack(spacing: 14) {
+                        RapSheetCard(state: model.state)
+                            .scaleEffect(0.62)
+                            .frame(width: 360 * 0.62, height: 450 * 0.62)
+                            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+                        if let card {
+                            ShareLink(item: card, preview: SharePreview("\(model.state.titleName)'s rap sheet", image: card)) {
+                                Label("Share the rap sheet", systemImage: "square.and.arrow.up")
+                                    .font(.system(.headline, design: .rounded).weight(.heavy))
+                                    .frame(maxWidth: .infinity, minHeight: 48)
+                                    .background(Ink.body, in: Capsule())
+                                    .foregroundStyle(Ink.eye)
                             }
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 8)
-                    }
-                    .creamSection()
-                }
-                if DiaryLook.showsDiary {
-                    Section("This week") {
-                        if model.state.diary.isEmpty {
-                            Text("nothing written yet. give it a day.").foregroundStyle(.secondary)
-                        }
-                        ForEach(model.state.diary.reversed(), id: \.day) { day in
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text(weekday(day.day)).font(.system(.subheadline, design: .rounded).weight(.heavy))
-                                Text(Diary.line(day, name: model.state.titleName)).font(.system(.body, design: .rounded))
-                            }
-                            .padding(.vertical, 4)
-                            .accessibilityElement(children: .combine)
+                            .buttonStyle(.plain)
                         }
                     }
-                    .creamSection()
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 8)
                 }
+                .creamSection()
+                Section("This week") {
+                    if model.state.diary.isEmpty {
+                        Text("nothing written yet. give it a day.").foregroundStyle(.secondary)
+                    }
+                    ForEach(model.state.diary.reversed(), id: \.day) { day in
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(weekday(day.day)).font(.system(.subheadline, design: .rounded).weight(.heavy))
+                            Text(Diary.line(day, name: model.state.titleName)).font(.system(.body, design: .rounded))
+                        }
+                        .padding(.vertical, 4)
+                        .accessibilityElement(children: .combine)
+                    }
+                }
+                .creamSection()
             }
             .creamForm()
-            .navigationTitle(DiaryLook.showsDiary ? "\(model.state.titleName)'s diary" : "Rap sheet")
+            .navigationTitle("\(model.state.titleName)'s diary")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { dismiss() } } }
             .task { renderCard() }
@@ -79,7 +64,6 @@ struct DiaryView: View {
     }
 
     private func renderCard() {
-        guard DiaryLook.showsRapSheet else { return }
         let renderer = ImageRenderer(content: RapSheetCard(state: model.state))
         renderer.scale = 3
         if let ui = renderer.uiImage { card = Image(uiImage: ui) }

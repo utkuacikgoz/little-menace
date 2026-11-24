@@ -42,6 +42,17 @@ Temper runs from 0 to 50. Every point lost adds to it; every point earned, every
 
 Points have no daily loss cap: the score can keep falling, and the mood is what pushes back.
 
+## Petting hot spots
+
+- The chin, ears, belly and tail each react with their own little act and line ("chin scratches. finally.", "ears are not buttons.", "the belly is a trap.", "hey. that's attached."). The head and body get the usual pet.
+- One of the four is today's favourite (the same all day, from the date). Petting it sends up hearts: "that's the spot. today, anyway."
+- Same care, points and poke limits as any pet. Nothing while asleep or cross.
+
+## Diary and rap sheet
+
+- **More › Diary**: the last 7 days, a line a day in its voice, from counts kept on the phone (snacks, refusals, pets, pokes, naps, games won, mischief).
+- On top, the **rap sheet**: a mugshot against a height chart with lifetime mischief, snacks refused, pokes resented and pukes, and what it's "known for". Share it as an image.
+
 ## Toys (four short, replayable rounds)
 
 Each one is fun without rewards. A round ends on a full-screen result: won or lost, what happened, the points counting up, the level bar, any level, stamp or gift it earned, the gremlin's own line about it, and a "Brag about it" share button.
@@ -112,7 +123,7 @@ Completing it grants 30 XP and a **gold stamp** once. It is shown only as an ico
 
 ## Sharing
 
-The menu has a **Share** item. It renders a 1080×1350 card from the real state: current pose, outfit, theme, name, level, stamps, discoveries and personality title. The card goes to the system share sheet, and nothing is posted automatically.
+The menu has a **Share** item. It makes a 4-second looping 1080×1350 video from the real state: current pose, outfit, theme, name, its latest line, level, stamps, discoveries and personality title. It breathes, blinks and the line pops in. The MP4 goes to the system share sheet (TikTok, Reels, Stories, Messages), and nothing is posted automatically.
 
 ## Away from the app
 - Widgets (Home Screen and Lock Screen) show its face and needs, planned every 30 minutes for six hours. Pet and Feed buttons apply the same rules and points as in the app.
