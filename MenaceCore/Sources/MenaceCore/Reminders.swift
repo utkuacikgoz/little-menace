@@ -86,17 +86,13 @@ public enum ReminderPolicy {
     }
 }
 
-/// When to show Apple's rating prompt: right after a won round, once the player has come back on
-/// a few days and reached a few levels, and at most once per app version. Apple also caps it at
-/// three times a year and lets people turn it off.
+/// When to ask "How's your gremlin?": on the first launch of each new app version, for players who
+/// have had it at least a day (a new player is never asked on day one). Happy answers get Apple's
+/// rating prompt, which Apple caps at three times a year; the others go to the feedback email.
 public enum ReviewPolicy {
-    public static let minVisitDays = 3
-    public static let minLevel = 3
+    public static let minAge: TimeInterval = 86400
 
-    public static func shouldAsk(_ s: PetState, wonRound: Bool, appVersion: String) -> Bool {
-        wonRound
-            && s.counters.visitDays >= minVisitDays
-            && s.level >= minLevel
-            && s.prefs.reviewAskedVersion != appVersion
+    public static func shouldAskOnLaunch(_ s: PetState, now: Date, appVersion: String) -> Bool {
+        now.timeIntervalSince(s.createdAt) >= minAge && s.prefs.reviewAskedVersion != appVersion
     }
 }

@@ -39,6 +39,8 @@ final class GameModel {
     var activity: ActivityKind?
     private(set) var session: ActivitySession?
     var showReminderOffer = false
+    /// The "How's your gremlin?" question is up.
+    var askingMood = false
     var showNamePrompt = false
     /// First-run guide (or reopened from Settings).
     var showHowToPlay = false
@@ -113,6 +115,7 @@ final class GameModel {
         // Idle-act screenshots show only what the act itself says.
         if ["idleAct", "phone", "pet"].contains(UserDefaults.standard.string(forKey: "LMScreen")) { return }
         #endif
+        askHowItsGoingIfDue()
         if bubble == nil && !homeObscured { say(.idle) }
     }
 
@@ -467,18 +470,22 @@ final class GameModel {
         return line
     }
 
-    /// Apple's rating prompt goes up right after a won round, once the player is a regular.
-    /// Returns true when the caller should request it; records the ask so it happens once per version.
-    func takeReviewMoment(won: Bool) -> Bool {
+    /// "How's your gremlin?" on the first launch of a new version, once the gremlin has settled in.
+    private func askHowItsGoingIfDue() {
         #if DEBUG
-        // Screenshot tours and UI tests start as a regular (`-LMScreen`): never ask them.
-        if UserDefaults.standard.string(forKey: "LMScreen") != nil { return false }
+        // Screenshot tours and UI tests (`-LMScreen`) are never asked.
+        if UserDefaults.standard.string(forKey: "LMScreen") != nil { return }
         #endif
         let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "0"
-        guard ReviewPolicy.shouldAsk(state, wonRound: won, appVersion: version) else { return false }
+        guard ReviewPolicy.shouldAskOnLaunch(state, now: Date(), appVersion: version) else { return }
         game.state.prefs.reviewAskedVersion = version
         save()
-        return true
+        Task { [weak self] in
+            // Let home settle first; skip it if something else is already on screen.
+            try? await Task.sleep(for: .seconds(1.5))
+            guard let self, !self.showHowToPlay, !self.showNamePrompt, !self.showReminderOffer, self.activity == nil else { return }
+            self.askingMood = true
+        }
     }
 
     /// Leaving a round early (close button, interruption, backgrounding).

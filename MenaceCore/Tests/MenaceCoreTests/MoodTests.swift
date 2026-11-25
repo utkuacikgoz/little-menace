@@ -216,31 +216,20 @@ final class MoodTests: XCTestCase {
 final class ReviewPolicyTests: XCTestCase {
     let now = ISO8601DateFormatter().date(from: "2026-09-21T10:00:00Z")!
 
-    func regular() -> PetState {
-        var s = PetState(now: now)
-        s.counters.visitDays = ReviewPolicy.minVisitDays
-        s.xp = Tuning.xpForLevel(ReviewPolicy.minLevel)
-        return s
-    }
-
-    func testAsksAfterAWinOnceTheyAreARegular() {
-        XCTAssertTrue(ReviewPolicy.shouldAsk(regular(), wonRound: true, appVersion: "1.0.0"))
-        XCTAssertFalse(ReviewPolicy.shouldAsk(regular(), wonRound: false, appVersion: "1.0.0"), "never after a loss")
-        var newcomer = regular()
-        newcomer.counters.visitDays = 1
-        XCTAssertFalse(ReviewPolicy.shouldAsk(newcomer, wonRound: true, appVersion: "1.0.0"))
-        var low = regular()
-        low.xp = 0
-        XCTAssertFalse(ReviewPolicy.shouldAsk(low, wonRound: true, appVersion: "1.0.0"))
+    func testAsksOnTheFirstLaunchOfAnUpdate() {
+        let player = PetState(now: now.addingTimeInterval(-3 * 86400))
+        XCTAssertTrue(ReviewPolicy.shouldAskOnLaunch(player, now: now, appVersion: "1.0.4"))
+        let newcomer = PetState(now: now.addingTimeInterval(-3600))
+        XCTAssertFalse(ReviewPolicy.shouldAskOnLaunch(newcomer, now: now, appVersion: "1.0.4"), "never on day one")
     }
 
     func testOncePerVersionAndKeptAcrossReset() {
-        var s = regular()
-        s.prefs.reviewAskedVersion = "1.0.0"
-        XCTAssertFalse(ReviewPolicy.shouldAsk(s, wonRound: true, appVersion: "1.0.0"))
-        XCTAssertTrue(ReviewPolicy.shouldAsk(s, wonRound: true, appVersion: "1.1.0"))
+        var s = PetState(now: now.addingTimeInterval(-3 * 86400))
+        s.prefs.reviewAskedVersion = "1.0.4"
+        XCTAssertFalse(ReviewPolicy.shouldAskOnLaunch(s, now: now, appVersion: "1.0.4"))
+        XCTAssertTrue(ReviewPolicy.shouldAskOnLaunch(s, now: now, appVersion: "1.0.5"))
         var g = Game(state: s)
         g.reset(now: now)
-        XCTAssertEqual(g.state.prefs.reviewAskedVersion, "1.0.0", "a new gremlin doesn't re-ask")
+        XCTAssertEqual(g.state.prefs.reviewAskedVersion, "1.0.4", "a new gremlin doesn't re-ask")
     }
 }
