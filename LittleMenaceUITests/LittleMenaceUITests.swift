@@ -208,7 +208,9 @@ final class LittleMenaceUITests: XCTestCase {
     func testClosingMidRoundLeavesNothingStuck() {
         launch(["-LMScreen", "home"])
         open("Sock tug")
-        app.buttons["Close"].tap()
+        let close = app.buttons["Close"]
+        XCTAssertTrue(close.waitForExistence(timeout: 10), "the round opens")
+        close.tap()
         XCTAssertTrue(app.buttons["Play"].waitForExistence(timeout: 5))
         // If the abandoned round were still active, the next one would be refused as busy.
         open("Cushion hunt")
@@ -326,13 +328,17 @@ final class LittleMenaceUITests: XCTestCase {
         toggle.coordinate(withNormalizedOffset: CGVector(dx: 0.93, dy: 0.5)).tap()
         let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
         let deny = springboard.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Don'")).firstMatch
+        // On a slow simulator the first tap can land before the switch responds: try once more.
+        if !deny.waitForExistence(timeout: 10) && toggle.value as? String == "0" && !app.buttons["Notifications are off in iOS Settings"].exists {
+            toggle.coordinate(withNormalizedOffset: CGVector(dx: 0.93, dy: 0.5)).tap()
+        }
         if deny.waitForExistence(timeout: 10) {
             deny.tap()
         } else {
             app.navigationBars.firstMatch.tap() // lets the interruption monitor run
         }
         let note = app.buttons["Notifications are off in iOS Settings"]
-        XCTAssertTrue(note.waitForExistence(timeout: 10), "denied permission is explained in Settings")
+        XCTAssertTrue(note.waitForExistence(timeout: 20), "denied permission is explained in Settings")
         XCTAssertEqual(toggle.value as? String, "0", "the toggle stays off when permission is denied")
     }
 
@@ -376,6 +382,8 @@ final class LittleMenaceUITests: XCTestCase {
                 return true
             }
         }
+        // The opening speech bubble fades after a few seconds; audit once it's gone so nothing vanishes mid-scan.
+        _ = waitGone(app.descendants(matching: .any)["pet-dialogue"], timeout: 10)
         try audit("home")
         menu("Stamps")
         try audit("stamps")
