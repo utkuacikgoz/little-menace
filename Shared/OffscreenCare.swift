@@ -34,18 +34,25 @@ enum OffscreenCare {
     /// How it's doing, in a sentence: for "How's my gremlin?" and the widgets.
     static func summary(_ s: PetState) -> String {
         if s.isAsleep { return "\(s.titleName) is asleep." }
+        return "\(s.titleName) is \(feeling(s)). Level \(s.level), \(s.points.total.formatted()) points."
+    }
+
+    /// Just how it feels, for the small Lock Screen widgets: "hungry and bored", "asleep".
+    /// Just how it feels, for the small Lock Screen widgets: "hungry and bored", "asleep".
+    static func feeling(_ s: PetState) -> String {
+        if s.isAsleep { return "asleep" }
         var wants: [String] = []
         if s.needs.fullness < 35 { wants.append("hungry") }
         if s.needs.joy < 40 { wants.append("bored") }
         if s.needs.energy < 30 { wants.append("sleepy") }
-        let feeling: String
+        let word: String
         switch s.mood {
-        case .furious: feeling = "furious"
-        case .angry: feeling = "angry"
-        case .annoyed: feeling = "annoyed"
-        case .calm: feeling = wants.isEmpty ? "content" : wants.joined(separator: " and ")
+        case .furious: word = "furious"
+        case .angry: word = "angry"
+        case .annoyed: word = "annoyed"
+        case .calm: word = wants.isEmpty ? "content" : wants.joined(separator: " and ")
         }
-        return "\(s.titleName) is \(feeling). Level \(s.level), \(s.points.total.formatted()) points."
+        return word
     }
 }
 

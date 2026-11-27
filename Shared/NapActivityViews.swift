@@ -12,7 +12,8 @@ struct NapBanner: View {
                         size: 64, animated: false)
                 .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 6) {
-                Text("\(attributes.name) is napping").font(.system(.headline, design: .rounded).weight(.heavy)).lineLimit(1)
+                Text("\(attributes.name) is napping").font(.system(.headline, design: .rounded).weight(.heavy))
+                    .lineLimit(2).minimumScaleFactor(0.85)
                 HStack(spacing: 4) {
                     Text("Wakes in")
                     Text(timerInterval: Date()...state.wakesAt, countsDown: true).monospacedDigit()
@@ -39,7 +40,8 @@ struct NapIslandTrailing: View {
     var body: some View {
         Text(timerInterval: Date()...state.wakesAt, countsDown: true)
             .monospacedDigit()
-            .frame(maxWidth: 48)
+            .minimumScaleFactor(0.8)
+            .frame(width: 56, alignment: .trailing)
             .foregroundStyle(Color(hex: 0xFFD46B))
     }
 }

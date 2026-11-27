@@ -14,7 +14,7 @@ struct GremlinWidgetView: View {
         switch family {
         case .accessoryCircular: circular
         case .accessoryRectangular: rectangular
-        case .accessoryInline: Text(OffscreenCare.summary(state))
+        case .accessoryInline: Text("\(state.titleName): \(OffscreenCare.feeling(state))")
         case .systemMedium: medium
         default: small
         }
@@ -115,7 +115,8 @@ struct GremlinWidgetView: View {
             GremlinView(pose: pose, fur: state.wardrobe.fur, size: 40, animated: false).accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 1) {
                 Text(state.titleName).font(.headline).lineLimit(1)
-                Text(OffscreenCare.summary(state)).font(.caption2).lineLimit(2)
+                Text(OffscreenCare.feeling(state).capitalizedFirst).font(.caption).lineLimit(2)
+                Text("Level \(state.level)").font(.caption2).opacity(0.8)
             }
         }
     }
@@ -131,4 +132,8 @@ struct GremlinWidgetBackground: View {
             ThemeBackground(themeID: state.wardrobe.theme, dimmed: state.isAsleep)
         }
     }
+}
+
+private extension String {
+    var capitalizedFirst: String { prefix(1).uppercased() + dropFirst() }
 }
