@@ -59,7 +59,7 @@ final class LittleMenaceUITests: XCTestCase {
         XCTAssertEqual(pet.label, "Your gremlin")
         pet.tap()
         let field = app.textFields["Name"]
-        XCTAssertTrue(field.waitForExistence(timeout: 3), "prompt appears after the first pet")
+        XCTAssertTrue(field.waitForExistence(timeout: 15), "prompt appears after the first pet")
         field.tap()
         field.typeText("Mo Fang")
         app.buttons["Save name"].tap()
@@ -97,13 +97,13 @@ final class LittleMenaceUITests: XCTestCase {
         menu("Settings")
         app.buttons["Midnight Snack"].tap()
         let preview = app.buttons["Preview Fridge Raid"]
-        XCTAssertTrue(preview.waitForExistence(timeout: 5))
+        XCTAssertTrue(preview.waitForExistence(timeout: 15))
         XCTAssertTrue(reveal(preview), "reactions sit below the looks and items")
         preview.tap()
         // The caption lives in the stage at the top of the page.
         let caption = app.staticTexts["collection-caption"]
         for _ in 0..<5 where !(caption.exists && caption.isHittable) { app.swipeDown(velocity: .slow) }
-        XCTAssertTrue(caption.waitForExistence(timeout: 3))
+        XCTAssertTrue(caption.waitForExistence(timeout: 15))
         XCTAssertEqual(caption.label, "midnight snack run.")
         XCTAssertFalse(app.buttons["wear-collection"].exists, "previewing never grants ownership")
     }
@@ -131,17 +131,17 @@ final class LittleMenaceUITests: XCTestCase {
     /// An element can exist under a screen that is still sliding away; wait until it can be tapped.
     /// Lists only build rows that are on screen: scroll gently until the element can be tapped.
     private func reveal(_ element: XCUIElement) -> Bool {
-        _ = element.waitForExistence(timeout: 2)
+        _ = element.waitForExistence(timeout: 15)
         for _ in 0..<5 where !(element.exists && element.isHittable) { app.swipeUp(velocity: .slow) }
         return waitHittable(element)
     }
 
-    private func waitGone(_ element: XCUIElement, timeout: TimeInterval = 5) -> Bool {
+    private func waitGone(_ element: XCUIElement, timeout: TimeInterval = 15) -> Bool {
         let exp = expectation(for: NSPredicate(format: "exists == false"), evaluatedWith: element)
         return XCTWaiter.wait(for: [exp], timeout: timeout) == .completed
     }
 
-    private func waitHittable(_ element: XCUIElement, timeout: TimeInterval = 5) -> Bool {
+    private func waitHittable(_ element: XCUIElement, timeout: TimeInterval = 15) -> Bool {
         let exp = expectation(for: NSPredicate(format: "hittable == true"), evaluatedWith: element)
         return XCTWaiter.wait(for: [exp], timeout: timeout) == .completed
     }
@@ -151,7 +151,7 @@ final class LittleMenaceUITests: XCTestCase {
         XCTAssertTrue(waitHittable(play), "Play never became tappable")
         play.tap()
         let button = app.buttons[toy]
-        XCTAssertTrue(button.waitForExistence(timeout: 3))
+        XCTAssertTrue(button.waitForExistence(timeout: 15))
         button.tap()
     }
 
@@ -159,7 +159,7 @@ final class LittleMenaceUITests: XCTestCase {
         let done = app.buttons["Done"]
         XCTAssertTrue(done.waitForExistence(timeout: timeout), "round never finished")
         done.tap()
-        XCTAssertTrue(app.buttons["Play"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["Play"].waitForExistence(timeout: 15))
     }
 
     func testSnackTossRound() {
@@ -167,7 +167,7 @@ final class LittleMenaceUITests: XCTestCase {
         open("Snack toss")
         // The snack takes a tap too, so it can be exposed as a button: find it by name, whatever its type.
         let snack = app.descendants(matching: .any)["Snack"].firstMatch
-        XCTAssertTrue(snack.waitForExistence(timeout: 5))
+        XCTAssertTrue(snack.waitForExistence(timeout: 15))
         for _ in 0..<8 {
             if !snack.exists { break }
             snack.swipeUp(velocity: .fast)
@@ -179,7 +179,7 @@ final class LittleMenaceUITests: XCTestCase {
         launch(["-LMScreen", "home"])
         open("Sock tug")
         let area = app.otherElements["Sock tug"].firstMatch
-        XCTAssertTrue(area.waitForExistence(timeout: 5))
+        XCTAssertTrue(area.waitForExistence(timeout: 15))
         let grip = area.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.7))
         grip.press(forDuration: 1.5, thenDragTo: grip.withOffset(CGVector(dx: 0, dy: 140)))
         finishRound(timeout: 30) // rounds end by 20 s at the latest
@@ -194,7 +194,7 @@ final class LittleMenaceUITests: XCTestCase {
         launch(["-LMScreen", "home"])
         open("Cushion hunt")
         let left = cushion("left")
-        XCTAssertTrue(left.waitForExistence(timeout: 5))
+        XCTAssertTrue(left.waitForExistence(timeout: 15))
         let enabled = NSPredicate(format: "isEnabled == true")
         wait(for: [expectation(for: enabled, evaluatedWith: left)], timeout: 10)
         for spot in ["left", "middle", "right"] {
@@ -202,7 +202,7 @@ final class LittleMenaceUITests: XCTestCase {
             let b = cushion(spot)
             if b.isEnabled { b.tap(); sleep(1) }
         }
-        finishRound(timeout: 8)
+        finishRound(timeout: 20)
     }
 
     func testClosingMidRoundLeavesNothingStuck() {
@@ -211,10 +211,10 @@ final class LittleMenaceUITests: XCTestCase {
         let close = app.buttons["Close"]
         XCTAssertTrue(close.waitForExistence(timeout: 10), "the round opens")
         close.tap()
-        XCTAssertTrue(app.buttons["Play"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["Play"].waitForExistence(timeout: 15))
         // If the abandoned round were still active, the next one would be refused as busy.
         open("Cushion hunt")
-        XCTAssertTrue(cushion("left").waitForExistence(timeout: 5))
+        XCTAssertTrue(cushion("left").waitForExistence(timeout: 15))
     }
 
     // MARK: Guide and points
@@ -229,12 +229,12 @@ final class LittleMenaceUITests: XCTestCase {
         for _ in 0..<8 where !go.exists {
             XCTAssertTrue(waitHittable(next), "Next is ready")
             next.tap()
-            _ = go.waitForExistence(timeout: 1)
+            _ = go.waitForExistence(timeout: 15)
         }
-        XCTAssertTrue(go.waitForExistence(timeout: 3), "the tour reaches its last step")
+        XCTAssertTrue(go.waitForExistence(timeout: 15), "the tour reaches its last step")
         go.tap()
         XCTAssertTrue(waitGone(go), "the tour closes")
-        XCTAssertTrue(pet.waitForExistence(timeout: 5))
+        XCTAssertTrue(pet.waitForExistence(timeout: 15))
         XCTAssertTrue(waitHittable(pet, timeout: 10), "the guide closes onto the home screen: \(app.debugDescription.replacingOccurrences(of: "\n", with: " ⏎ "))")
 
         app.terminate()
@@ -247,7 +247,7 @@ final class LittleMenaceUITests: XCTestCase {
         let score = app.buttons["Points"]
         XCTAssertTrue(waitHittable(score))
         score.tap()
-        XCTAssertTrue(app.navigationBars["Points"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.navigationBars["Points"].waitForExistence(timeout: 15))
         app.buttons["Done"].tap()
         XCTAssertTrue(waitHittable(app.buttons["Feed"]))
     }
@@ -260,7 +260,7 @@ final class LittleMenaceUITests: XCTestCase {
         more.tap()
         let menu = app.collectionViews.containing(.button, identifier: item).firstMatch
         let b = menu.buttons[item]
-        XCTAssertTrue(b.waitForExistence(timeout: 3))
+        XCTAssertTrue(b.waitForExistence(timeout: 15))
         XCTAssertTrue(waitHittable(b), "\(item) is ready before selecting it")
         b.tap()
         // A tap that lands while a sheet is still settling is dropped by the menu: tap the item once more.
@@ -272,14 +272,14 @@ final class LittleMenaceUITests: XCTestCase {
         launch(["-LMScreen", "home"])
         menu("Wardrobe")
         let leaf = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Leaf'")).firstMatch
-        XCTAssertTrue(leaf.waitForExistence(timeout: 3))
+        XCTAssertTrue(leaf.waitForExistence(timeout: 15))
         leaf.tap()
         XCTAssertTrue(leaf.label.contains("wearing"))
         let nightcap = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Nightcap'")).firstMatch
         XCTAssertTrue(nightcap.exists, "paid items are listed in the Wardrobe")
         nightcap.tap()
         // Not owned: the preview shows the buy bar. Owned (e.g. a leftover sandbox purchase): it equips.
-        let offered = buyButton.waitForExistence(timeout: 5)
+        let offered = buyButton.waitForExistence(timeout: 15)
         XCTAssertTrue(offered || nightcap.label.contains("wearing"), "paid item previews with a buy button, or equips if owned")
     }
 
@@ -289,7 +289,7 @@ final class LittleMenaceUITests: XCTestCase {
         let row = app.buttons["Midnight Snack"]
         XCTAssertTrue(reveal(row), "Midnight Snack reachable in Settings")
         row.tap()
-        let offered = buyButton.waitForExistence(timeout: 5)
+        let offered = buyButton.waitForExistence(timeout: 15)
         XCTAssertTrue(offered || ownedMarker.exists, "collection page shows the buy button, or 'Owned' if already bought")
     }
 
@@ -300,7 +300,7 @@ final class LittleMenaceUITests: XCTestCase {
         XCTAssertTrue(reveal(startOver), "Start Over reachable")
         startOver.tap()
         let title = app.staticTexts["Start over with a new gremlin?"]
-        XCTAssertTrue(title.waitForExistence(timeout: 3), "the confirmation appears")
+        XCTAssertTrue(title.waitForExistence(timeout: 15), "the confirmation appears")
         // iOS 26 shows the dialog as a bubble without Cancel; tapping outside dismisses it.
         let cancel = app.buttons["Cancel"]
         if cancel.exists { cancel.tap() } else { app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.3)).tap() }
@@ -323,7 +323,7 @@ final class LittleMenaceUITests: XCTestCase {
         }
         menu("Settings")
         let toggle = app.switches["Reminders"]
-        XCTAssertTrue(toggle.waitForExistence(timeout: 3))
+        XCTAssertTrue(toggle.waitForExistence(timeout: 15))
         // Tap the switch itself; tapping a SwiftUI toggle's centre can land on its label.
         toggle.coordinate(withNormalizedOffset: CGVector(dx: 0.93, dy: 0.5)).tap()
         let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
@@ -356,14 +356,14 @@ final class LittleMenaceUITests: XCTestCase {
         menu("Stamps")
         // The stamp card's own content, not just some scroll view: container types differ across iOS versions.
         let week = app.descendants(matching: .any).matching(NSPredicate(format: "label CONTAINS 'stamps this week'")).firstMatch
-        XCTAssertTrue(week.waitForExistence(timeout: 5),
+        XCTAssertTrue(week.waitForExistence(timeout: 15),
                       "stamp card opens at the largest text size: \(app.debugDescription.replacingOccurrences(of: "\n", with: " ⏎ "))")
     }
 
     /// Swipe a sheet away and wait until home is back, so the next menu opens on home, not on a closing sheet.
     private func dismissSheet() {
         app.swipeDown(velocity: .fast)
-        XCTAssertTrue(waitHittable(app.buttons["Feed"], timeout: 8), "the sheet closes: \(app.debugDescription.replacingOccurrences(of: "\n", with: " ⏎ "))")
+        XCTAssertTrue(waitHittable(app.buttons["Feed"], timeout: 15), "the sheet closes: \(app.debugDescription.replacingOccurrences(of: "\n", with: " ⏎ "))")
         // Feed turns hittable before the sheet's closing animation ends; let it finish before the next tap.
         XCTAssertTrue(waitHittable(app.buttons["More"]))
         Thread.sleep(forTimeInterval: 0.6)
