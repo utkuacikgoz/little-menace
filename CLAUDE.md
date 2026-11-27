@@ -5,6 +5,7 @@
 - **Doc-only or non-code commits get `[skip ci]`** in the commit message.
 - **At most one screenshot run at a time.** Before starting a manual (`workflow_dispatch`) run, list running runs and cancel any stale ones first. Never start a new one while another is in progress for the same branch unless the old one is cancelled.
 - Manual runs take screenshots only (no tests); PR runs test only. Don't add steps back to either without being asked.
+- **Open PRs as drafts.** Draft pushes run only core tests and a build check (a few minutes). Mark the PR ready for review once the work is done: that runs the full UI tests once, and merge after they pass.
 - Don't re-run CI "to check". Read the logs of the run that exists.
 
 ## Review with the owner

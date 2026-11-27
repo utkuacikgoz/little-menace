@@ -1,10 +1,12 @@
 name: iOS build
 
-# Pushes to main and PRs run the tests. A manual run takes screenshots only (no tests).
+# Draft PRs run the core tests and a compile check (a few minutes). The slow UI tests run on PRs marked
+# ready for review and on pushes to main. A manual run takes screenshots only (no tests).
 on:
   push:
     branches: [main]
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
   workflow_dispatch:
     inputs:
       tour:
@@ -34,7 +36,7 @@ jobs:
 
   app-tests:
     name: App tests (${{ matrix.shard }}/3)
-    if: github.event_name != 'workflow_dispatch'
+    if: github.event_name == 'push' || (github.event_name == 'pull_request' && !github.event.pull_request.draft)
     runs-on: macos-15
     timeout-minutes: 25
     strategy:
@@ -75,6 +77,29 @@ jobs:
             -destination "id=$SIM" \
             -derivedDataPath build CODE_SIGNING_ALLOWED=NO "${ARGS[@]}" 2>&1 \
             | grep -E "Test Case .*(passed|failed)|error:|AUDIT|Executed|\*\* TEST"
+
+  build-check:
+    name: Build check
+    # Draft PRs only: proves the app and widget still compile, without the UI tests.
+    if: github.event_name == 'pull_request' && github.event.pull_request.draft
+    runs-on: macos-15
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - name: Use Xcode 26
+        run: |
+          XC=$(ls -d /Applications/Xcode_26*.app 2>/dev/null | sort -V | tail -1)
+          if [ -z "$XC" ]; then
+            echo "::error::No Xcode 26 on this runner. Installed:"; ls -d /Applications/Xcode*.app; exit 1
+          fi
+          sudo xcode-select -s "$XC"
+          xcodebuild -version
+      - name: Build
+        run: |
+          set -o pipefail
+          xcodebuild build-for-testing -project LittleMenace.xcodeproj -scheme LittleMenace \
+            -destination 'generic/platform=iOS Simulator' -configuration Debug \
+            -derivedDataPath build CODE_SIGNING_ALLOWED=NO 2>&1 | grep -E "error:|\*\* (BUILD|TEST BUILD)"
 
   screenshots:
     name: Screenshots (${{ matrix.part }})
