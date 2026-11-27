@@ -38,7 +38,6 @@ enum OffscreenCare {
     }
 
     /// Just how it feels, for the small Lock Screen widgets: "hungry and bored", "asleep".
-    /// Just how it feels, for the small Lock Screen widgets: "hungry and bored", "asleep".
     static func feeling(_ s: PetState) -> String {
         if s.isAsleep { return "asleep" }
         var wants: [String] = []
