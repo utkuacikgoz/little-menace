@@ -132,3 +132,13 @@ jobs:
       - name: Remove API key
         if: always()
         run: rm -rf "$RUNNER_TEMP/asc"
+
+  # The slow UI tests run alongside each TestFlight build, without holding up the upload.
+  ui-tests:
+    uses: ./.github/workflows/ios.yml
+    # The called workflow also holds the screenshot publisher (skipped here), which declares contents: write.
+    permissions:
+      contents: write
+    with:
+      ui-tests: true
+

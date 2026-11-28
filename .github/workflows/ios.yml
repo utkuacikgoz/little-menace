@@ -1,12 +1,17 @@
 name: iOS build
 
-# Draft PRs run the core tests and a compile check (a few minutes). The slow UI tests run on PRs marked
-# ready for review and on pushes to main. A manual run takes screenshots only (no tests).
+# PRs and pushes to main run the quick checks: core tests, a build and the in-app unit tests (a few minutes).
+# The slow UI tests run only alongside a TestFlight build (testflight.yml calls this with ui-tests).
+# A manual run takes screenshots only (no tests).
 on:
   push:
     branches: [main]
   pull_request:
-    types: [opened, synchronize, reopened, ready_for_review]
+  workflow_call:
+    inputs:
+      ui-tests:
+        type: boolean
+        default: false
   workflow_dispatch:
     inputs:
       tour:
@@ -17,7 +22,7 @@ on:
 
 # A newer push to the same branch cancels the older run.
 concurrency:
-  group: ci-${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  group: ci-${{ github.workflow }}-${{ github.head_ref || github.ref }}-${{ inputs.ui-tests && 'ui' || 'quick' }}
   cancel-in-progress: true
 
 permissions:
@@ -26,7 +31,7 @@ permissions:
 jobs:
   core:
     name: Core tests
-    if: github.event_name != 'workflow_dispatch'
+    if: github.event_name == 'push' || github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     container: swift:6.2 # the Swift in Xcode 26.3, which builds the shipping app
     timeout-minutes: 10
@@ -35,8 +40,8 @@ jobs:
       - run: swift test --package-path MenaceCore
 
   app-tests:
-    name: App tests (${{ matrix.shard }}/3)
-    if: github.event_name == 'push' || (github.event_name == 'pull_request' && !github.event.pull_request.draft)
+    name: UI tests (${{ matrix.shard }}/3)
+    if: inputs.ui-tests
     runs-on: macos-15
     timeout-minutes: 25
     strategy:
@@ -78,12 +83,12 @@ jobs:
             -derivedDataPath build CODE_SIGNING_ALLOWED=NO "${ARGS[@]}" 2>&1 \
             | grep -E "Test Case .*(passed|failed)|error:|AUDIT|Executed|\*\* TEST"
 
-  build-check:
-    name: Build check
-    # Draft PRs only: proves the app and widget still compile, without the UI tests.
-    if: github.event_name == 'pull_request' && github.event.pull_request.draft
+  quick:
+    name: Build and unit tests
+    # Every PR and push to main: the app and widget compile, and the in-app unit tests pass (StoreKit, app settings).
+    if: github.event_name == 'push' || github.event_name == 'pull_request'
     runs-on: macos-15
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
       - name: Use Xcode 26
@@ -94,16 +99,23 @@ jobs:
           fi
           sudo xcode-select -s "$XC"
           xcodebuild -version
-      - name: Build
+      - name: Test
         run: |
           set -o pipefail
-          xcodebuild build-for-testing -project LittleMenace.xcodeproj -scheme LittleMenace \
-            -destination 'generic/platform=iOS Simulator' -configuration Debug \
-            -derivedDataPath build CODE_SIGNING_ALLOWED=NO 2>&1 | grep -E "error:|\*\* (BUILD|TEST BUILD)"
+          SIM=$(xcrun simctl list devices available -j | python3 -c '
+          import json, sys
+          phones = [d for rt, ds in json.load(sys.stdin)["devices"].items() if "iOS" in rt for d in ds if d["name"].startswith("iPhone")]
+          pick = [d for d in phones if d["name"] == "iPhone 16 Pro Max"] or [d for d in phones if "Pro Max" in d["name"]] or phones
+          print(pick[-1]["udid"])')
+          xcrun simctl bootstatus "$SIM" -b >/dev/null
+          xcodebuild test -project LittleMenace.xcodeproj -scheme LittleMenace \
+            -destination "id=$SIM" -only-testing:LittleMenaceTests \
+            -derivedDataPath build CODE_SIGNING_ALLOWED=NO 2>&1 \
+            | grep -E "Test Case .*(passed|failed)|error:|Executed|\*\* TEST"
 
   screenshots:
     name: Screenshots (${{ matrix.part }})
-    if: github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'workflow_dispatch' && inputs.tour != ''
     runs-on: macos-15
     timeout-minutes: 20
     strategy:
