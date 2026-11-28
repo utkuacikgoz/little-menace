@@ -17,7 +17,7 @@ enum CoachTarget: Int, CaseIterable {
 
     var body: String {
         switch self {
-        case .pet: return "Pets make it happy. Drag to squish it, hold for a sly grin. Too many pets, too fast, and it gets annoyed."
+        case .pet: return "Pets make it happy. Try the chin, ears, belly and tail: one is today's favourite. Drag to squish, hold for a sly grin. Too many, too fast, and it gets annoyed."
         case .feed: return "Tap, or drag the snack to its mouth. Don't feed a full belly."
         case .play: return "Four tiny games. Better rounds earn more points."
         case .nap: return "Naps restore energy. Waking it early costs points."

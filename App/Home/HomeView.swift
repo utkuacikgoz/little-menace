@@ -1,4 +1,5 @@
 import SwiftUI
+import StoreKit
 import MenaceCore
 
 enum HomeSheet: String, Identifiable {
@@ -15,6 +16,8 @@ struct HomeView: View {
     @Environment(GameModel.self) private var model
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.dynamicTypeSize) private var typeSize
+    @Environment(\.requestReview) private var requestReview
+    @Environment(\.openURL) private var openURL
 
     @State private var sheet: HomeSheet?
     @State private var showPlay = false
@@ -66,7 +69,7 @@ struct HomeView: View {
                     SpeechBubble(text: bubble.text)
                         .accessibilityIdentifier("pet-dialogue")
                         .frame(maxWidth: geo.size.width - 64)
-                        .position(x: center.x, y: model.pendingMischief == nil ? max(center.y - petSize * 0.72, Self.belowScore + 10) : min(center.y + petSize * 0.68, geo.size.height - 180))
+                        .position(x: center.x, y: model.pendingMischief == nil ? max(center.y - petSize * 0.72, topClear + 10) : min(center.y + petSize * 0.68, geo.size.height - 180))
                         .transition(.opacity)
                         .id(bubble.id)
                 }
@@ -82,7 +85,7 @@ struct HomeView: View {
 
                 if let event = model.pendingMischief {
                     mischiefProp(event)
-                        .position(x: center.x, y: max(center.y - petSize * 0.85, Self.belowScore))
+                        .position(x: center.x, y: max(center.y - petSize * 0.85, topClear))
                 }
 
                 if let snackAt {
@@ -140,6 +143,16 @@ struct HomeView: View {
                 model.look = CGSize(width: max(-1, min(1, (point.x - mouth.x) / 120)), height: max(-1, min(1, (point.y - mouth.y) / 120)))
                 if d < 160 && model.transient == nil { model.react(.attention, for: 0.6) }
             }
+        }
+        // "How's your gremlin?" on the first launch of an update: happy goes to Apple's rating prompt, the rest to an email.
+        .alert("How's \(model.state.displayName) treating you?",
+               isPresented: Binding(get: { model.askingMood }, set: { model.askingMood = $0 })) {
+            Button("Love it 😀") { requestReview() }
+            Button("It's OK 😐") { if let url = FeedbackMail.url(mood: "😐") { openURL(url) } }
+            Button("Not great 😠") { if let url = FeedbackMail.url(mood: "😠") { openURL(url) } }
+            Button("Not now", role: .cancel) {}
+        } message: {
+            Text("Tell us straight. It helps make it better.")
         }
         .sheet(item: $sheet) { which in
             switch which {
@@ -253,6 +266,11 @@ struct HomeView: View {
 
     /// Centre line for things placed under the scoreboard at the top.
     static let belowScore: CGFloat = 116
+
+    /// The first free height under the top bar: lower while the temper gauge sits under the score.
+    private var topClear: CGFloat {
+        model.state.mood > .calm && !model.state.isAsleep ? Self.belowScore + 42 : Self.belowScore
+    }
 
     static func rubberBand(_ t: CGSize, limit: CGFloat) -> CGSize {
         func band(_ v: CGFloat) -> CGFloat {

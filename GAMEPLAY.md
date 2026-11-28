@@ -118,7 +118,7 @@ Completing it grants 30 XP and a **gold stamp** once. It is shown only as an ico
 
 ## Rating prompt and feedback
 
-- Right after a won round, once the player has visited on 3 days and reached level 3, and at most once per app version (kept across a gremlin reset), it asks "How's (name) treating you?": **Love it** opens Apple's rating prompt (Apple decides whether it appears, at most three times a year); **It's OK** and **Not great** open an email to hello@utkuacikgoz.com with that face in the subject; **Not now** closes it.
+- On the first launch of each new app version, for players who have had their gremlin at least a day, it asks "How's (name) treating you?" once (kept across a gremlin reset): **Love it** opens Apple's rating prompt (Apple decides whether it appears, at most three times a year); **It's OK** and **Not great** open an email to hello@utkuacikgoz.com with that face in the subject; **Not now** closes it. It waits if the guide, the name prompt or a game is on screen.
 - **Settings › Send Feedback** opens the same email any time. Drafts include the app version, iPhone model and iOS version. Nothing is sent unless the player presses Send.
 
 ## Sharing
